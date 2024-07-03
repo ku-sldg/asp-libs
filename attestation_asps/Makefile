@@ -1,5 +1,5 @@
 # List of directories
-DIRS := test_asp
+DIRS := test_asp attest_id certificate_id appraise_id
 
 BIN := ./bin
 
