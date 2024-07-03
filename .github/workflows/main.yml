@@ -1,0 +1,28 @@
+name: Build and Test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  schedule:
+    - cron: '0 0 * * 0' # Running at midnight every Sunday 
+
+jobs:
+  build-and-test:
+    strategy:
+      fail-fast: false
+      
+    runs-on: ubuntu-latest
+
+
+    steps:
+############### Testing Checkout and that all ASPs build
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Test Build
+        run: |
+          make ci
