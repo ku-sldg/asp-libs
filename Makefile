@@ -11,6 +11,7 @@ all: $(DIRS)
 $(DIRS):
 	mkdir -p $(BIN)
 	$(MAKE) -C $@
+	cp $(DIRS)/bin/* $(BIN)
 
 # Optional: Define a clean target to clean all directories
 .PHONY: clean
