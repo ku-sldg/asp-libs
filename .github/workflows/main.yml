@@ -24,4 +24,6 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Test Build
-        run: make 
+        run: |
+          cd ${{ github.workspace }}
+          make 
