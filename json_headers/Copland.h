@@ -3,7 +3,6 @@
 #include "CoplandJson.h"
 
 #define DEFAULT_EV_STR_SIZE 512
-#define DEFAULT_JSON_SIZE 1024
 
 typedef struct ArgMap
 {
@@ -50,7 +49,6 @@ ASPRunRequest ASPRunRequest_from_string(const char *req)
   }
   JSON *json = build_empty_JSON();
   parse_json_string(req, &json);
-  printf("Parsed JSON\n");
   char *asp_id = get_InnerString(get_InnerJSON(json, "ASP_ID"));
 
   JSON *asp_args = get_InnerObject(get_InnerJSON(json, "ASP_ARGS"));
@@ -159,19 +157,18 @@ const char *ASPRunResponse_to_string(ASPRunResponse resp)
     cur_ev = cur_ev->next;
   }
   strcat(ev_str, "]");
-  size_t ret_val_size = DEFAULT_JSON_SIZE;
-  char *ret_val = (char *)malloc(sizeof(char) * ret_val_size);
+  // Setup the hard coded values
   const char *preamble = "{ \"TYPE\": \"RESPONSE\", \"ACTION\": \"ASP_RUN\", \"SUCCESS\": \0";
-  while (strlen(preamble) + strlen(success_str) + strlen(", \"PAYLOAD\": ") + strlen(ev_str) + 1 > DEFAULT_JSON_SIZE)
-  {
-    ret_val_size *= 2;
-    ret_val = (char *)realloc(ret_val, sizeof(char) * ret_val_size);
-  }
+  const char *payload_str = ", \"PAYLOAD\": { \"RawEv\": \0";
+  const char *postamble = "} }\0";
+  size_t ret_val_size = strlen(preamble) + strlen(success_str) + strlen(payload_str) + strlen(ev_str) + strlen(postamble);
+  char *ret_val = (char *)malloc(sizeof(char) * ret_val_size);
+  // Build the ret string
   strcat(ret_val, preamble);
   strcat(ret_val, success_str);
-  strcat(ret_val, ", \"PAYLOAD\": \0");
+  strcat(ret_val, payload_str);
   strcat(ret_val, ev_str);
-  strcat(ret_val, "}\0");
+  strcat(ret_val, postamble);
   // Returning the final string
   return ret_val;
 }
