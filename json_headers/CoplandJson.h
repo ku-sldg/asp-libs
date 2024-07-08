@@ -301,6 +301,34 @@ const char *skip_whitespace(const char *str)
 }
 
 /**
+ * Skip whitespace and commas in a string
+ * @param str The string to skip whitespace and commas in
+ * @return The position in the string after skipping whitespace and commas
+ */
+const char *skip_white_and_commas(const char *str)
+{
+  bool comma_skipped = false;
+  if (*str == ',')
+  {
+    str++;
+    comma_skipped = true;
+  }
+  // Someone could conceiably have WHITESPACE, COMMA, WHITESPACE
+  str = skip_whitespace(str);
+  if (*str == ',')
+  {
+    if (comma_skipped)
+    {
+      throw_error("Multiple commas found!");
+      return NULL;
+    }
+    str++;
+  }
+  str = skip_whitespace(str);
+  return str;
+}
+
+/**
  * Parse a string from the JSON string
  * @return The position in the string after the string value
  * @throws If the string is not a quoted string
@@ -361,7 +389,7 @@ const char *parse_inner_json_string(const char *json_string, InnerJSON **out)
   else if (*json_string == '[')
   {
     // Parse JSON array
-    InnerJSON **items;
+    InnerJSON **items = (InnerJSON **)malloc(sizeof(InnerJSON *));
     size_t size = 0;
     json_string++; // Move past the opening bracket '['
     json_string = skip_whitespace(json_string);
@@ -381,7 +409,7 @@ const char *parse_inner_json_string(const char *json_string, InnerJSON **out)
       items[size] = item;
       size++;
       // Skip whitespace after the item
-      json_string = skip_whitespace(json_string);
+      json_string = skip_white_and_commas(json_string);
     }
     if (*json_string == ']')
     {
@@ -480,18 +508,8 @@ const char *parse_json_string(const char *json_string, JSON **out)
         throw_error("Error parsing top level map/JSON object element!");
       }
       add_entry_to_json_object(*out, key, item);
-      if (*json_string == ',')
-      {
-        json_string++; // Move past the comma ','
-      }
-      // Skip whitespace after the item
-      json_string = skip_whitespace(json_string);
-      // Someone silly might put the comma after whitespace so we have to be wary
-      if (*json_string == ',')
-      {
-        json_string++; // Move past the comma ','
-      }
-      json_string = skip_whitespace(json_string);
+      // Skip whitespace and commas
+      json_string = skip_white_and_commas(json_string);
     }
     if (*json_string == '}')
     {
