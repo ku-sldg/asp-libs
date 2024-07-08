@@ -1,5 +1,7 @@
 # List of directories
-DIRS := test_asp attest_id certificate_id appraise_id
+
+# Find all directories that have a Makefile in them
+DIRS := $(shell find . -mindepth 2 -maxdepth 2 -type f -name Makefile | xargs -n 1 dirname)
 
 BIN := ./bin
 
