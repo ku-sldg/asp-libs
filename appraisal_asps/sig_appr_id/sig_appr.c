@@ -5,37 +5,26 @@
 
 int main(int argc, char **argv)
 {
-  // Initialize OpenSSL
-  initialize_openssl();
-
-  // Load private key
-  EVP_PKEY *pkey = load_public_key("../common_files/unsecure_pub_key_dont_use.pem");
-  if (!pkey)
-  {
-    fprintf(stderr, "Error loading public key\n");
-    return 1;
-  }
-
   ASPRunRequest req = ASPRunRequest_from_string(argv[1]);
   // Data to be checked for a good signature
-  char *inp_ev = req.raw_ev->ev_val;
+  RawEv_T *ev_head = req.raw_ev;
+  if (ev_head == NULL || ev_head->next == NULL)
+  {
+    fprintf(stderr, "Error: no evidence (or insufficient evidence) provided\n");
+    return 1;
+  }
+  char *signing_ev = concat_all_RawEv(ev_head->next);
+  char *sig = ev_head->ev_val;
 
   // Check the signature
-  unsigned char *sig_check = NULL;
-  unsigned int sig_len;
-  SHA256_digest_sign(inp_ev, 
+  bool verified = SHA256_digest_verify_with_key(signing_ev, sig, ("../common_files/unsecure_pub_key_dont_use.pem"));
 
   // Sign the input evidence
-  char *resp_ev = (char *)malloc(sizeof(char) * sig_len);
+
+  const char *resp_ev = (verified ? "true\0" : "false\0");
 
   ASPRunResponse resp = {true, build_RawEv_T(resp_ev)};
   printf("%s", ASPRunResponse_to_string(resp));
-
-  // Cleanup
-  OPENSSL_free(sig);
-  EVP_PKEY_free(pkey);
-  EVP_cleanup();
-  ERR_free_strings();
 
   return 0;
 }

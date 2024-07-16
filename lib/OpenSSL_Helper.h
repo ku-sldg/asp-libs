@@ -124,3 +124,53 @@ unsigned char *SHA256_digest_sign_with_key(const char *msg, const char *key_file
   EVP_PKEY_free(pkey);
   return sig;
 }
+
+bool SHA256_digest_verify(const char *msg, const char *given_sig, EVP_PKEY *key)
+{
+  bool verified = false;
+  if (msg == NULL || given_sig == NULL || key == NULL)
+  {
+    goto cleanup;
+  }
+  EVP_MD_CTX *mdCtx = EVP_MD_CTX_new();
+  if (mdCtx == NULL)
+  {
+    printf("EVP_MD_CTX_new failed, error 0x%lx\n", ERR_get_error());
+    goto cleanup;
+  }
+  if (EVP_DigestVerifyInit(mdCtx, NULL, EVP_sha512(), NULL, key) != 1)
+  {
+    printf("EVP_DigestVerifyInit failed, error 0x%lx\n", ERR_get_error());
+    goto cleanup;
+  }
+  if (EVP_DigestVerifyUpdate(mdCtx, msg, strlen(msg)) != 1)
+  {
+    printf("EVP_DigestVerifyUpdate failed, error 0x%lx\n", ERR_get_error());
+    goto cleanup;
+  }
+  uint32_t const rc = EVP_DigestVerifyFinal(mdCtx, given_sig, strlen(given_sig));
+  verified = rc == 1;
+
+cleanup:
+  // Cleanup
+  if (mdCtx != NULL)
+  {
+    EVP_MD_CTX_free(mdCtx);
+    mdCtx = NULL;
+  }
+  return verified;
+}
+
+bool SHA256_digest_verify_with_key(const char *msg, const char *given_sig, const char *key_file_path)
+{
+  EVP_PKEY *key = load_public_key(key_file_path);
+  if (!key)
+  {
+    fprintf(stderr, "Error loading public key\n");
+    return false;
+  }
+
+  bool verified = SHA256_digest_verify(msg, given_sig, key);
+  EVP_PKEY_free(key);
+  return verified;
+}
