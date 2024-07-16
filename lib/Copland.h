@@ -11,20 +11,6 @@ typedef struct ArgMap
   struct ArgMap *next;
 } ArgMap;
 
-char *get_ArgMap_value(ArgMap *arg_map, const char *key)
-{
-  ArgMap *cur_arg = arg_map;
-  while (cur_arg != NULL)
-  {
-    if (strcmp(cur_arg->key, key) == 0)
-    {
-      return cur_arg->value;
-    }
-    cur_arg = cur_arg->next;
-  }
-  return NULL;
-}
-
 typedef struct RawEv_T
 {
   char *ev_val;
@@ -135,20 +121,6 @@ ASPRunResponse build_ASPRunResponse(bool success, RawEv_T *raw_ev)
 {
   ASPRunResponse resp = {success, raw_ev};
   return resp;
-}
-
-const char *ErrorResponse(const char *resp_message)
-{
-  const char *preamble = "{ \"TYPE\": \"RESPONSE\", \"ACTION\": \"ASP_RUN\", \"SUCCESS\": false, \"PAYLOAD\": \"\0";
-  const char *postamble = "\" }\0";
-  size_t ret_val_size = strlen(preamble) + strlen(resp_message) + strlen(postamble);
-  char *ret_val = (char *)malloc(sizeof(char) * ret_val_size);
-  // Build the ret string
-  strcat(ret_val, preamble);
-  strcat(ret_val, resp_message);
-  strcat(ret_val, postamble);
-  // Returning the final string
-  return ret_val;
 }
 
 const char *ASPRunResponse_to_string(ASPRunResponse resp)

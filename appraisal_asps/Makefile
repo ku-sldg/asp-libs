@@ -12,10 +12,7 @@ all: $(DIRS)
 
 $(DIRS):
 	mkdir -p $(BIN)
-	for dir in $(DIRS); do \
-		$(MAKE) -C $$dir; \
-		cp $$dir/bin/* $(BIN); \
-	done
+	$(MAKE) -C $@
 
 # Optional: Define a clean target to clean all directories
 .PHONY: clean
