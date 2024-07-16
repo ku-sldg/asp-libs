@@ -1,3 +1,4 @@
+#define COPLAND_JSON_HEADER
 #include <stdlib.h>
 #include <stdbool.h>
 #include <stddef.h>

@@ -1,6 +1,9 @@
+#define COPLAND_HEADER
 #include <string.h>
 #include <stdbool.h>
+#ifndef COPLAND_JSON_HEADER
 #include "CoplandJson.h"
+#endif
 
 #define DEFAULT_EV_STR_SIZE 512
 
@@ -16,6 +19,20 @@ typedef struct RawEv_T
   char *ev_val;
   struct RawEv_T *next;
 } RawEv_T;
+
+char *concat_all_RawEv(RawEv_T *ev)
+{
+  if (ev == NULL)
+  {
+    return "";
+  }
+  char *cur_val = ev->ev_val;
+  char *rec_val = concat_all_RawEv(ev->next);
+  char *ret_val = (char *)malloc(sizeof(char) * (strlen(cur_val) + strlen(rec_val) + 1));
+  strcat(ret_val, cur_val);
+  strcat(ret_val, rec_val);
+  return ret_val;
+}
 
 RawEv_T *build_RawEv_T(char *ev_val)
 {

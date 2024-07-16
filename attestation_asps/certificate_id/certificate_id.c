@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "../../json_headers/Copland.h"
+#include "../../lib/Copland.h"
 
 int main(int argc, char **argv)
 {
