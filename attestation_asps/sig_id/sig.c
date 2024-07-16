@@ -5,9 +5,6 @@
 
 int main(int argc, char **argv)
 {
-  // Initialize OpenSSL
-  initialize_openssl();
-
   ASPRunRequest req = ASPRunRequest_from_string(argv[1]);
   // Data to be signed
   char *signing_ev = concat_all_RawEv(req.raw_ev);
@@ -17,7 +14,7 @@ int main(int argc, char **argv)
 
   // Sign the input evidence
   char *resp_ev_val = (char *)malloc(sizeof(char) * strlen(sig));
-  RawEv_T *resp_ev = build_RawEv_T(resp_ev);
+  RawEv_T *resp_ev = build_RawEv_T(resp_ev_val);
   // We are extending the previous evidence with the sign
   resp_ev->next = req.raw_ev;
 

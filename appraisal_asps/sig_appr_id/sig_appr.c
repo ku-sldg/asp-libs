@@ -21,7 +21,7 @@ int main(int argc, char **argv)
 
   // Sign the input evidence
 
-  const char *resp_ev = (verified ? "true\0" : "false\0");
+  char *resp_ev = (verified ? "true\0" : "false\0");
 
   ASPRunResponse resp = {true, build_RawEv_T(resp_ev)};
   printf("%s", ASPRunResponse_to_string(resp));

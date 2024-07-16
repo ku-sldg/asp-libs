@@ -84,7 +84,7 @@ unsigned char *SHA256_digest_sign(const char *msg, EVP_PKEY *pkey)
     goto cleanup;
   }
   sig = (uint8_t *)OPENSSL_malloc(*sig_len);
-  if (*sig == NULL)
+  if (sig == NULL)
   {
     printf("OPENSSL_malloc failed, error 0x%lx\n", ERR_get_error());
     goto cleanup;
