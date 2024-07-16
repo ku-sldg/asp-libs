@@ -75,7 +75,6 @@ unsigned char *SHA256_digest_sign(const char *msg, EVP_PKEY *pkey)
     printf("EVP_DigestSignUpdate failed, error 0x%lx\n", ERR_get_error());
     goto cleanup;
   }
-  sig_len = (size_t *)malloc(sizeof(size_t));
   // Call EVP_DigestSignFinal with null signature in order to get signature
   // length
   if (EVP_DigestSignFinal(mdCtx, NULL, sig_len) != 1 || *sig_len == 0)
@@ -83,7 +82,7 @@ unsigned char *SHA256_digest_sign(const char *msg, EVP_PKEY *pkey)
     printf("EVP_DigestSignFinal failed (1), error 0x%lx\n", ERR_get_error());
     goto cleanup;
   }
-  sig = (uint8_t *)OPENSSL_malloc(*sig_len);
+  sig = (unsigned char *)OPENSSL_malloc(*sig_len);
   if (sig == NULL)
   {
     printf("OPENSSL_malloc failed, error 0x%lx\n", ERR_get_error());
@@ -99,9 +98,13 @@ unsigned char *SHA256_digest_sign(const char *msg, EVP_PKEY *pkey)
 
 cleanup:
   // Cleanup
-  if (result != true && sig != NULL)
+  if (result != true)
   {
-    OPENSSL_free(sig);
+    if (sig != NULL)
+    {
+      OPENSSL_free(sig);
+    }
+    throw_error("Error signing the digest");
   }
   if (mdCtx != NULL)
   {
@@ -121,11 +124,15 @@ unsigned char *SHA256_digest_sign_with_key(const char *msg, const char *key_file
   }
 
   unsigned char *sig = SHA256_digest_sign(msg, pkey);
+  if (sig == NULL)
+  {
+    fprintf(stderr, "Error signing the digest\n");
+  }
   EVP_PKEY_free(pkey);
   return sig;
 }
 
-bool SHA256_digest_verify(const char *msg, const char *given_sig, EVP_PKEY *key)
+bool SHA256_digest_verify(const char *msg, const unsigned char *given_sig, EVP_PKEY *key)
 {
   bool verified = false;
   if (msg == NULL || given_sig == NULL || key == NULL)

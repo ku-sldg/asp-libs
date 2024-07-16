@@ -48,7 +48,7 @@
       // "program": "${workspaceRoot}/src/converter",
       "preLaunchTask": "C/C++: g++ build active file",
       "args": [
-        "\"{\\\"TYPE\\\":\\\"REQUEST\\\",\\\"ACTION\\\":\\\"ASP_RUN\\\",\\\"ASP_ID\\\":\\\"attest_id\\\",\\\"ASP_ARGS\\\":{},\\\"TARG_PLC\\\":\\\"P1\\\",\\\"TARG\\\":\\\"sys_targ\\\",\\\"RAWEV\\\":{\\\"RawEv\\\":[]}}\"",
+        "\"{\\\"TYPE\\\":\\\"REQUEST\\\",\\\"ACTION\\\":\\\"ASP_RUN\\\",\\\"ASP_ID\\\":\\\"attest_id\\\",\\\"ASP_ARGS\\\":{},\\\"TARG_PLC\\\":\\\"P1\\\",\\\"TARG\\\":\\\"sys_targ\\\",\\\"RAWEV\\\":{\\\"RawEv\\\":[\"attesting()\"]}}\"",
         // "\"{\\\"ASP_ID\\\": \\\"appraise_id\\\",\\\"ASP_ARGS\\\":{},\\\"TARG_PLC\\\":\\\"P2\\\",\\\"TARG\\\":\\\"sys_targ\\\", \\\"RAWEV\\\": { \\\"RawEv\\\": [\\\"61656768\\\",\\\"6163\\\",\\\"65656565\\\"] } }\""
       ],
       "stopAtEntry": false,

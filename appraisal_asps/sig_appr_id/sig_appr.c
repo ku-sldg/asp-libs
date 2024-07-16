@@ -17,7 +17,7 @@ int main(int argc, char **argv)
   char *sig = ev_head->ev_val;
 
   // Check the signature
-  bool verified = SHA256_digest_verify_with_key(signing_ev, sig, ("../common_files/unsecure_pub_key_dont_use.pem"));
+  bool verified = SHA256_digest_verify_with_key(signing_ev, sig, ("./common_files/unsecure_pub_key_dont_use.pem"));
 
   // Sign the input evidence
 

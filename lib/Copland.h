@@ -24,11 +24,17 @@ char *concat_all_RawEv(RawEv_T *ev)
 {
   if (ev == NULL)
   {
-    return "";
+    return NULL;
   }
   char *cur_val = ev->ev_val;
   char *rec_val = concat_all_RawEv(ev->next);
-  char *ret_val = (char *)malloc(sizeof(char) * (strlen(cur_val) + strlen(rec_val) + 1));
+  if (rec_val == NULL)
+  {
+    return cur_val;
+  }
+  size_t ret_val_size = strlen(cur_val) + strlen(rec_val) + 1;
+  char *ret_val = (char *)malloc(sizeof(char) * ret_val_size);
+  memset(ret_val, 0, ret_val_size);
   strcat(ret_val, cur_val);
   strcat(ret_val, rec_val);
   return ret_val;
@@ -147,45 +153,48 @@ const char *ASPRunResponse_to_string(ASPRunResponse resp)
   // Creating encoding for RawEv
   size_t ev_str_size = DEFAULT_EV_STR_SIZE;
   char *ev_str = (char *)malloc(sizeof(char) * ev_str_size);
-  strcat(ev_str, "[\0");
-  size_t used_ev_str_size = 2;
+  sprintf(ev_str, "[");
+  size_t used_ev_str_size = 1;
   RawEv_T *cur_ev = resp.raw_ev;
   while (cur_ev != NULL)
   {
     char *cur_val = cur_ev->ev_val;
-    size_t cur_val_size = strlen(cur_val) + 6; // Decided to go with 6 for the 2 quotes and 1 comma, 1 space, and possible 1 ending bracket + null terminator
+    size_t cur_entry_size = strlen(cur_val) + 2; // cur_val + 2 quotes
     RawEv_T *next_val = cur_ev->next;
     if (next_val != NULL)
     {
-      cur_val_size += 2;
+      // Need two extra for the comma and space
+      cur_entry_size += 2;
     }
-    if (used_ev_str_size + cur_val_size > ev_str_size)
+    if (used_ev_str_size + cur_entry_size > ev_str_size)
     {
       ev_str_size *= 2;
       ev_str = (char *)realloc(ev_str, sizeof(char) * ev_str_size);
+      // memset(ev_str + used_ev_str_size, 0, ev_str_size - used_ev_str_size);
     }
-    strcat(ev_str, "\"");
-    strcat(ev_str, cur_val);
-    strcat(ev_str, "\"");
+    sprintf(ev_str + used_ev_str_size, "\"%s\"", cur_val);
+    used_ev_str_size += cur_entry_size;
     if (next_val != NULL)
     {
-      strcat(ev_str, ", ");
+      sprintf(ev_str + used_ev_str_size, ", ");
+      used_ev_str_size += 2;
     }
     cur_ev = cur_ev->next;
   }
-  strcat(ev_str, "]");
+  sprintf(ev_str + used_ev_str_size, "]");
   // Setup the hard coded values
-  const char *preamble = "{ \"TYPE\": \"RESPONSE\", \"ACTION\": \"ASP_RUN\", \"SUCCESS\": \0";
-  const char *payload_str = ", \"PAYLOAD\": { \"RawEv\": \0";
-  const char *postamble = "} }\0";
-  size_t ret_val_size = strlen(preamble) + strlen(success_str) + strlen(payload_str) + strlen(ev_str) + strlen(postamble);
+  const char *preamble = "{ \"TYPE\": \"RESPONSE\", \"ACTION\": \"ASP_RUN\", \"SUCCESS\": ";
+  const char *payload_str = ", \"PAYLOAD\": { \"RawEv\": ";
+  const char *postamble = "} }";
+  size_t ret_val_size = strlen(preamble) + strlen(success_str) + strlen(payload_str) + strlen(ev_str) + strlen(postamble) + 1;
   char *ret_val = (char *)malloc(sizeof(char) * ret_val_size);
-  // Build the ret string
-  strcat(ret_val, preamble);
-  strcat(ret_val, success_str);
-  strcat(ret_val, payload_str);
-  strcat(ret_val, ev_str);
-  strcat(ret_val, postamble);
+  sprintf(ret_val, "%s%s%s%s%s", preamble, success_str, payload_str, ev_str, postamble);
+  // // Build the ret string
+  // strcat(ret_val, preamble);
+  // strcat(ret_val, success_str);
+  // strcat(ret_val, payload_str);
+  // strcat(ret_val, ev_str);
+  // strcat(ret_val, postamble);
   // Returning the final string
   return ret_val;
 }
