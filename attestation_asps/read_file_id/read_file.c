@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdbool.h>
-#include "../../json_headers/Copland.h"
+#include "../../lib/Copland.h"
 
 #define INITIAL_FILE_SIZE 512
 
