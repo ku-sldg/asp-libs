@@ -15,8 +15,10 @@
 unsigned char *SHA256_hash_full_ev(RawEv_T *raw_ev)
 {
   char *msg = concat_all_RawEv(raw_ev);
-  char *resp_ev = (char *)malloc(sizeof(char) * SHA256_DIGEST_LENGTH);
-  return SHA256((const unsigned char *)msg, strlen(msg), (unsigned char *)resp_ev);
+  char *resp_ev = (char *)malloc(sizeof(char) * (SHA256_DIGEST_LENGTH + 1));
+  SHA256((const unsigned char *)msg, strlen(msg), (unsigned char *)resp_ev);
+  resp_ev[SHA256_DIGEST_LENGTH] = '\0';
+  return resp_ev;
 }
 
 // Load a private key from a PEM file

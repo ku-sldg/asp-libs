@@ -14,11 +14,34 @@ typedef struct ArgMap
   struct ArgMap *next;
 } ArgMap;
 
+void free_ArgMap(ArgMap *arg)
+{
+  if (arg == NULL)
+  {
+    return;
+  }
+  free_ArgMap(arg->next);
+  free(arg->key);
+  free(arg->value);
+  free(arg);
+}
+
 typedef struct RawEv_T
 {
   char *ev_val;
   struct RawEv_T *next;
 } RawEv_T;
+
+void free_RawEv_T(RawEv_T *ev)
+{
+  if (ev == NULL)
+  {
+    return;
+  }
+  free_RawEv_T(ev->next);
+  free(ev->ev_val);
+  free(ev);
+}
 
 char *concat_all_RawEv(RawEv_T *ev)
 {
@@ -57,6 +80,15 @@ typedef struct
   RawEv_T *raw_ev;
 } ASPRunRequest;
 
+void free_ASPRunRequest(ASPRunRequest *req)
+{
+  free(req->asp_id);
+  free(req->targ_plc);
+  free(req->targ);
+  free_RawEv_T(req->raw_ev);
+  free_ArgMap(req->asp_args);
+}
+
 ASPRunRequest build_ASPRunRequest(char *asp_id, ArgMap *asp_args, char *targ_plc, char *targ, RawEv_T *raw_ev)
 {
   ASPRunRequest req = {asp_id, asp_args, targ_plc, targ, raw_ev};
@@ -72,7 +104,7 @@ ASPRunRequest ASPRunRequest_from_string(const char *req)
   }
   JSON *json = build_empty_JSON();
   parse_json_string(req, &json);
-  char *asp_id = get_InnerString(get_InnerJSON(json, "ASP_ID"));
+  char *asp_id = strdup(get_InnerString(get_InnerJSON(json, "ASP_ID")));
 
   JSON *asp_args = get_InnerObject(get_InnerJSON(json, "ASP_ARGS"));
   ArgMap *top_arg = NULL;
@@ -83,8 +115,8 @@ ASPRunRequest ASPRunRequest_from_string(const char *req)
     char *key = cur_entry->key;
     char *value = get_InnerString(cur_entry->value);
     ArgMap *new_arg = (ArgMap *)malloc(sizeof(ArgMap));
-    new_arg->key = key;
-    new_arg->value = value;
+    new_arg->key = strdup(key);
+    new_arg->value = strdup(value);
     new_arg->next = NULL;
     if (top_arg == NULL)
     {
@@ -103,8 +135,8 @@ ASPRunRequest ASPRunRequest_from_string(const char *req)
     cur_entry = cur_entry->next;
   }
 
-  char *targ_plc = get_InnerString(get_InnerJSON(json, "TARG_PLC"));
-  char *targ = get_InnerString(get_InnerJSON(json, "TARG"));
+  char *targ_plc = strdup(get_InnerString(get_InnerJSON(json, "TARG_PLC")));
+  char *targ = strdup(get_InnerString(get_InnerJSON(json, "TARG")));
 
   JsonArray rawev = get_InnerArray(get_InnerJSON(get_InnerObject(get_InnerJSON(json, "RAWEV")), "RawEv"));
   RawEv_T *top_raw_ev = NULL;
@@ -114,7 +146,7 @@ ASPRunRequest ASPRunRequest_from_string(const char *req)
     InnerJSON *curev_json = rawev.items[i];
     char *ev_val = get_InnerString(curev_json);
     RawEv_T *new_ev = (RawEv_T *)malloc(sizeof(RawEv_T));
-    new_ev->ev_val = ev_val;
+    new_ev->ev_val = strdup(ev_val);
     new_ev->next = NULL;
     if (i == 0)
     {
@@ -129,6 +161,7 @@ ASPRunRequest ASPRunRequest_from_string(const char *req)
       cur_ev = new_ev;
     }
   }
+  free_JSON(json);
 
   // This one will be a lot more complex I think
   return build_ASPRunRequest(asp_id, top_arg, targ_plc, targ, top_raw_ev);
@@ -140,13 +173,18 @@ typedef struct
   RawEv_T *raw_ev;
 } ASPRunResponse;
 
+void free_ASPRunResponse(ASPRunResponse *resp)
+{
+  free_RawEv_T(resp->raw_ev);
+}
+
 ASPRunResponse build_ASPRunResponse(bool success, RawEv_T *raw_ev)
 {
   ASPRunResponse resp = {success, raw_ev};
   return resp;
 }
 
-const char *ASPRunResponse_to_string(ASPRunResponse resp)
+char *ASPRunResponse_to_string(ASPRunResponse resp)
 {
   // Creating encoding for success
   const char *success_str = (resp.success ? "true\0" : "false\0");
@@ -189,12 +227,8 @@ const char *ASPRunResponse_to_string(ASPRunResponse resp)
   size_t ret_val_size = strlen(preamble) + strlen(success_str) + strlen(payload_str) + strlen(ev_str) + strlen(postamble) + 1;
   char *ret_val = (char *)malloc(sizeof(char) * ret_val_size);
   sprintf(ret_val, "%s%s%s%s%s", preamble, success_str, payload_str, ev_str, postamble);
-  // // Build the ret string
-  // strcat(ret_val, preamble);
-  // strcat(ret_val, success_str);
-  // strcat(ret_val, payload_str);
-  // strcat(ret_val, ev_str);
-  // strcat(ret_val, postamble);
+  // Cleanup
+  free(ev_str);
   // Returning the final string
   return ret_val;
 }

@@ -94,7 +94,7 @@ JSON *build_empty_JSON()
  * @param key The key to get the InnerJSON for
  * @return The InnerJSON object for the key
  */
-InnerJSON *get_InnerJSON(JSON *json, const char *key)
+InnerJSON *get_InnerJSON(JSON *json, char *key)
 {
   MapEntry *entry = json->object.entries;
   while (entry != NULL)
@@ -178,7 +178,6 @@ InnerJSON *InnerJSON_Array(InnerJSON **items, size_t size)
 {
   InnerJSON *innerjson = (InnerJSON *)malloc(sizeof(InnerJSON));
   innerjson->type = INJSON_ARRAY;
-  innerjson->data.array.items = (InnerJSON **)malloc(size * sizeof(InnerJSON *));
   innerjson->data.array.items = items;
   innerjson->data.array.size = size;
   return innerjson;
@@ -188,11 +187,11 @@ InnerJSON *InnerJSON_Array(InnerJSON **items, size_t size)
  * Create a new InnerJSON object that is a string
  * @return The newly created InnerJSON object
  */
-InnerJSON *InnerJSON_String(const char *string)
+InnerJSON *InnerJSON_String(char *string)
 {
   InnerJSON *innerjson = (InnerJSON *)malloc(sizeof(InnerJSON));
   innerjson->type = INJSON_STRING;
-  innerjson->data.string = strdup(string);
+  innerjson->data.string = string;
   return innerjson;
 }
 
@@ -262,10 +261,10 @@ void free_InnerJSON(InnerJSON *innerjson)
 }
 
 // Add an entry to a JSON object
-void add_entry_to_json_object(JSON *json, const char *key, InnerJSON *value)
+void add_entry_to_json_object(JSON *json, char *key, InnerJSON *value)
 {
   MapEntry *entry = (MapEntry *)malloc(sizeof(MapEntry));
-  entry->key = strdup(key);
+  entry->key = key;
   entry->value = value;
   entry->next = json->object.entries;
   json->object.entries = entry;
@@ -397,7 +396,7 @@ const char *parse_inner_json_string(const char *json_string, InnerJSON **out)
     while (*json_string && *json_string != ']')
     {
       // Get the next item in the array
-      InnerJSON *item = build_empty_InnerJSON();
+      InnerJSON *item = NULL;
       json_string = parse_inner_json_string(json_string, &item);
       if (item == NULL)
       {
@@ -431,6 +430,7 @@ const char *parse_inner_json_string(const char *json_string, InnerJSON **out)
     if (json_string == NULL)
     {
       // Error parsing string
+      free(ret_str);
       free_InnerJSON(*out);
       throw_error("Error parsing JSON string value!");
     }
@@ -500,7 +500,7 @@ const char *parse_json_string(const char *json_string, JSON **out)
       // Advanced past the colon ':'
       json_string++;
       // Get the next entry
-      InnerJSON *item = build_empty_InnerJSON();
+      InnerJSON *item = NULL;
       json_string = parse_inner_json_string(json_string, &item);
       if (item == NULL)
       {
@@ -519,11 +519,13 @@ const char *parse_json_string(const char *json_string, JSON **out)
     else
     {
       // How did we end without a closing brace!?
+      free_JSON(*out);
       throw_error("Invalid JSON object!");
     }
   }
   else
   {
+    free(*out);
     throw_error("Only JSON Objects are supported at the top level!");
   }
   return json_string;
