@@ -1,6 +1,9 @@
+#define COPLAND_HEADER
 #include <string.h>
 #include <stdbool.h>
+#ifndef COPLAND_JSON_HEADER
 #include "CoplandJson.h"
+#endif
 
 #define DEFAULT_EV_STR_SIZE 512
 
@@ -11,11 +14,68 @@ typedef struct ArgMap
   struct ArgMap *next;
 } ArgMap;
 
+char *get_ArgMap_value(ArgMap *arg_map, const char *key)
+{
+  ArgMap *cur_arg = arg_map;
+  while (cur_arg != NULL)
+  {
+    if (strcmp(cur_arg->key, key) == 0)
+    {
+      return cur_arg->value;
+    }
+    cur_arg = cur_arg->next;
+  }
+  return NULL;
+}
+
+void free_ArgMap(ArgMap *arg)
+{
+  if (arg == NULL)
+  {
+    return;
+  }
+  free_ArgMap(arg->next);
+  free(arg->key);
+  free(arg->value);
+  free(arg);
+}
+
 typedef struct RawEv_T
 {
   char *ev_val;
   struct RawEv_T *next;
 } RawEv_T;
+
+void free_RawEv_T(RawEv_T *ev)
+{
+  if (ev == NULL)
+  {
+    return;
+  }
+  free_RawEv_T(ev->next);
+  free(ev->ev_val);
+  free(ev);
+}
+
+char *concat_all_RawEv(RawEv_T *ev)
+{
+  if (ev == NULL)
+  {
+    return NULL;
+  }
+  char *cur_val = ev->ev_val;
+  char *rec_val = concat_all_RawEv(ev->next);
+  if (rec_val == NULL)
+  {
+    return cur_val;
+  }
+  size_t ret_val_size = strlen(cur_val) + strlen(rec_val) + 1;
+  char *ret_val = (char *)malloc(sizeof(char) * ret_val_size);
+  memset(ret_val, 0, ret_val_size);
+  strcat(ret_val, cur_val);
+  strcat(ret_val, rec_val);
+  return ret_val;
+}
 
 RawEv_T *build_RawEv_T(char *ev_val)
 {
@@ -34,6 +94,15 @@ typedef struct
   RawEv_T *raw_ev;
 } ASPRunRequest;
 
+void free_ASPRunRequest(ASPRunRequest *req)
+{
+  free(req->asp_id);
+  free(req->targ_plc);
+  free(req->targ);
+  free_RawEv_T(req->raw_ev);
+  free_ArgMap(req->asp_args);
+}
+
 ASPRunRequest build_ASPRunRequest(char *asp_id, ArgMap *asp_args, char *targ_plc, char *targ, RawEv_T *raw_ev)
 {
   ASPRunRequest req = {asp_id, asp_args, targ_plc, targ, raw_ev};
@@ -49,7 +118,7 @@ ASPRunRequest ASPRunRequest_from_string(const char *req)
   }
   JSON *json = build_empty_JSON();
   parse_json_string(req, &json);
-  char *asp_id = get_InnerString(get_InnerJSON(json, "ASP_ID"));
+  char *asp_id = strdup(get_InnerString(get_InnerJSON(json, "ASP_ID")));
 
   JSON *asp_args = get_InnerObject(get_InnerJSON(json, "ASP_ARGS"));
   ArgMap *top_arg = NULL;
@@ -60,8 +129,8 @@ ASPRunRequest ASPRunRequest_from_string(const char *req)
     char *key = cur_entry->key;
     char *value = get_InnerString(cur_entry->value);
     ArgMap *new_arg = (ArgMap *)malloc(sizeof(ArgMap));
-    new_arg->key = key;
-    new_arg->value = value;
+    new_arg->key = strdup(key);
+    new_arg->value = strdup(value);
     new_arg->next = NULL;
     if (top_arg == NULL)
     {
@@ -80,8 +149,8 @@ ASPRunRequest ASPRunRequest_from_string(const char *req)
     cur_entry = cur_entry->next;
   }
 
-  char *targ_plc = get_InnerString(get_InnerJSON(json, "TARG_PLC"));
-  char *targ = get_InnerString(get_InnerJSON(json, "TARG"));
+  char *targ_plc = strdup(get_InnerString(get_InnerJSON(json, "TARG_PLC")));
+  char *targ = strdup(get_InnerString(get_InnerJSON(json, "TARG")));
 
   JsonArray rawev = get_InnerArray(get_InnerJSON(get_InnerObject(get_InnerJSON(json, "RAWEV")), "RawEv"));
   RawEv_T *top_raw_ev = NULL;
@@ -91,7 +160,7 @@ ASPRunRequest ASPRunRequest_from_string(const char *req)
     InnerJSON *curev_json = rawev.items[i];
     char *ev_val = get_InnerString(curev_json);
     RawEv_T *new_ev = (RawEv_T *)malloc(sizeof(RawEv_T));
-    new_ev->ev_val = ev_val;
+    new_ev->ev_val = strdup(ev_val);
     new_ev->next = NULL;
     if (i == 0)
     {
@@ -106,6 +175,7 @@ ASPRunRequest ASPRunRequest_from_string(const char *req)
       cur_ev = new_ev;
     }
   }
+  free_JSON(json);
 
   // This one will be a lot more complex I think
   return build_ASPRunRequest(asp_id, top_arg, targ_plc, targ, top_raw_ev);
@@ -117,58 +187,76 @@ typedef struct
   RawEv_T *raw_ev;
 } ASPRunResponse;
 
+void free_ASPRunResponse(ASPRunResponse *resp)
+{
+  free_RawEv_T(resp->raw_ev);
+}
+
 ASPRunResponse build_ASPRunResponse(bool success, RawEv_T *raw_ev)
 {
   ASPRunResponse resp = {success, raw_ev};
   return resp;
 }
 
-const char *ASPRunResponse_to_string(ASPRunResponse resp)
+const char *ErrorResponse(const char *resp_message)
+{
+  const char *preamble = "{ \"TYPE\": \"RESPONSE\", \"ACTION\": \"ASP_RUN\", \"SUCCESS\": false, \"PAYLOAD\": \"\0";
+  const char *postamble = "\" }\0";
+  size_t ret_val_size = strlen(preamble) + strlen(resp_message) + strlen(postamble);
+  char *ret_val = (char *)malloc(sizeof(char) * ret_val_size);
+  // Build the ret string
+  strcat(ret_val, preamble);
+  strcat(ret_val, resp_message);
+  strcat(ret_val, postamble);
+  // Returning the final string
+  return ret_val;
+}
+
+char *ASPRunResponse_to_string(ASPRunResponse resp)
 {
   // Creating encoding for success
   const char *success_str = (resp.success ? "true\0" : "false\0");
   // Creating encoding for RawEv
   size_t ev_str_size = DEFAULT_EV_STR_SIZE;
   char *ev_str = (char *)malloc(sizeof(char) * ev_str_size);
-  strcat(ev_str, "[\0");
-  size_t used_ev_str_size = 2;
+  sprintf(ev_str, "[");
+  size_t used_ev_str_size = 1;
   RawEv_T *cur_ev = resp.raw_ev;
   while (cur_ev != NULL)
   {
     char *cur_val = cur_ev->ev_val;
-    size_t cur_val_size = strlen(cur_val) + 6; // Decided to go with 6 for the 2 quotes and 1 comma, 1 space, and possible 1 ending bracket + null terminator
+    size_t cur_entry_size = strlen(cur_val) + 2; // cur_val + 2 quotes
     RawEv_T *next_val = cur_ev->next;
     if (next_val != NULL)
     {
-      cur_val_size += 2;
+      // Need two extra for the comma and space
+      cur_entry_size += 2;
     }
-    if (used_ev_str_size + cur_val_size > ev_str_size)
+    if (used_ev_str_size + cur_entry_size > ev_str_size)
     {
       ev_str_size *= 2;
       ev_str = (char *)realloc(ev_str, sizeof(char) * ev_str_size);
+      // memset(ev_str + used_ev_str_size, 0, ev_str_size - used_ev_str_size);
     }
-    strcat(ev_str, "\"");
-    strcat(ev_str, cur_val);
-    strcat(ev_str, "\"");
+    sprintf(ev_str + used_ev_str_size, "\"%s\"", cur_val);
+    used_ev_str_size += cur_entry_size;
     if (next_val != NULL)
     {
-      strcat(ev_str, ", ");
+      sprintf(ev_str + used_ev_str_size, ", ");
+      used_ev_str_size += 2;
     }
     cur_ev = cur_ev->next;
   }
-  strcat(ev_str, "]");
+  sprintf(ev_str + used_ev_str_size, "]");
   // Setup the hard coded values
-  const char *preamble = "{ \"TYPE\": \"RESPONSE\", \"ACTION\": \"ASP_RUN\", \"SUCCESS\": \0";
-  const char *payload_str = ", \"PAYLOAD\": { \"RawEv\": \0";
-  const char *postamble = "} }\0";
-  size_t ret_val_size = strlen(preamble) + strlen(success_str) + strlen(payload_str) + strlen(ev_str) + strlen(postamble);
+  const char *preamble = "{ \"TYPE\": \"RESPONSE\", \"ACTION\": \"ASP_RUN\", \"SUCCESS\": ";
+  const char *payload_str = ", \"PAYLOAD\": { \"RawEv\": ";
+  const char *postamble = "} }";
+  size_t ret_val_size = strlen(preamble) + strlen(success_str) + strlen(payload_str) + strlen(ev_str) + strlen(postamble) + 1;
   char *ret_val = (char *)malloc(sizeof(char) * ret_val_size);
-  // Build the ret string
-  strcat(ret_val, preamble);
-  strcat(ret_val, success_str);
-  strcat(ret_val, payload_str);
-  strcat(ret_val, ev_str);
-  strcat(ret_val, postamble);
+  sprintf(ret_val, "%s%s%s%s%s", preamble, success_str, payload_str, ev_str, postamble);
+  // Cleanup
+  free(ev_str);
   // Returning the final string
   return ret_val;
 }
