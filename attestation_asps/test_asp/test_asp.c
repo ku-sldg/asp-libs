@@ -1,10 +1,13 @@
 #include <stdio.h>
-#include "../../json_headers/Copland.h"
+#include "../../lib/Copland.h"
 
 #define EV_RESP_SIZE 1024
 
 int main(int argc, char **argv)
 {
+  // Print a debug message to stderr
+  fprintf(stderr, "This is a debug message\n");
+  fprintf(stderr, "argv[1]: %s\n", argv[1]);
   ASPRunRequest req = ASPRunRequest_from_string(argv[1]);
   size_t resp_ev_size = EV_RESP_SIZE;
   char *resp_ev = (char *)malloc(sizeof(char) * resp_ev_size);
