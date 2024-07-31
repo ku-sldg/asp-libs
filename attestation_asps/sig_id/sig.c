@@ -1,29 +1,21 @@
-#include "../../lib/Copland.h"
-#include "../../lib/OpenSSL_Helper.h"
 #include <stdio.h>
-#include <stdlib.h>
+#include "../../lib/Copland.h"
 
 int main(int argc, char **argv)
 {
   ASPRunRequest req = ASPRunRequest_from_string(argv[1]);
-  // Data to be signed
-  char *signing_ev = concat_all_RawEv(req.raw_ev);
-
-  // Sign the digest
-  unsigned char *sig = SHA256_digest_sign_with_key(signing_ev, ("./common_files/unsecure_priv_key_dont_use.pem"));
-  if (sig == NULL)
+  const char *preamble = "SIGning(\0";
+  const char *postamble = ")\0";
+  size_t resp_ev_size = strlen(preamble) + (req.raw_ev == NULL ? 0 : strlen(req.raw_ev->ev_val)) + strlen(postamble);
+  char *resp_ev = (char *)malloc(sizeof(char) * resp_ev_size);
+  strcat(resp_ev, preamble);
+  if (req.raw_ev != NULL)
   {
-    fprintf(stderr, "Error signing the digest\n");
-    return 1;
+    strcat(resp_ev, req.raw_ev->ev_val);
   }
-
-  // Sign the input evidence
-  char *resp_ev_val = (char *)malloc(sizeof(char) * (strlen(sig) + 1));
-  RawEv_T *resp_ev = build_RawEv_T(resp_ev_val);
-  // We are extending the previous evidence with the sign
-  resp_ev->next = req.raw_ev;
-
-  ASPRunResponse resp = {true, resp_ev};
+  strcat(resp_ev, postamble);
+  ASPRunResponse resp = {true, build_RawEv_T(resp_ev)};
   printf("%s", ASPRunResponse_to_string(resp));
+  // printf("{ \"TYPE\": \"RESPONSE\", \"ACTION\": \"ASP_RUN\", \"SUCCESS\": true, \"PAYLOAD\": [\"attesting\"]}");
   return 0;
 }
