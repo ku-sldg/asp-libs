@@ -347,6 +347,8 @@ const char *parse_string(const char *json, char **out)
       json++; // Skip escaped character
     json++;
   }
+  if (*json != '"')
+    throw_error("Invalid string value - NO END!");
   size_t length = json - start;
   *out = (char *)malloc(length + 1);
   strncpy(*out, start, length);
@@ -398,8 +400,9 @@ const char *parse_inner_json_string(const char *json_string, InnerJSON **out)
       // Get the next item in the array
       InnerJSON *item = NULL;
       json_string = parse_inner_json_string(json_string, &item);
-      if (item == NULL)
+      if (json_string == NULL || item == NULL)
       {
+        // We cannot have consumed the entire inner json string!
         // Error parsing element
         free_InnerJSON(*out);
         throw_error("Error parsing array element!");

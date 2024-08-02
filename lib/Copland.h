@@ -205,9 +205,7 @@ const char *ErrorResponse(const char *resp_message)
   size_t ret_val_size = strlen(preamble) + strlen(resp_message) + strlen(postamble);
   char *ret_val = (char *)malloc(sizeof(char) * ret_val_size);
   // Build the ret string
-  strcat(ret_val, preamble);
-  strcat(ret_val, resp_message);
-  strcat(ret_val, postamble);
+  sprintf(ret_val, "%s%s%s", preamble, resp_message, postamble);
   // Returning the final string
   return ret_val;
 }
@@ -234,8 +232,13 @@ char *ASPRunResponse_to_string(ASPRunResponse resp)
     }
     if (used_ev_str_size + cur_entry_size > ev_str_size)
     {
-      ev_str_size *= 2;
+      ev_str_size = (used_ev_str_size + cur_entry_size) * 2;
       ev_str = (char *)realloc(ev_str, sizeof(char) * ev_str_size);
+      if (ev_str == NULL)
+      {
+        fprintf(stderr, "Failed to realloc in ASPRunResponse_to_string\n");
+        exit(1);
+      }
       // memset(ev_str + used_ev_str_size, 0, ev_str_size - used_ev_str_size);
     }
     sprintf(ev_str + used_ev_str_size, "\"%s\"", cur_val);
