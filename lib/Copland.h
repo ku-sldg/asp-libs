@@ -7,6 +7,57 @@
 
 #define DEFAULT_EV_STR_SIZE 512
 
+void byte_to_hex(unsigned char byte, char *hex_str)
+{
+  sprintf(hex_str, "%02x", byte);
+}
+
+void byte_from_hex(const char *hex_str, unsigned char *byte)
+{
+  sscanf(hex_str, "%2hhx", byte);
+}
+
+unsigned char *from_Hex(const char *str)
+{
+  size_t len = strlen(str);
+  if (len % 2 != 0)
+  {
+    fprintf(stderr, "Invalid hex string\n");
+    exit(1);
+  }
+  size_t ret_str_entries = len / 2;
+  unsigned char *ret_str = (unsigned char *)malloc(ret_str_entries + 1);
+  if (ret_str == NULL)
+  {
+    fprintf(stderr, "Failed to malloc in from_Hex\n");
+    exit(1);
+  }
+
+  for (size_t i = 0; i < ret_str_entries; i++)
+  {
+    byte_from_hex(str + i * 2, &ret_str[i]);
+  }
+  ret_str[ret_str_entries] = '\0';
+  return ret_str;
+}
+
+unsigned char *to_Hex(const char *str)
+{
+  size_t len = strlen(str);
+  unsigned char *hex_str = (unsigned char *)malloc(len * 2 + 1);
+  if (hex_str == NULL)
+  {
+    fprintf(stderr, "Failed to malloc in to_Hex\n");
+    exit(1);
+  }
+  for (size_t i = 0; i < len; i++)
+  {
+    byte_to_hex(str[i], (char *)hex_str + i * 2);
+  }
+  hex_str[len * 2] = '\0';
+  return hex_str;
+}
+
 typedef struct ArgMap
 {
   char *key;
@@ -63,7 +114,7 @@ char *concat_all_RawEv(RawEv_T *ev)
   {
     return NULL;
   }
-  char *cur_val = ev->ev_val;
+  char *cur_val = from_Hex(ev->ev_val);
   char *rec_val = concat_all_RawEv(ev->next);
   if (rec_val == NULL)
   {

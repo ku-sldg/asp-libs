@@ -19,7 +19,11 @@ int main(int argc, char **argv)
 
   // Sign the input evidence
   char *resp_ev_val = (char *)malloc(sizeof(char) * (strlen(sig) + 1));
-  RawEv_T *resp_ev = build_RawEv_T(resp_ev_val);
+  memset(resp_ev_val, 0, strlen(sig) + 1);
+  strcat(resp_ev_val, sig);
+  char *resp_ev_hex = to_Hex(resp_ev_val);
+
+  RawEv_T *resp_ev = build_RawEv_T(resp_ev_hex);
   // We are extending the previous evidence with the sign
   resp_ev->next = req.raw_ev;
 

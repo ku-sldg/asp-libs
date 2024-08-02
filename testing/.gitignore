@@ -1,2 +1,2 @@
-output
-*_Fuzzing
+**/output
+**/*_Fuzzing

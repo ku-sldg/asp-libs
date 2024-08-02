@@ -90,8 +90,8 @@ int main(int argc, char **argv)
     printf("%s", ErrorResponse("Failed to read file"));
     return 1;
   }
-
-  ASPRunResponse resp = {true, build_RawEv_T(file_buf)};
+  char *file_hex = to_Hex(file_buf);
+  ASPRunResponse resp = {true, build_RawEv_T(file_hex)};
   printf("%s", ASPRunResponse_to_string(resp));
   return 0;
 }
