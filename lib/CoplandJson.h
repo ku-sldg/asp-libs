@@ -276,7 +276,7 @@ void add_entry_to_json_object(JSON *json, char *key, InnerJSON *value)
  * @param out The return slot for the InnerJSON object
  * @return The remaining string
  */
-const char *parse_inner_json_string(const char *json_string, InnerJSON **out);
+const char *parse_inner_json_string(const char *json_string, unsigned int max_depth, InnerJSON **out);
 
 /**
  * Parses a JSON string into a JSON object
@@ -284,7 +284,7 @@ const char *parse_inner_json_string(const char *json_string, InnerJSON **out);
  * @param out The return slot for the JSON object
  * @return The remaining string
  */
-const char *parse_json_string(const char *json_string, JSON **out);
+const char *parse_json_string(const char *json_string, unsigned int max_depth, JSON **out);
 
 /**
  * Skip whitespace characters in a string
@@ -378,14 +378,18 @@ const char *parse_bool(const char *json, bool *out)
   return NULL;
 }
 
-const char *parse_inner_json_string(const char *json_string, InnerJSON **out)
+const char *parse_inner_json_string(const char *json_string, unsigned int max_depth, InnerJSON **out)
 {
+  if (max_depth == 0)
+  {
+    throw_error("Max parsing depth reached!");
+  }
   json_string = skip_whitespace(json_string);
 
   if (*json_string == '{')
   {
     JSON *json = build_empty_JSON();
-    json_string = parse_json_string(json_string, &json);
+    json_string = parse_json_string(json_string, max_depth - 1, &json);
     *out = InnerJSON_Object(json);
   }
   else if (*json_string == '[')
@@ -399,7 +403,7 @@ const char *parse_inner_json_string(const char *json_string, InnerJSON **out)
     {
       // Get the next item in the array
       InnerJSON *item = NULL;
-      json_string = parse_inner_json_string(json_string, &item);
+      json_string = parse_inner_json_string(json_string, max_depth - 1, &item);
       if (json_string == NULL || item == NULL)
       {
         // We cannot have consumed the entire inner json string!
@@ -462,8 +466,12 @@ const char *parse_inner_json_string(const char *json_string, InnerJSON **out)
 }
 
 // Function to parse a JSON string into InnerJSON
-const char *parse_json_string(const char *json_string, JSON **out)
+const char *parse_json_string(const char *json_string, unsigned int max_depth, JSON **out)
 {
+  if (max_depth == 0)
+  {
+    throw_error("Max parsing depth reached!");
+  }
   json_string = skip_whitespace(json_string);
 
   // Determine the type of JSON value
@@ -504,7 +512,7 @@ const char *parse_json_string(const char *json_string, JSON **out)
       json_string++;
       // Get the next entry
       InnerJSON *item = NULL;
-      json_string = parse_inner_json_string(json_string, &item);
+      json_string = parse_inner_json_string(json_string, max_depth - 1, &item);
       if (item == NULL)
       {
         // Error parsing element
