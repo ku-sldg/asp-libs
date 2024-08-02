@@ -1,5 +1,6 @@
 # Compiler
-CC = afl-gcc-fast
+# If CC is not set, use afl-gcc-fast
+CC ?= afl-gcc-fast
 
 # Compiler flags
 CFLAGS = -Wall -g -fsanitize=address
