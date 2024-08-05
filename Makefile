@@ -19,12 +19,6 @@ $(DIRS):
 		cp $@/bin/* $(BIN); \
 	fi
 
-# mkdir -p $(BIN)
-# for dir in $(DIRS); do \
-# 	$(MAKE) -C $$dir; \
-# 	cp $$dir/bin/* $(BIN); \
-# done
-
 # Optional: Define a clean target to clean all directories
 .PHONY: clean
 
@@ -33,7 +27,3 @@ clean:
 		$(MAKE) -C $@ clean; \
 	fi
 	rm -rf $(BIN); 
-# for dir in $(DIRS); do \
-# 	$(MAKE) -C $$dir clean; \
-# done
-# rm -rf $(BIN)
