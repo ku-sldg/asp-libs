@@ -14,14 +14,14 @@ int main(int argc, char **argv)
     return 1;
   }
   char *signing_ev = concat_all_RawEv(ev_head->next);
-  char *sig = ev_head->ev_val;
+  char *sig = from_Hex(ev_head->ev_val);
 
   // Check the signature
   bool verified = SHA256_digest_verify_with_key(signing_ev, sig, ("./common_files/unsecure_pub_key_dont_use.pem"));
 
   // Sign the input evidence
 
-  char *resp_ev = (verified ? "true\0" : "false\0");
+  char *resp_ev = from_Hex(verified ? "true\0" : "false\0");
 
   ASPRunResponse resp = {true, build_RawEv_T(resp_ev)};
   printf("%s", ASPRunResponse_to_string(resp));

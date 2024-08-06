@@ -6,16 +6,24 @@ int main(int argc, char **argv)
   ASPRunRequest req = ASPRunRequest_from_string(argv[1]);
   const char *preamble = "SIGning(\0";
   const char *postamble = ")\0";
-  size_t resp_ev_size = strlen(preamble) + (req.raw_ev == NULL ? 0 : strlen(req.raw_ev->ev_val)) + strlen(postamble);
-  char *resp_ev = (char *)malloc(sizeof(char) * resp_ev_size);
-  strcat(resp_ev, preamble);
-  if (req.raw_ev != NULL)
+  if (req.raw_ev == NULL)
   {
-    strcat(resp_ev, req.raw_ev->ev_val);
+    char *resp_str = "SIGning()";
+    RawEv_T *ev = build_RawEv_T(to_Hex(resp_str));
+    ASPRunResponse resp = {false, ev};
+    printf("%s", ASPRunResponse_to_string(resp));
+    return 0;
   }
+  // Raw ev <> null here
+  unsigned char *req_ev_val = from_Hex(req.raw_ev->ev_val);
+  size_t resp_ev_size = strlen(preamble) + strlen(req_ev_val) + strlen(postamble);
+  char *resp_ev = (char *)malloc(sizeof(char) * resp_ev_size);
+  memset(resp_ev, 0, resp_ev_size);
+  strcat(resp_ev, preamble);
+  strcat(resp_ev, req_ev_val);
   strcat(resp_ev, postamble);
-  ASPRunResponse resp = {true, build_RawEv_T(resp_ev)};
+  char *resp_str = to_Hex(resp_ev);
+  ASPRunResponse resp = {true, build_RawEv_T(resp_str)};
   printf("%s", ASPRunResponse_to_string(resp));
-  // printf("{ \"TYPE\": \"RESPONSE\", \"ACTION\": \"ASP_RUN\", \"SUCCESS\": true, \"PAYLOAD\": [\"attesting\"]}");
   return 0;
 }
