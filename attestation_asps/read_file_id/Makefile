@@ -1,5 +1,5 @@
 all: read_file.c
-	gcc read_file.c -o ../bin/read_file_id
+	gcc -w read_file.c -o ../bin/read_file_id
 
 clean:
-	rm ../bin/read_file_id
+	rm -rf ../bin/read_file_id

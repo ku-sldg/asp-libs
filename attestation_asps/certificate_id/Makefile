@@ -1,5 +1,5 @@
 all: certificate_id.c
-	gcc certificate_id.c -o ../bin/certificate_id
+	gcc -w certificate_id.c -o ../bin/certificate_id
 
 clean:
-	rm ../bin/certificate_id
+	rm -rf ../bin/certificate_id

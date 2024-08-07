@@ -1,5 +1,5 @@
 all: hashfile_id.c
-	gcc hashfile_id.c -o ../bin/hashfile_id
+	gcc -w hashfile_id.c -o ../bin/hashfile_id
 
 clean:
-	rm ../bin/hashfile_id
+	rm -rf ../bin/hashfile_id

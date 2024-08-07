@@ -1,5 +1,5 @@
 all: test_asp.c
-	gcc test_asp.c -o ../bin/test_asp 
+	gcc -w test_asp.c -o ../bin/test_asp 
 
 clean:
-	rm ../bin/test_asp
+	rm -rf ../bin/test_asp

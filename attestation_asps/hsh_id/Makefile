@@ -1,4 +1,4 @@
-asp_name=sig
+asp_name=hsh
 source_filename=$(asp_name).c
 executable_filename=$(asp_name)_id
 

@@ -1,5 +1,5 @@
 all: appraise_id.c
-	gcc appraise_id.c -o ../bin/appraise_id
+	gcc -w appraise_id.c -o ../bin/appraise_id
 
 clean:
-	rm ../bin/appraise_id
+	rm -rf ../bin/appraise_id

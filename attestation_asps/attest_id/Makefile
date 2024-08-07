@@ -1,5 +1,5 @@
 all: attest_id.c
-	gcc attest_id.c -o ../bin/attest_id
+	gcc -w attest_id.c -o ../bin/attest_id
 
 clean:
-	rm ../bin/attest_id
+	rm -rf ../bin/attest_id
