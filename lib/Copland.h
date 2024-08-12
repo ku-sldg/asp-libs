@@ -201,8 +201,8 @@ ASPRunRequest ASPRunRequest_from_string(const char *req)
     cur_entry = cur_entry->next;
   }
 
-  char *targ_plc = strdup(get_InnerString(get_InnerJSON(json, "TARG_PLC")));
-  char *targ = strdup(get_InnerString(get_InnerJSON(json, "TARG")));
+  char *targ_plc = strdup(get_InnerString(get_InnerJSON(json, "ASP_PLC")));
+  char *targ = strdup(get_InnerString(get_InnerJSON(json, "ASP_TARG_ID")));
 
   JsonArray rawev = get_InnerArray(get_InnerJSON(get_InnerObject(get_InnerJSON(json, "RAWEV")), "RawEv"));
   RawEv_T *top_raw_ev = NULL;
