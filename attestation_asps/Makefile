@@ -3,6 +3,8 @@
 # Find all directories that have a Makefile in them
 DIRS := $(shell find . -mindepth 2 -maxdepth 2 -type f -name Makefile | xargs -n 1 dirname)
 
+IGNORED_DIRS := test_asp
+
 BIN := ./bin
 
 # Target to run make in each directory

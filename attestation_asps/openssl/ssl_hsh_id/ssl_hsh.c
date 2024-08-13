@@ -1,5 +1,5 @@
-#include "../../lib/Copland.h"
-#include "../../lib/OpenSSL_Helper.h"
+#include "../../../lib/Copland.h"
+#include "../../../lib/OpenSSL_Helper.h"
 
 int main(int argc, char **argv)
 {
