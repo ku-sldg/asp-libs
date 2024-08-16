@@ -3,7 +3,7 @@
 # Find all directories that have a Makefile in them
 DIRS := $(shell find . -mindepth 2 -maxdepth 2 -type f -name Makefile | xargs -n 1 dirname)
 
-IGNORED_DIRS := testing
+IGNORED_DIRS := testing, $(OMIT_DIRS)
 
 BIN := ./bin
 
