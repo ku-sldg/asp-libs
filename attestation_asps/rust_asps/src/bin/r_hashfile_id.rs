@@ -1,4 +1,4 @@
-use asp_library::copland::*;
+use rust_am_lib::copland::*;
 use data_encoding::BASE64;
 use anyhow::{Context, Result};
 use std::env;

@@ -3,10 +3,6 @@ name = "rust_asps"
 version = "0.1.0"
 edition = "2021"
 
-[lib]
-name = "asp_library"
-path = "src/lib.rs"
-
 [[bin]]
 name = "r_hashfile_id"
 path = "src/bin/r_hashfile_id.rs"
@@ -20,9 +16,9 @@ test = false
 bench = false
 
 [dependencies]
+rust_am_lib = { git = "https://github.com/ku-sldg/rust-am-lib.git" }
+serde_json = "1.0.125"
 anyhow = "1.0.86"
 data-encoding = "2.6.0"
-serde = {version = "1.0.208", features = ["derive"]}
-serde_json = "1.0.125"
 sha2 = "0.10.8"
 sysinfo = "0.31.3"
