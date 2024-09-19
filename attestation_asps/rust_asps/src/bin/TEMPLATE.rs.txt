@@ -32,6 +32,18 @@ fn body() -> Result<String> {
     let args_map = req.ASP_ARGS;
     let filename = &args_map.get("filepath").context("filename argument not provided to ASP, hashfile_id")?;
 
+    /* Code sample for accessing input evidence within the ASP.
+
+    // Suppose the filename is to be extracted from evidence, instead of an ASP argument
+
+    let evidence_in = match req.RAWEV {RawEv::RawEv(x) => x,};
+
+    let latest_evidence = &evidence_in[evidence_in.len() - 1];
+    // Evidence is always base64 encoded, so decode this
+    let filename_bytes = base64::decode(latest_evidence)?;
+    let filename = String::from_utf8(filename_bytes)?;
+     */
+
     let bytes = std::fs::read(filename)?; // Vec<u8>
 
     let hash = Sha256::digest(&bytes);
