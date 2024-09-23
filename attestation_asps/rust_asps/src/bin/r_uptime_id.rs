@@ -6,7 +6,6 @@
 
 
 use rust_am_lib::copland::*;
-use base64;
 use anyhow::{Result};
 use std::env;
 
@@ -31,7 +30,7 @@ fn body() -> Result<String> {
 
     // returns seconds since last boot.
     let up = System::uptime();
-    let up_b64: String = base64::encode(&up.to_be_bytes());
+    let up_b64: String = base64::encode(up.to_be_bytes());
 
     let evidence = RawEv::RawEv(vec![up_b64]);
 
@@ -41,7 +40,7 @@ fn body() -> Result<String> {
     Ok (response_json)
 }
 
-fn main() -> () {
+fn main() {
 
     let response_json = match body() {
         Ok(resp) => resp,
@@ -54,5 +53,4 @@ fn main() -> () {
     // The ASP output (ASPRunRequest) is written to stdout.
     // The caller will capture stdout to receive the response from this ASP.
     println!("{response_json}");
-    ()
 }

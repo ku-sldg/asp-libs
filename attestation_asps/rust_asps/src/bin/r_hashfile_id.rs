@@ -3,7 +3,6 @@
 
 // Common Packages
 use rust_am_lib::copland::*;
-use base64;
 use anyhow::{Context, Result};
 use std::env;
 
@@ -42,7 +41,7 @@ fn body() -> Result<String> {
     // Step 1:
     // The return value for an ASP, must be
     // encoded in BASE64, and converted to ascii for JSON transmission
-    let hash_b64: String = base64::encode(&hash);
+    let hash_b64: String = base64::encode(hash);
 
     // Step 2:
     // wrap the value as Evidence
@@ -61,7 +60,7 @@ fn body() -> Result<String> {
 // an ASPRunResponse with SUCCESS = false, o/w uses
 // ASPRunResponse returned from body()
 
-fn main() -> () {
+fn main() {
 
     let response_json = match body() {
         Ok(resp) => resp,
@@ -76,5 +75,4 @@ fn main() -> () {
     // The ASP output (ASPRunRequest) is written to stdout.
     // The caller will capture stdout to receive the response from this ASP.
     println!("{response_json}");
-    ()
 }
