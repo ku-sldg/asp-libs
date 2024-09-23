@@ -54,7 +54,7 @@ fn body() -> Result<String> {
     Ok (response_json)
 }
 
-// Main simply invokes the body() funciton above,
+// Main simply invokes the body() function above,
 // and checks for Err Result.
 // If it detects an Err Result, this ASP will return
 // an ASPRunResponse with SUCCESS = false, o/w uses
