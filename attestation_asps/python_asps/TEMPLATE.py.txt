@@ -1,0 +1,71 @@
+## TEMPLATE.txt
+## General structure for ASP's written in rust
+
+import sys
+import json
+import hashlib
+import binascii
+import base64
+
+import copland
+
+## function where the work of the ASP is performed.
+## May raise exception(s) which will be handled in main.
+
+def body():
+
+    # For every ASP, an ASPRunRequest appears as the single command-line argument
+    numargs = len(sys.argv)
+    if (numargs == 1):
+        raise Exception("no ASPRunRequest provided to p_hashfile_id")
+    json_req = sys.argv[1]
+    request = json.loads(json_req, object_hook=copland.ASPRunRequest.from_json)
+
+    # Code for specific for this ASP.
+    # This example computes the HASH of the file named in an argument for the ASP.
+    # May raise an exception, which will be captured in main.
+
+    asp_args = request.ASP_ARGS
+    filename = asp_args['filepath']
+
+    with open(filename,"rb") as f:
+        bytes = f.read()
+
+    hash_string = hashlib.sha256(bytes).hexdigest()
+    # evidence as bytes
+    hash_bytes = hash_string.encode()
+
+    # End of code specific for this ASP.
+
+    # Common code to bundle computed value.
+    # Step 1:
+    # The return value for an ASP, must be
+    # encoded in BASE64, and converted to ascii for JSON transmission
+    hash_b64 = base64.b64encode(hash_bytes).decode('ascii')
+
+    # Step 2:
+    # wrap the value as Evidence
+    evidence = copland.RAWEV([hash_b64])
+
+    # Step 3:
+    # Construct the ASPRunResponse with this evidence.
+    response = copland.successfulASPRunResponse(evidence)
+    response_json = json.dumps(response, default=lambda o: o.__dict__)
+    return response_json
+
+# Main simply invokes the body() function above,
+# and checks for exceptions.
+# If it detects an exception, this ASP will return
+# an ASPRunResponse with SUCCESS = false, o/w uses
+# ASPRunResponse returned from body()
+
+if __name__ == "__main__":
+    try:
+        response_json = body()
+    except BaseException as e:
+        response = copland.failureASPRunResponse(str(e))
+        response_json = json.dumps(response, default=lambda o: o.__dict__)
+    finally:
+        # The ASP output (ASPRunRequest) is written to stdout.
+        # The caller will capture stdout to receive the response from this ASP.
+        print(response_json)

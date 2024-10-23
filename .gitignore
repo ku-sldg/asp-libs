@@ -1,1 +1,9 @@
 bin
+# in Rust projects,  <project>/src/bin/  holds source code
+!**/src/bin
+
+# in Rust projects, this directory contains only derived files.
+target
+
+# in Rust projects, lock files
+Cargo.lock
