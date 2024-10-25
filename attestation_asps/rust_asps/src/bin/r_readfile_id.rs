@@ -2,6 +2,7 @@
 use rust_am_lib::copland::*;
 use anyhow::{Context, Result};
 use std::env;
+use hex;
 
 // function where the work of the ASP is performed.
 // May signal an error which will be handled in main.
@@ -22,15 +23,17 @@ fn body() -> Result<String> {
     // This example computes the HASH of the file named in an argument for the ASP.
     // May return an Err Result, which will be captured in main.
     let args_map = req.ASP_ARGS;
-    let filename = &args_map.get("filepath").context("filename argument not provided to ASP, hashfile_id")?;
+    let filename = &args_map.get("filepath").context("filepath argument not provided to ASP, r_readfile_id")?;
 
-    let bytes = std::fs::read(filename)?; // Vec<u8>
+    let bytes = std::fs::read(filename).context("could not read file contents in ASP, r_readfile_id.  Perhaps the file doesn't exits?")?; // Vec<u8>
 
     // Common code to bundle computed value.
     // Step 1:
     // The return value for an ASP, must be
     // encoded in BASE64, and converted to ascii for JSON transmission
-    let hash_b64: String = base64::encode(bytes);
+
+    // Using HEX encoding for now...will switch to b64
+    let hash_b64: String = hex::encode(bytes); //base64::encode(bytes);
 
     // Step 2:
     // wrap the value as Evidence

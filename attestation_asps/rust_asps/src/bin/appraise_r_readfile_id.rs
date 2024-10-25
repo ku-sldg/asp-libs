@@ -2,6 +2,7 @@
 use rust_am_lib::copland::*;
 use anyhow::{Context, Result};
 use std::env;
+use hex;
 
 // function where the work of the ASP is performed.
 // May signal an error which will be handled in main.
@@ -22,7 +23,7 @@ fn body() -> Result<String> {
     // This example computes the HASH of the file named in an argument for the ASP.
     // May return an Err Result, which will be captured in main.
     let args_map = req.ASP_ARGS;
-    let golden_filename = &args_map.get("filepath-golden").context("filename argument not provided to ASP, hashfile_id")?;
+    let golden_filename = &args_map.get("filepath-golden").context("filepath-golden argument not provided to ASP, appraise_r_readfile_id")?;
 
     let golden_bytes = std::fs::read(golden_filename)?; // Vec<u8>
 
@@ -40,7 +41,8 @@ fn body() -> Result<String> {
     let latest_evidence = &evidence_in[0];
 
     // Evidence is always base64 encoded, so decode this
-    let file_bytes = base64::decode(latest_evidence)?;
+    // Using HEX decoding for now...will switch to b64
+    let file_bytes = hex::decode(latest_evidence)?; //base64::decode(latest_evidence)?;
     let bytes_equal : bool = golden_bytes.eq(&file_bytes);
 
 
@@ -58,7 +60,8 @@ fn body() -> Result<String> {
         };
 
 
-    let out_contents_b64 = base64::encode(out_contents);
+    // Using HEX encoding for now...will switch to b64
+    let out_contents_b64 = hex::encode(out_contents); //base64::encode(out_contents);
 
 
 
