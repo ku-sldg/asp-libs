@@ -3,8 +3,7 @@
 use rust_am_lib::copland::*;
 use anyhow::{Result};
 use std::env;
-// use base64::{Engine as _, engine::{general_purpose}};
-use base64::{engine::general_purpose, Engine as _};
+use base64::prelude::*;
 
 use std::str;
 use std::io::Read;
@@ -54,7 +53,7 @@ fn body() -> Result<String> {
         let path = newest_file_in_dir(APPRAISAL_DIR)?;
         println!("Appraisal file: {:?}", path);
         let bytes = std::fs::read(path)?; // Vec<u8>
-        let bytes_encoded: String = general_purpose::STANDARD.encode(bytes);
+        let bytes_encoded: String = BASE64_STANDARD.encode(bytes);
         let evidence = RawEv::RawEv(vec![bytes_encoded]);
         let  response = successfulASPRunResponse (evidence);
         let response_json = serde_json::to_string(&response)?;
