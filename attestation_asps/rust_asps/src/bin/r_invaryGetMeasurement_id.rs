@@ -47,10 +47,8 @@ fn body() -> Result<String> {
     let _req: ASPRunRequest = serde_json::from_str(json_request)?;
 
     let measure_job_id = demand_measure("veritas")?;
-    println!("ID = {:?}", measure_job_id);
-    thread::sleep(Duration::new(4, 0));
+    thread::sleep(Duration::new(6, 0));
     let done = check_job_complete(&measure_job_id)?;
-    println!("Done = {:?}", done);
 
     if done {
         let path = newest_file_in_dir(APPRAISAL_DIR)?;
@@ -111,10 +109,6 @@ fn demand_measure (hostname : &str) -> std::io::Result <String > {
     let mut handle = Easy::new();
 
     handle.url(DEMAND_MEASURE_URL).unwrap();
-
-//    for debugging connection
-//    handle.verbose(true).unwrap();
-
     // --insecure
     handle.ssl_verify_peer(false).unwrap();
 
@@ -129,7 +123,6 @@ fn demand_measure (hostname : &str) -> std::io::Result <String > {
 
     handle.post(true).unwrap();
     handle.post_field_size(data_to_send.len() as u64).unwrap();
-
     {
         let mut transfer = handle.transfer();
         transfer.read_function(|buf| {
@@ -170,6 +163,3 @@ fn newest_file_in_dir (dir : &str) -> std::io::Result<PathBuf> {
         None => Err(Error::new(ErrorKind::NotFound, "No files in directory.")),
     }
 }
-
-// for debugging
-// fn print_type_of<T>(_: &T) {println!("{}", std::any::type_name::<T>());}
