@@ -18,7 +18,7 @@ use serde::{Deserialize, Serialize};
 
 
 const APPRAISAL_DIR : &'static str = "/var/opt/invary-appraiser/appraisals";
-//    handle.url("https://127.0.0.1:8443/api/measurements/jobs").unwrap();
+//    handle.url("https://127.0.0.1:8443/api/measurements/jobs")?;
 const DEMAND_MEASURE_URL : &'static str = "https://localhost:8443/api/measurements/jobs";
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -51,7 +51,6 @@ fn body() -> Result<String> {
 
     if done {
         let path = newest_file_in_dir(APPRAISAL_DIR)?;
-        println!("Appraisal file: {:?}", path);
         let bytes = std::fs::read(path)?; // Vec<u8>
         let bytes_encoded: String = BASE64_STANDARD.encode(bytes);
         let evidence = RawEv::RawEv(vec![bytes_encoded]);
@@ -86,19 +85,19 @@ fn check_job_complete (job_id : &str) -> std::io::Result <bool > {
     url.push_str(job_id);
 
     let mut handle = Easy::new();
-    handle.url(url.as_str()).unwrap();
+    handle.url(url.as_str())?;
     // --insecure
-    handle.ssl_verify_peer(false).unwrap();
+    handle.ssl_verify_peer(false)?;
     {
         let mut transfer = handle.transfer();
         transfer.write_function(|new_data| {
            received_data.extend_from_slice(new_data);
             Ok(new_data.len())
-        }).unwrap();
-        transfer.perform().unwrap();
+        })?;
+        transfer.perform()?;
     }
     let response = str::from_utf8(&received_data).unwrap();
-    let check_response: InvaryMeasureCheck  = serde_json::from_str(response).unwrap();
+    let check_response: InvaryMeasureCheck  = serde_json::from_str(response)?;
     Ok(check_response.measured > 0)
 }
 
@@ -107,12 +106,12 @@ fn demand_measure (hostname : &str) -> std::io::Result <String > {
     let mut list = List::new();
     let mut handle = Easy::new();
 
-    handle.url(DEMAND_MEASURE_URL).unwrap();
+    handle.url(DEMAND_MEASURE_URL)?;
     // --insecure
-    handle.ssl_verify_peer(false).unwrap();
+    handle.ssl_verify_peer(false)?;
 
-    list.append("Content-Type: application/json").unwrap();
-    handle.http_headers(list).unwrap();
+    list.append("Content-Type: application/json")?;
+    handle.http_headers(list)?;
 
     let mut data = String::new();
     data.push_str("{\"hostnames\": [\"");
@@ -120,22 +119,22 @@ fn demand_measure (hostname : &str) -> std::io::Result <String > {
     data.push_str( "\"]}");
     let mut data_to_send = data.as_bytes();
 
-    handle.post(true).unwrap();
-    handle.post_field_size(data_to_send.len() as u64).unwrap();
+    handle.post(true)?;
+    handle.post_field_size(data_to_send.len() as u64)?;
     {
         let mut transfer = handle.transfer();
         transfer.read_function(|buf| {
             Ok(data_to_send.read(buf).unwrap_or(0))
-        }).unwrap();
+        })?;
 
         transfer.write_function(|new_data| {
            received_data.extend_from_slice(new_data);
             Ok(new_data.len())
-        }).unwrap();
-        transfer.perform().unwrap();
+        })?;
+        transfer.perform()?;
     }
     let response = str::from_utf8(&received_data).unwrap();
-    let check_response: InvaryMeasureCheck  = serde_json::from_str(response).unwrap();
+    let check_response: InvaryMeasureCheck  = serde_json::from_str(response)?;
     Ok(check_response.id)
 }
 
@@ -144,13 +143,13 @@ fn newest_file_in_dir (dir : &str) -> std::io::Result<PathBuf> {
     let mut latest_time = UNIX_EPOCH;
     let mut latest_entry : Option<DirEntry> = None;
 
-    let entries = fs::read_dir(dir).unwrap();
+    let entries = fs::read_dir(dir)?;
 
     for e in entries {
-        let entry = e.unwrap();
+        let entry = e?;
         let meta = entry.metadata()?;
         if meta.is_file() {
-            let mod_time = meta.modified().unwrap();
+            let mod_time = meta.modified()?;
             if mod_time > latest_time {
                 latest_time = mod_time;
                 latest_entry = Some(entry);
