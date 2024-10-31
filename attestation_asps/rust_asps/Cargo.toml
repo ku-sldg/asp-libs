@@ -22,6 +22,12 @@ test = false
 bench = false
 
 [[bin]]
+name = "r_provision_id"
+path = "src/bin/r_provision_id.rs"
+test = false
+bench = false
+
+[[bin]]
 name = "appraise_r_readfile_id"
 path = "src/bin/appraise_r_readfile_id.rs"
 test = false

@@ -27,7 +27,8 @@ fn body() -> Result<String> {
 
     let golden_bytes = std::fs::read(golden_filename)?; // Vec<u8>
 
-    let golden_bytes_decoded = hex::decode(golden_bytes)?;
+    //let golden_bytes_decoded = hex::decode(golden_bytes)?;
+    let golden_bytes_string : &String = &String::from_utf8(golden_bytes)?;
 
     // Common code to bundle computed value.
     // Step 1:
@@ -44,8 +45,8 @@ fn body() -> Result<String> {
 
     // Evidence is always base64 encoded, so decode this
     // Using HEX decoding for now...will switch to b64
-    let file_bytes = hex::decode(latest_evidence)?; //base64::decode(latest_evidence)?;
-    let bytes_equal : bool = golden_bytes_decoded.eq(&file_bytes);
+    //let file_bytes = hex::decode(latest_evidence)?; //base64::decode(latest_evidence)?;
+    let bytes_equal : bool = golden_bytes_string.eq(latest_evidence);
 
 
     // End of code specific for this ASP.
