@@ -2,6 +2,7 @@
 use rust_am_lib::copland::*;
 use anyhow::{Context, Result};
 use std::env;
+use base64::prelude::*;
 
 // function where the work of the ASP is performed.
 // May signal an error which will be handled in main.
@@ -30,7 +31,7 @@ fn body() -> Result<String> {
     // Step 1:
     // The return value for an ASP, must be
     // encoded in BASE64, and converted to ascii for JSON transmission
-    let hash_b64: String = base64::encode(bytes);
+    let hash_b64: String = BASE64_STANDARD.encode(bytes);
 
     // Step 2:
     // wrap the value as Evidence

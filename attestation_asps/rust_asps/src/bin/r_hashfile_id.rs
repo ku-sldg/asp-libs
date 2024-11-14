@@ -5,6 +5,8 @@
 use rust_am_lib::copland::*;
 use anyhow::{Context, Result};
 use std::env;
+// use base64::{Engine as _, engine::{general_purpose}};
+use base64::prelude::*;
 
 // Packages required to perform specific ASP action.
 // e.g.
@@ -41,7 +43,7 @@ fn body() -> Result<String> {
     // Step 1:
     // The return value for an ASP, must be
     // encoded in BASE64, and converted to ascii for JSON transmission
-    let hash_b64: String = base64::encode(hash);
+    let hash_b64: String = BASE64_STANDARD.encode(hash);
 
     // Step 2:
     // wrap the value as Evidence
