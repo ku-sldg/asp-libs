@@ -23,13 +23,13 @@ fn body() -> Result<String> {
 
     let evidence_in = match req.RAWEV {RawEv::RawEv(x) => x,};
 
-    let latest_evidence = &evidence_in[0];
+    let latest_evidence : &String = &evidence_in[0];
 
     // Code for specific for this ASP.
     // This example computes the HASH of the file named in an argument for the ASP.
     // May return an Err Result, which will be captured in main.
     let args_map = req.ASP_ARGS;
-    let filename = &args_map.get("filepath").context("filepath argument not provided to ASP, r_readfile_id")?;
+    let filename : &&String = &args_map.get("filepath").context("filepath argument not provided to ASP, r_readfile_id")?;
 
     //let bytes = std::fs::read(filename).context("could not read file contents in ASP, r_readfile_id.  Perhaps the file doesn't exits?")?; // Vec<u8>
 
