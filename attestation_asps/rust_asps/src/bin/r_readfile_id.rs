@@ -2,6 +2,9 @@
 use rust_am_lib::copland::*;
 use anyhow::{Context, Result};
 use std::env;
+/*
+use base64::prelude::*;
+*/
 use hex;
 
 // function where the work of the ASP is performed.
@@ -44,6 +47,10 @@ fn body() -> Result<String> {
     // Step 1:
     // The return value for an ASP, must be
     // encoded in BASE64, and converted to ascii for JSON transmission
+  
+  /*
+    let hash_b64: String = BASE64_STANDARD.encode(bytes);
+   */
 
     // Using HEX encoding for now...will switch to b64
     let hash_b64: String = hex::encode(bytes); //base64::encode(bytes);

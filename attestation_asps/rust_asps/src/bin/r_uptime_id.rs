@@ -8,6 +8,7 @@
 use rust_am_lib::copland::*;
 use anyhow::{Result};
 use std::env;
+use base64::prelude::*;
 
 use sysinfo::System;
 
@@ -30,7 +31,8 @@ fn body() -> Result<String> {
 
     // returns seconds since last boot.
     let up = System::uptime();
-    let up_b64: String = base64::encode(up.to_be_bytes());
+    // Base64 encode the evidence
+    let up_b64: String = BASE64_STANDARD.encode(up.to_be_bytes());
 
     let evidence = RawEv::RawEv(vec![up_b64]);
 
