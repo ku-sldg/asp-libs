@@ -23,9 +23,22 @@ fn body() -> Result<String> {
     // This example computes the HASH of the file named in an argument for the ASP.
     // May return an Err Result, which will be captured in main.
     let args_map = req.ASP_ARGS;
-    let golden_filename = &args_map.get("filepath-golden").context("filepath-golden argument not provided to ASP, appraise_r_readfile_id")?;
+    let golden_filename = args_map.get("filepath-golden").context("filepath-golden argument not provided to ASP, appraise_r_readfile_id")?;
 
-    let golden_bytes : Vec<u8> = std::fs::read(golden_filename)?; // Vec<u8>
+
+    let env_var_key = "DEMO_ROOT";
+    let env_var_string = 
+        match env::var(env_var_key) {
+            Ok(val) => {val}
+            Err(_e) => {panic!("Did not set environment variable DEMO_ROOT")}
+
+        };
+
+    let filename_string = (*golden_filename).clone();
+    let filename_full = format!{"{env_var_string}{filename_string}"};
+
+
+    let golden_bytes : Vec<u8> = std::fs::read(&filename_full)?; // Vec<u8>
 
     let golden_bytes_string : &String = &String::from_utf8(golden_bytes)?;
 

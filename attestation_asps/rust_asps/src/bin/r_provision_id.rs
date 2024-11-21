@@ -29,11 +29,23 @@ fn body() -> Result<String> {
     // This example computes the HASH of the file named in an argument for the ASP.
     // May return an Err Result, which will be captured in main.
     let args_map = req.ASP_ARGS;
-    let filename : &&String = &args_map.get("filepath").context("filepath argument not provided to ASP, r_readfile_id")?;
+    let filename : &String = args_map.get("filepath").context("filepath argument not provided to ASP, r_readfile_id")?;
+
+    let env_var_key = "DEMO_ROOT";
+    let env_var_string = 
+        match env::var(env_var_key) {
+            Ok(val) => {val}
+            Err(_e) => {panic!("Did not set environment variable DEMO_ROOT")}
+
+        };
+
+    let filename_string = (*filename).clone();
+    let filename_full = format!{"{env_var_string}{filename_string}"};
+
 
     //let bytes = std::fs::read(filename).context("could not read file contents in ASP, r_readfile_id.  Perhaps the file doesn't exits?")?; // Vec<u8>
 
-    std::fs::write(filename, latest_evidence)?;
+    std::fs::write(filename_full, latest_evidence)?;
 
     // Common code to bundle computed value.
     // Step 1:
