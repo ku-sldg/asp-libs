@@ -2,9 +2,6 @@
 use rust_am_lib::copland::*;
 use anyhow::{Context, Result};
 use std::env;
-/*
-use base64::prelude::*;
-*/
 use hex;
 
 // function where the work of the ASP is performed.
@@ -26,8 +23,7 @@ fn body() -> Result<String> {
     // This example computes the HASH of the file named in an argument for the ASP.
     // May return an Err Result, which will be captured in main.
     let args_map = req.ASP_ARGS;
-    let filename = args_map.get("filepath").context("filepath argument not provided to ASP, r_readfile_id")?;
-
+    let golden_filename = args_map.get("filepath-golden").context("filepath-golden argument not provided to ASP, appraise_r_readfile_id")?;
 
 
     let env_var_key = "DEMO_ROOT";
@@ -38,30 +34,61 @@ fn body() -> Result<String> {
 
         };
 
-    let filename_string = (*filename).clone();
+    let filename_string = (*golden_filename).clone();
     let filename_full = format!{"{env_var_string}{filename_string}"};
 
-    let bytes = std::fs::read(&filename_full).context("could not read file contents in ASP, r_readfile_id.  Perhaps the file doesn't exits?")?; // Vec<u8>
+
+    let golden_bytes : Vec<u8> = std::fs::read(&filename_full)?; // Vec<u8>
+
+    let golden_bytes_string : &String = &String::from_utf8(golden_bytes)?;
 
     // Common code to bundle computed value.
     // Step 1:
     // The return value for an ASP, must be
     // encoded in BASE64, and converted to ascii for JSON transmission
-  
-  /*
-    let hash_b64: String = BASE64_STANDARD.encode(bytes);
-   */
+    //let golden_bytes_b64: String = base64::encode(bytes);
+
+    // Suppose the file contents are to be extracted from evidence...
+
+
+    let evidence_in = match req.RAWEV {RawEv::RawEv(x) => x,};
+
+    let latest_evidence : &String = &evidence_in[0];
+
+    // Evidence is always base64 encoded, so decode this
+    // Using HEX decoding for now...will switch to b64
+    //let file_bytes = hex::decode(latest_evidence)?; //base64::decode(latest_evidence)?;
+    let bytes_equal : bool = golden_bytes_string.eq(latest_evidence);
+    /*file_bytes*/
+
+
+    // End of code specific for this ASP.
+
+    // Common code to bundle computed value.
+    // Step 1:
+    // The return value for an ASP, must be
+    // encoded in BASE64, and converted to ascii for JSON transmission
+
+    let out_contents: String =
+        match bytes_equal {
+            true => {"PASSED".to_string()}
+            false => {"FAILED".to_string()}
+        };
+
 
     // Using HEX encoding for now...will switch to b64
-    let hash_b64: String = hex::encode(bytes); //base64::encode(bytes);
+    let out_contents_b64 = hex::encode(out_contents); //base64::encode(out_contents);
+
+
+
 
     // Step 2:
     // wrap the value as Evidence
-    let evidence = RawEv::RawEv(vec![hash_b64]);
+    let evidence = RawEv::RawEv(vec![out_contents_b64]);
 
     // Step 3:
     // Construct the ASPRunResponse with this evidence.
-    let  response = successfulASPRunResponse (evidence);
+    let response = successfulASPRunResponse (evidence);
     let response_json = serde_json::to_string(&response)?;
     Ok (response_json)
 }

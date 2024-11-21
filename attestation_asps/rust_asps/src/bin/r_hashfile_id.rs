@@ -43,7 +43,17 @@ fn body() -> Result<String> {
     // Step 1:
     // The return value for an ASP, must be
     // encoded in BASE64, and converted to ascii for JSON transmission
+  /*
     let hash_b64: String = BASE64_STANDARD.encode(hash);
+   */
+
+    // Using HEX encoding for now...will switch to b64
+    let hash_b64: String = hex::encode(hash);
+
+    /*
+        // Using HEX encoding for now...will switch to b64
+    let hash_b64: String = hex::encode(bytes); //base64::encode(bytes);
+    */
 
     // Step 2:
     // wrap the value as Evidence

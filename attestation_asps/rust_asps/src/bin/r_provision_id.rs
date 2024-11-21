@@ -2,10 +2,7 @@
 use rust_am_lib::copland::*;
 use anyhow::{Context, Result};
 use std::env;
-/*
-use base64::prelude::*;
-*/
-use hex;
+//use hex;
 
 // function where the work of the ASP is performed.
 // May signal an error which will be handled in main.
@@ -22,13 +19,17 @@ fn body() -> Result<String> {
     // May fail.  If so, return an Err Result
     let req: ASPRunRequest = serde_json::from_str(json_request)?;
 
+
+
+    let evidence_in = match req.RAWEV {RawEv::RawEv(x) => x,};
+
+    let latest_evidence : &String = &evidence_in[0];
+
     // Code for specific for this ASP.
     // This example computes the HASH of the file named in an argument for the ASP.
     // May return an Err Result, which will be captured in main.
     let args_map = req.ASP_ARGS;
-    let filename = args_map.get("filepath").context("filepath argument not provided to ASP, r_readfile_id")?;
-
-
+    let filename : &String = args_map.get("filepath").context("filepath argument not provided to ASP, r_readfile_id")?;
 
     let env_var_key = "DEMO_ROOT";
     let env_var_string = 
@@ -41,27 +42,29 @@ fn body() -> Result<String> {
     let filename_string = (*filename).clone();
     let filename_full = format!{"{env_var_string}{filename_string}"};
 
-    let bytes = std::fs::read(&filename_full).context("could not read file contents in ASP, r_readfile_id.  Perhaps the file doesn't exits?")?; // Vec<u8>
+
+    //let bytes = std::fs::read(filename).context("could not read file contents in ASP, r_readfile_id.  Perhaps the file doesn't exits?")?; // Vec<u8>
+
+    std::fs::write(filename_full, latest_evidence)?;
 
     // Common code to bundle computed value.
     // Step 1:
     // The return value for an ASP, must be
     // encoded in BASE64, and converted to ascii for JSON transmission
-  
-  /*
-    let hash_b64: String = BASE64_STANDARD.encode(bytes);
-   */
 
     // Using HEX encoding for now...will switch to b64
-    let hash_b64: String = hex::encode(bytes); //base64::encode(bytes);
+    //let hash_b64: String = hex::encode(bytes); //base64::encode(bytes);
 
     // Step 2:
     // wrap the value as Evidence
-    let evidence = RawEv::RawEv(vec![hash_b64]);
+
+    // For now, ouptut empty evidence (maybe ok permenantly for provisioning?)
+    //let evidence = RawEv::RawEv(vec![hash_b64]);
+    let evidence = RawEv::RawEv(vec![]);
 
     // Step 3:
     // Construct the ASPRunResponse with this evidence.
-    let  response = successfulASPRunResponse (evidence);
+    let response = successfulASPRunResponse (evidence);
     let response_json = serde_json::to_string(&response)?;
     Ok (response_json)
 }

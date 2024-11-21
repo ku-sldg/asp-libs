@@ -21,8 +21,32 @@ path = "src/bin/r_invaryGetMeasurement_id.rs"
 test = false
 bench = false
 
+[[bin]]
+name = "r_readfile_id"
+path = "src/bin/r_readfile_id.rs"
+test = false
+bench = false
+
+[[bin]]
+name = "r_provision_id"
+path = "src/bin/r_provision_id.rs"
+test = false
+bench = false
+
+[[bin]]
+name = "appraise_r_readfile_id"
+path = "src/bin/appraise_r_readfile_id.rs"
+test = false
+bench = false
+
+[[bin]]
+name = "appraise_r_hashfile_id"
+path = "src/bin/appraise_r_hashfile_id.rs"
+test = false
+bench = false
+
 [dependencies]
-rust_am_lib = { git = "https://github.com/ku-sldg/rust-am-lib.git", version = "0.1.1"}
+rust_am_lib = { git = "https://github.com/ku-sldg/rust-am-lib.git", version = "0.1.2"}
 serde_json = "1.0.125"
 anyhow = "1.0.86"
 sha2 = "0.10.8"
@@ -30,3 +54,4 @@ sysinfo = "0.31.3"
 curl = "0.4.47"
 base64 = "0.22.1"
 serde = { version = "1.0.214", features = ["derive"] }
+hex = "0.4.3"
