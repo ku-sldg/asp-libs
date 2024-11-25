@@ -10,7 +10,7 @@ int main(int argc, char **argv)
   char *signing_ev = concat_all_RawEv(req.raw_ev);
 
   // Sign the digest
-  unsigned char *sig = SHA256_digest_sign_with_key(signing_ev, ("./common_files/unsecure_priv_key_dont_use.pem"));
+  unsigned char *sig = SHA256_digest_sign_with_key(signing_ev, ("/Users/adampetz/Documents/Summer_2024/asp-libs/common_files/unsecure_priv_key_dont_use.pem"));
   if (sig == NULL)
   {
     fprintf(stderr, "Error signing the digest\n");
@@ -25,7 +25,7 @@ int main(int argc, char **argv)
 
   RawEv_T *resp_ev = build_RawEv_T(resp_ev_hex);
   // We are extending the previous evidence with the sign
-  resp_ev->next = req.raw_ev;
+  //resp_ev->next = req.raw_ev;
 
   ASPRunResponse resp = {true, resp_ev};
   printf("%s", ASPRunResponse_to_string(resp));
