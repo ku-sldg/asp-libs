@@ -45,6 +45,12 @@ path = "src/bin/appraise_r_hashfile_id.rs"
 test = false
 bench = false
 
+[[bin]]
+name = "r_sig"
+path = "src/bin/r_sig.rs"
+test = false
+bench = false
+
 [dependencies]
 rust_am_lib = { git = "https://github.com/ku-sldg/rust-am-lib.git", version = "0.1.2"}
 serde_json = "1.0.125"
@@ -55,3 +61,4 @@ curl = "0.4.47"
 base64 = "0.22.1"
 serde = { version = "1.0.214", features = ["derive"] }
 hex = "0.4.3"
+openssl = "0.10.68"
