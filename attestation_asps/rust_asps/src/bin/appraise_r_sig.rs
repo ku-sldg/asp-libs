@@ -47,8 +47,9 @@ fn body() -> Result<String> {
      let hash_b64: String = BASE64_STANDARD.encode(bytes);
     */
 
+    let res_string : String = if res {"PASSED".to_string()} else {"FAILED".to_string()};
     // Using HEX encoding for now...will switch to b64
-    let hash_b64: String = hex::encode(format!("{res}"));
+    let hash_b64: String = hex::encode(res_string);
 
     // Step 2:
     // wrap the value as Evidence
