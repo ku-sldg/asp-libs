@@ -19,7 +19,7 @@ fn body(ev: copland::EvidenceT, _args: copland::ASP_ARGS) -> Result<copland::Evi
     let pkey = openssl::pkey::PKey::public_key_from_pem(&fs::read("key.pem")?)?;
     let mut verifier = openssl::sign::Verifier::new(openssl::hash::MessageDigest::sha256(), &pkey)?;
     verifier.set_rsa_padding(openssl::rsa::Padding::PKCS1_PSS)?;
-    let res = verifier.verify_oneshot(&hex::decode(message_signature)?, &message_sig_input)?;
+    let res = verifier.verify_oneshot(&message_signature, &message_sig_input)?;
 
     let res_string: String = if res {
         "PASSED".to_string()

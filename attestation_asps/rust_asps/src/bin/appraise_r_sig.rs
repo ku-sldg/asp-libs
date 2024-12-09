@@ -18,8 +18,7 @@ fn body(ev: copland::EvidenceT, _args: copland::ASP_ARGS) -> Result<copland::Evi
     let pkey = openssl::pkey::PKey::public_key_from_pem(key)?;
     let mut verifier = openssl::sign::Verifier::new(openssl::hash::MessageDigest::sha256(), &pkey)?;
     verifier.update(&message_sig_input)?;
-    let signature = hex::decode(message_signature)?;
-    let res = verifier.verify(&signature)?;
+    let res = verifier.verify(&message_signature)?;
 
     // Common code to bundle computed value.
     // Step 1:

@@ -60,5 +60,4 @@ sysinfo = "0.31.3"
 curl = "0.4.47"
 base64 = "0.22.1"
 serde = { version = "1.0.214", features = ["derive"] }
-hex = "0.4.3"
 openssl = "0.10.68"
