@@ -13,7 +13,6 @@ fn body(ev: copland::EvidenceT, _args: copland::ASP_ARGS) -> Result<copland::Evi
     signer.update(&ev_flattened)?;
     let signature = signer.sign_to_vec()?;
     let bytes = signature;
-    println!("signature: {:?}", bytes);
     Ok(vec![bytes])
 }
 
