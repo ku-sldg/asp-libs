@@ -27,12 +27,7 @@ use tss_esapi::{
 use anyhow::Context as _;
 use std::{env, fs, path::Path};
 
-fn body(raw_ev: copland::RawEv, _args: copland::ASP_ARGS) -> anyhow::Result<copland::RawEv> {
-    // Code for specific for this ASP
-    let copland::RawEv::RawEv(message) = raw_ev;
-    let message = message.join("");
-    let message = message.as_bytes();
-
+fn body(ev: copland::EvidenceT, _args: copland::ASP_ARGS) -> anyhow::Result<copland::EvidenceT> {
     // Code adapted from tpm_sign
     let use_key_context: bool = true; // true = try to load keys from context
                                       // false = reload keys manually every time
@@ -94,7 +89,8 @@ fn body(raw_ev: copland::RawEv, _args: copland::ASP_ARGS) -> anyhow::Result<copl
         check_ticket,
     )?;
 
-    let digest = Digest::try_from(&openssl::sha::sha256(message)[..])?;
+    let ev_flattened: Vec<u8> = ev.into_iter().flatten().collect();
+    let digest = Digest::try_from(&openssl::sha::sha256(&ev_flattened)[..])?;
 
     let key_handle = load_signing_key(&mut context, use_key_context)?;
 
@@ -118,23 +114,7 @@ fn body(raw_ev: copland::RawEv, _args: copland::ASP_ARGS) -> anyhow::Result<copl
         Signature::RsaSsa(sig) | Signature::RsaPss(sig) => sig.signature().value().to_vec(),
         _ => return Err(anyhow::anyhow!("really bad")),
     };
-
-    // Common code to bundle computed value.
-    // Step 1:
-    // The return value for an ASP, must be
-    // encoded in BASE64, and converted to ascii for JSON transmission
-
-    /*
-     let hash_b64: String = BASE64_STANDARD.encode(bytes);
-    */
-
-    // TODO: Using HEX encoding for now...will switch to b64
-    let hash_b64: String = hex::encode(signature); //base64::encode(bytes);
-
-    // Step 2:
-    // wrap the value as Evidence
-    let evidence = copland::RawEv::RawEv(vec![hash_b64]);
-    Ok(evidence)
+    Ok(vec![signature])
 }
 
 fn load_external_signing_key(context: &mut Context) -> anyhow::Result<KeyHandle> {

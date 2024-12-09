@@ -1,40 +1,23 @@
 // Common Packages
 use anyhow::{Context, Result};
-use rust_am_lib::copland::*;
-use std::env;
-/*
-use base64::prelude::*;
-*/
-use hex;
+use rust_am_lib::copland::{self, handle_body};
 
 // function where the work of the ASP is performed.
 // May signal an error which will be handled in main.
-fn body() -> Result<String> {
-    // For every ASP, an ASPRunRequest appears as the single command-line argument
-    let args: Vec<String> = env::args().collect();
-
-    if args.len() < 2 {
-        return Err(anyhow::anyhow!(
-            "ASPRunRequest not supplied as command line argument"
-        ));
-    }
-
-    let json_request = &args[1];
-    // May fail.  If so, return an Err Result
-    let req: ASPRunRequest = serde_json::from_str(json_request)?;
-
-    // Code for specific for this ASP.
-
-    let message_in = match req.RAWEV {
-        RawEv::RawEv(x) => x,
-    };
-    let message_signature = message_in[0].clone();
-    let message_sig_input = message_in[1..].join("");
+fn body(ev: copland::EvidenceT, _args: copland::ASP_ARGS) -> Result<copland::EvidenceT> {
+    let message_signature = ev.first().context("No message signature found")?;
+    let message_sig_input = ev
+        .get(1..)
+        .context("No message found")?
+        .to_vec()
+        .into_iter()
+        .flatten()
+        .collect::<Vec<u8>>();
     // Use openssl to verify the signature
     let key = include_bytes!("../../../../common_files/unsecure_pub_key_dont_use.pem");
     let pkey = openssl::pkey::PKey::public_key_from_pem(key)?;
     let mut verifier = openssl::sign::Verifier::new(openssl::hash::MessageDigest::sha256(), &pkey)?;
-    verifier.update(message_sig_input.as_bytes())?;
+    verifier.update(&message_sig_input)?;
     let signature = hex::decode(message_signature)?;
     let res = verifier.verify(&signature)?;
 
@@ -47,19 +30,12 @@ fn body() -> Result<String> {
      let hash_b64: String = BASE64_STANDARD.encode(bytes);
     */
 
-    let res_string : String = if res {"PASSED".to_string()} else {"FAILED".to_string()};
-    // Using HEX encoding for now...will switch to b64
-    let hash_b64: String = hex::encode(res_string);
-
-    // Step 2:
-    // wrap the value as Evidence
-    let evidence = RawEv::RawEv(vec![hash_b64]);
-
-    // Step 3:
-    // Construct the ASPRunResponse with this evidence.
-    let response = successfulASPRunResponse(evidence);
-    let response_json = serde_json::to_string(&response)?;
-    Ok(response_json)
+    let res_string: String = if res {
+        "PASSED".to_string()
+    } else {
+        "FAILED".to_string()
+    };
+    Ok(vec![res_string.as_bytes().to_vec()])
 }
 
 // Main simply invokes the body() function above,
@@ -69,19 +45,5 @@ fn body() -> Result<String> {
 // ASPRunResponse returned from body()
 
 fn main() {
-    let response_json = match body() {
-        Ok(resp) => resp,
-        Err(_error) => {
-            let response = failureASPRunResponse(_error.to_string());
-            // If an error occurs converting the failure response to JSON
-            // there is nothing else to do but panic.
-            // This should never happen.
-            serde_json::to_string(&response).unwrap_or_else(|error| {
-                panic!("Failed to json.encode failure response: {error:?}");
-            })
-        }
-    };
-    // The ASP output (ASPRunRequest) is written to stdout.
-    // The caller will capture stdout to receive the response from this ASP.
-    println!("{response_json}");
+    handle_body(body);
 }
