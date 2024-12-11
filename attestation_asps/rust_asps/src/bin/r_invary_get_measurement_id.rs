@@ -11,7 +11,7 @@ use std::thread;
 use std::time::{Duration, UNIX_EPOCH};
 use anyhow::{Context, Result};
 
-const APPRAISAL_DIR: &'static str = "/var/opt/invary-appraiser/appraisals";
+//const APPRAISAL_DIR: &'static str = "/var/opt/invary-appraiser/appraisals";
 //    handle.url("https://127.0.0.1:8443/api/measurements/jobs")?;
 const DEMAND_MEASURE_URL: &'static str = "https://localhost:8443/api/measurements/jobs";
 
@@ -36,6 +36,10 @@ fn body(_ev: copland::EvidenceT, args: copland::ASP_ARGS) -> Result<copland::Evi
         .get("dynamic").
         context("dynamic argument not provided to ASP, r_invary_get_measurement_id")?;
 
+    let appraisaldir_arg_val = args
+        .get("appraisal-dir").
+        context("appraisal-dir argument not provided to ASP, r_invary_get_measurement_id")?;
+
     let dynamic_arg_val_string : String = (*dynamic_arg_val).clone();
     let true_val_string : String = "true".to_string();
     let dynamic_arg_bool: bool = dynamic_arg_val_string.eq(&true_val_string);
@@ -50,8 +54,8 @@ fn body(_ev: copland::EvidenceT, args: copland::ASP_ARGS) -> Result<copland::Evi
         let done = check_job_complete(&measure_job_id)?;
 
         if done {
-            eprint!("Reading latest KIM appraisal from directory: {}\n", APPRAISAL_DIR);
-            let path = newest_file_in_dir(APPRAISAL_DIR)?;
+            eprint!("Reading latest KIM appraisal from directory: {}\n", appraisaldir_arg_val);
+            let path = newest_file_in_dir(appraisaldir_arg_val)?;
             let bytes = std::fs::read(path)?; // Vec<u8>
             Ok(vec![bytes])
         } else {
@@ -60,8 +64,9 @@ fn body(_ev: copland::EvidenceT, args: copland::ASP_ARGS) -> Result<copland::Evi
 
     }
     else {
-        eprint!("\nReading latest KIM appraisal from directory: {}\n\n", APPRAISAL_DIR);
-        let path = newest_file_in_dir(APPRAISAL_DIR)?;
+        eprint!("\nSkipping Request for dynamic KIM measurement...\n\n");
+        eprint!("\nReading latest KIM appraisal from directory: {}\n\n", appraisaldir_arg_val);
+        let path = newest_file_in_dir(appraisaldir_arg_val)?;
         let bytes = std::fs::read(path)?; // Vec<u8>
         Ok(vec![bytes])
     }
