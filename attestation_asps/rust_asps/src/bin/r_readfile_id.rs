@@ -20,7 +20,7 @@ fn body(_ev: copland::EvidenceT, args: copland::ASP_ARGS) -> Result<copland::Evi
     let filename_string = (*filename).clone();
     let filename_full = format! {"{env_var_string}{filename_string}"};
 
-    print!("Attempting to read from file: {}\n", filename_full); 
+    eprint!("Attempting to read from file: {}\n", filename_full); 
 
     let bytes = std::fs::read(&filename_full).context(
         "could not read file contents in ASP, r_readfile_id.  Perhaps the file doesn't exits?",
