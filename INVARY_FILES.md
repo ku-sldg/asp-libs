@@ -17,3 +17,8 @@ make
 ```
 
 Then repeat the above setuid trick again
+
+
+# Repository with instructions for running Invary "test probe" for invalidating Invary appraisal ASP
+
+https://github.com/Invary-Runtime-Integrity/invary-test-probe
