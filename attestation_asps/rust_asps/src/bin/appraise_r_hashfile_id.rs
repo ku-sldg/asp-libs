@@ -7,9 +7,22 @@ use rust_am_lib::copland::{self, handle_body};
 fn body(ev: copland::EvidenceT, args: copland::ASP_ARGS) -> Result<copland::EvidenceT> {
     let golden_filename = args
         .get("filepath-golden")
-        .context("filepath-golden argument not provided to ASP, appraise_r_readfile_id")?;
+        .context("filepath-golden argument not provided to ASP, appraise_r_hashfile_id")?;
 
-    let golden_bytes = std::fs::read(golden_filename)?; // Vec<u8>
+    let env_var_key = "DEMO_ROOT";
+    let env_var_string = match std::env::var(env_var_key) {
+        Ok(val) => val,
+        Err(_e) => {
+            panic!("Did not set environment variable DEMO_ROOT")
+        }
+    };
+
+    let filename_string = (*golden_filename).clone();
+    let filename_full = format! {"{env_var_string}{filename_string}"};
+
+    eprint!("Attempting to read from file: {}\n", filename_full);
+
+    let golden_bytes = std::fs::read(filename_full)?; // Vec<u8>
 
     // Common code to bundle computed value.
     // Step 1:
