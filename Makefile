@@ -7,8 +7,20 @@ IGNORED_DIRS := testing, $(OMIT_DIRS)
 
 BIN := ./bin
 
+STANDARD_IGNORE := testing, tpm_asps, python_asps, openssl
+
 # Target to run make in each directory
-.PHONY: all $(DIRS) 
+.PHONY: some all $(DIRS) 
+
+some:
+	mkdir -p $(BIN); \
+	for dir in $(DIRS); do \
+		if ! echo "$(STANDARD_IGNORE)" | grep -qw $$dir; then \
+			$(MAKE) OMIT_DIRS="$(STANDARD_IGNORE)" -C $$dir; \
+			cp -r $$dir/bin/* $(BIN) 2>/dev/null || : ; \
+		fi ; \
+	done
+
 
 all: $(DIRS)
 
