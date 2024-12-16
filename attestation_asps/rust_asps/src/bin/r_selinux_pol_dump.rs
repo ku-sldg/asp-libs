@@ -10,10 +10,10 @@ fn body(ev: copland::EvidenceT, _args: copland::ASP_ARGS) -> Result<copland::Evi
     let policy_name = "demo_pipeline";
 
     // Execute the shell command to dump the selinux policy
-    let output = std::process::Command::new("semodule --cil --extract {policy_name}");
+    let output = std::process::Command::new(format!("semodule --cil --extract {policy_name}"));
 
     // This will place the output in a file named after the policy in the current directory
-    let filename = format! {"{policy_name}.cil"};
+    let filename = format!("{policy_name}.cil");
 
     eprint!("Attempting to read from file: {}\n", filename);
 

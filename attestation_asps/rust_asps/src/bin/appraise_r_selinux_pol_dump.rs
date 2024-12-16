@@ -8,7 +8,7 @@ fn body(ev: copland::EvidenceT, _args: copland::ASP_ARGS) -> Result<copland::Evi
     let pol_hash = ev.first().unwrap();
 
     // let policy_name = _args.get("policy_name").unwrap();
-    let policy_name = "demo_pipeline";
+    let _policy_name = "demo_pipeline";
 
     let golden_policy_path = "demo_pipeline_golden.cil";
 
