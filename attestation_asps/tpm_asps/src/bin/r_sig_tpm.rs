@@ -103,7 +103,7 @@ fn body(ev: copland::EvidenceT, _args: copland::ASP_ARGS) -> anyhow::Result<copl
     let ev_flattened: Vec<u8> = ev.into_iter().flatten().collect();
     let digest = Digest::try_from(&openssl::sha::sha256(&ev_flattened)[..])?;
 
-    let key_handle = load_signing_key(&mut context, use_key_context)?;
+    let key_handle = load_signing_key(&env_var_string, &mut context, use_key_context)?;
 
     let signature = context.execute_with_session(Some(session), |context| {
         context.sign(
@@ -204,7 +204,11 @@ fn save_key_context<P: AsRef<Path>>(
     Ok(())
 }
 
-fn load_signing_key(context: &mut Context, use_key_context: bool) -> anyhow::Result<KeyHandle> {
+fn load_signing_key(
+    env_var_string: &String,
+    context: &mut Context,
+    use_key_context: bool,
+) -> anyhow::Result<KeyHandle> {
     if use_key_context {
         if let Ok(key_handle) = reload_key_context(context, env::temp_dir().join("signing.ctx")) {
             return Ok(key_handle);
@@ -234,12 +238,12 @@ fn load_signing_key(context: &mut Context, use_key_context: bool) -> anyhow::Res
     context.set_sessions((Some(auth_session), None, None));
     let primary_key_handle = create_primary_handle(context)?;
     let public = Public::unmarshall(
-        fs::read("key.pub")?
+        fs::read(format!("{env_var_string}/key.pub"))?
             .get(2..)
             .context("Slicing out of bounds")?,
     )?;
     let private = Private::try_from(
-        fs::read("key.priv")?
+        fs::read(format!("{env_var_string}/key.priv"))?
             .get(2..)
             .context("Slicing out of bounds")?,
     )?;
