@@ -6,8 +6,6 @@
   "ASP_PLC": "P2",
   "ASP_TARG_ID": "sys_targ",
   "RAWEV": {
-    "RawEv": [
-      "attesting()"
-    ]
+    "RawEv": [""]
   }
 }
