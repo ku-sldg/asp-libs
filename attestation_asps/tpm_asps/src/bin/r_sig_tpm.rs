@@ -28,11 +28,22 @@ use anyhow::Context as _;
 use std::{env, fs, path::Path};
 
 fn body(ev: copland::EvidenceT, _args: copland::ASP_ARGS) -> anyhow::Result<copland::EvidenceT> {
+    let env_var_key = "AM_ROOT";
+    let env_var_string = match std::env::var(env_var_key) {
+        Ok(val) => val,
+        Err(_e) => {
+            panic!("Did not set environment variable AM_ROOT")
+        }
+    };
+
     // Code adapted from tpm_sign
     let use_key_context: bool = true; // true = try to load keys from context
                                       // false = reload keys manually every time
     let mut context = Context::new(TctiNameConf::from_environment_variable()?)?;
-    let approved_policy = Digest::try_from(fs::read("policy/pcr.policy_desired")?)?;
+
+    let approved_policy = Digest::try_from(fs::read(format!(
+        "{env_var_string}/policy/pcr.policy_desired"
+    ))?)?;
     let policy_digest = Digest::try_from(&openssl::sha::sha256(&approved_policy)[..])?;
     let session = context
         .start_auth_session(
@@ -74,7 +85,7 @@ fn body(ev: copland::EvidenceT, _args: copland::ASP_ARGS) -> anyhow::Result<copl
 
     let policy_signature = Signature::RsaSsa(RsaSignature::create(
         HashingAlgorithm::Sha256,
-        PublicKeyRsa::try_from(fs::read("policy/pcr.signature")?)?,
+        PublicKeyRsa::try_from(fs::read(format!("{env_var_string}/policy/pcr.signature"))?)?,
     )?);
     let check_ticket =
         context.verify_signature(policy_key_handle, policy_digest, policy_signature)?;
@@ -118,7 +129,7 @@ fn body(ev: copland::EvidenceT, _args: copland::ASP_ARGS) -> anyhow::Result<copl
 }
 
 fn load_external_signing_key(context: &mut Context) -> anyhow::Result<KeyHandle> {
-    let der = fs::read("policy/policy_key.pem")?;
+    let der = fs::read(format!("{env_var_string}/policy/policy_key.pem"))?;
     let key = openssl::rsa::Rsa::public_key_from_pem(&der)?;
     let modulus = key.n().to_vec();
     let exponent = key
@@ -159,7 +170,7 @@ fn set_policy(context: &mut Context, session: PolicySession) -> anyhow::Result<(
         .with_selection(HashingAlgorithm::Sha256, &[PcrSlot::Slot0])
         .build()?;
 
-    let concatenated_pcr_values = fs::read("policy/pcr0.sha256")?;
+    let concatenated_pcr_values = fs::read(format!("{env_var_string}/policy/pcr0.sha256"))?;
     let hashed_pcrs = Digest::try_from(&openssl::sha::sha256(&concatenated_pcr_values)[..])?;
 
     context.policy_pcr(session, hashed_pcrs, pcr_selection_list)?;
