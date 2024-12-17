@@ -6,6 +6,14 @@ use std::fs;
 // function where the work of the ASP is performed.
 // May signal an error which will be handled in main.
 fn body(ev: copland::EvidenceT, _args: copland::ASP_ARGS) -> Result<copland::EvidenceT> {
+    let env_var_key = "AM_ROOT";
+    let env_var_string = match std::env::var(env_var_key) {
+        Ok(val) => val,
+        Err(_e) => {
+            panic!("Did not set environment variable AM_ROOT")
+        }
+    };
+
     let message_signature = ev.first().context("No message signature found")?;
     let message_sig_input = ev
         .get(1..)
@@ -16,7 +24,8 @@ fn body(ev: copland::EvidenceT, _args: copland::ASP_ARGS) -> Result<copland::Evi
         .collect::<Vec<u8>>();
     // Use openssl to verify the signature
     // TODO: fix reading key.pem with actual public key from args
-    let pkey = openssl::pkey::PKey::public_key_from_pem(&fs::read("key.pem")?)?;
+    let pkey =
+        openssl::pkey::PKey::public_key_from_pem(&fs::read(format!("{env_var_string}/key.pem"))?)?;
     let mut verifier = openssl::sign::Verifier::new(openssl::hash::MessageDigest::sha256(), &pkey)?;
     verifier.set_rsa_padding(openssl::rsa::Padding::PKCS1_PSS)?;
     let res = verifier.verify_oneshot(&message_signature, &message_sig_input)?;

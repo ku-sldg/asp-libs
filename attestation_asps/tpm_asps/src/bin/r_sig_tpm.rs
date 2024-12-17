@@ -63,14 +63,14 @@ fn body(ev: copland::EvidenceT, _args: copland::ASP_ARGS) -> anyhow::Result<copl
         .build();
     context.tr_sess_set_attributes(session, session_attributes, session_attributes_mask)?;
     let policy_session: PolicySession = session.try_into()?;
-    set_policy(&mut context, policy_session)?;
+    set_policy(&env_var_string, &mut context, policy_session)?;
 
     let policy_key_handle = if use_key_context {
         if let Ok(key_handle) = reload_key_context(&mut context, env::temp_dir().join("policy.ctx"))
         {
             key_handle
         } else {
-            let policy_key_handle = load_external_signing_key(&mut context)?;
+            let policy_key_handle = load_external_signing_key(&env_var_string, &mut context)?;
             let _ = save_key_context(
                 &mut context,
                 policy_key_handle.into(),
@@ -79,7 +79,7 @@ fn body(ev: copland::EvidenceT, _args: copland::ASP_ARGS) -> anyhow::Result<copl
             policy_key_handle
         }
     } else {
-        load_external_signing_key(&mut context)?
+        load_external_signing_key(&env_var_string, &mut context)?
     };
     let key_sign = context.tr_get_name(policy_key_handle.into())?;
 
@@ -128,7 +128,10 @@ fn body(ev: copland::EvidenceT, _args: copland::ASP_ARGS) -> anyhow::Result<copl
     Ok(vec![signature])
 }
 
-fn load_external_signing_key(context: &mut Context) -> anyhow::Result<KeyHandle> {
+fn load_external_signing_key(
+    env_var_string: &String,
+    context: &mut Context,
+) -> anyhow::Result<KeyHandle> {
     let der = fs::read(format!("{env_var_string}/policy/policy_key.pem"))?;
     let key = openssl::rsa::Rsa::public_key_from_pem(&der)?;
     let modulus = key.n().to_vec();
@@ -165,7 +168,11 @@ fn load_external_signing_key(context: &mut Context) -> anyhow::Result<KeyHandle>
     Ok(policy_key_handle)
 }
 
-fn set_policy(context: &mut Context, session: PolicySession) -> anyhow::Result<()> {
+fn set_policy(
+    env_var_string: &String,
+    context: &mut Context,
+    session: PolicySession,
+) -> anyhow::Result<()> {
     let pcr_selection_list = PcrSelectionListBuilder::new()
         .with_selection(HashingAlgorithm::Sha256, &[PcrSlot::Slot0])
         .build()?;
