@@ -14,11 +14,11 @@ fn body(ev: copland::EvidenceT, args: copland::ASP_ARGS) -> Result<copland::Evid
         .get("filepath")
         .context("filepath argument not provided to ASP, r_readfile_id")?;
 
-    let env_var_key = "DEMO_ROOT";
+    let env_var_key = "AM_ROOT";
     let env_var_string = match std::env::var(env_var_key) {
         Ok(val) => val,
         Err(_e) => {
-            panic!("Did not set environment variable DEMO_ROOT")
+            panic!("Did not set environment variable AM_ROOT")
         }
     };
 
