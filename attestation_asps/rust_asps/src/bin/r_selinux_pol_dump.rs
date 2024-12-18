@@ -9,10 +9,11 @@ fn body(_ev: copland::EvidenceT, _args: copland::ASP_ARGS) -> Result<copland::Ev
     // let policy_name = _args.get("policy_name").unwrap();
     let policy_name = "demo_pipeline";
 
-    // Execute the shell command to dump the selinux policy
-    let command = format!("semodule --cil --extract {policy_name}");
-    eprintln!("Executing command: {}", command);
-    let mut output = std::process::Command::new(command);
+    let command = "semodule";
+    let args = ["--cil", "--extract", policy_name];
+
+    eprintln!("Executing command: {} {:?}", command, args);
+    let mut output = std::process::Command::new(command).args(&args);
 
     if output.status().is_err() {
         eprintln!(
