@@ -23,6 +23,8 @@ fn body(ev: copland::EvidenceT, _args: copland::ASP_ARGS) -> Result<copland::Evi
     eprint!("Attempting to read from file: {}\n", golden_policy_path);
 
     let golden_bytes = std::fs::read(golden_policy_path)?; // Vec<u8>
+    eprintln!("Policy Bytes: {:?}", pol_hash);
+    eprintln!("Golden Bytes: {:?}", golden_bytes);
 
     let out_contents: String = match golden_bytes.eq(pol_hash) {
         true => "PASSED".to_string(),
