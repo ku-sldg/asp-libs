@@ -10,10 +10,15 @@ fn body(_ev: copland::EvidenceT, _args: copland::ASP_ARGS) -> Result<copland::Ev
     let policy_name = "demo_pipeline";
 
     // Execute the shell command to dump the selinux policy
-    let mut output = std::process::Command::new(format!("semodule --cil --extract {policy_name}"));
+    let command = format!("semodule --cil --extract {policy_name}");
+    eprintln!("Executing command: {}", command);
+    let mut output = std::process::Command::new(command);
 
     if output.status().is_err() {
-        eprint!("Failed to execute the command to dump the policy\n");
+        eprintln!(
+            "Failed to execute the command to dump the policy: Error Code: {:?}",
+            output.status()
+        );
         return Err(anyhow::anyhow!(
             "Failed to execute the command to dump the policy"
         ));
