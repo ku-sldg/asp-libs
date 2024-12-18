@@ -13,7 +13,8 @@ fn body(_ev: copland::EvidenceT, _args: copland::ASP_ARGS) -> Result<copland::Ev
     let args = ["--cil", "--extract", policy_name];
 
     eprintln!("Executing command: {} {:?}", command, args);
-    let mut output = std::process::Command::new(command).args(&args);
+    let mut binding = std::process::Command::new(command);
+    let output = binding.args(&args);
 
     if output.status().is_err() {
         eprintln!(
