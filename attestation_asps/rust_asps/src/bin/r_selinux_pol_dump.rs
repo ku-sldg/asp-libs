@@ -2,6 +2,7 @@
 use anyhow::Result;
 use rust_am_lib::copland::{self, handle_body};
 use sha2::{Digest, Sha256};
+use std::process::Stdio;
 
 // function where the work of the ASP is performed.
 // May signal an error which will be handled in main.
@@ -13,8 +14,8 @@ fn body(_ev: copland::EvidenceT, _args: copland::ASP_ARGS) -> Result<copland::Ev
     let args = ["--cil", "--extract", policy_name];
 
     eprintln!("Executing command: {} {:?}", command, args);
-    let mut binding = std::process::Command::new(command);
-    let output = binding.args(&args);
+    let mut binding = std::process::Command::new(command); //.args(&args).stdout(Stdio::null());
+    let output = binding.args(&args).stdout(Stdio::null());
 
     if output.status().is_err() {
         eprintln!(

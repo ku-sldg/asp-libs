@@ -18,7 +18,7 @@ fn body(ev: copland::EvidenceT, _args: copland::ASP_ARGS) -> Result<copland::Evi
     // let policy_name = _args.get("policy_name").unwrap();
     let _policy_name = "demo_pipeline";
 
-    let golden_policy_path = format!("{env_var_string}/demo_pipeline_golden.cil");
+    let golden_policy_path = format!("{env_var_string}/tests/DemoFiles/goldenFiles/demo_pipeline_golden.cil");
 
     eprint!("Attempting to read from file: {}\n", golden_policy_path);
 
