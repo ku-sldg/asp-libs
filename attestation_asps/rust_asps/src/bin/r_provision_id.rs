@@ -11,8 +11,8 @@ fn body(ev: copland::EvidenceT, args: copland::ASP_ARGS) -> Result<copland::Evid
     // This example computes the HASH of the file named in an argument for the ASP.
     // May return an Err Result, which will be captured in main.
     let filename: &String = args
-        .get("filepath")
-        .context("filepath argument not provided to ASP, r_readfile_id")?;
+        .get("filepath-golden")
+        .context("filepath-golden argument not provided to ASP, r_readfile_id")?;
 
     let env_var_key = "DEMO_ROOT";
     let env_var_string = match std::env::var(env_var_key) {
