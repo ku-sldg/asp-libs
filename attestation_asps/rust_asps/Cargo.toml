@@ -10,6 +10,12 @@ test = false
 bench = false
 
 [[bin]]
+name = "r_hashdir_id"
+path = "src/bin/r_hashdir_id.rs"
+test = false
+bench = false
+
+[[bin]]
 name = "r_uptime_id"
 path = "src/bin/r_uptime_id.rs"
 test = false
@@ -67,3 +73,4 @@ curl = "0.4.47"
 base64 = "0.22.1"
 serde = { version = "1.0.214", features = ["derive"] }
 openssl = "0.10.68"
+lexical-sort = "0.3.1"

@@ -1,0 +1,12 @@
+{
+  "TYPE": "REQUEST",
+  "ACTION": "ASP_RUN",
+  "ASP_ID": "r_hashdir_id",
+  "ASP_ARGS": {"dirpath":"/am-cakeml/tests/DemoFiles/goldenFiles"},
+  "ASP_PLC": "P2",
+  "ASP_TARG_ID": "sys_targ",
+  "RAWEV": {
+    "RawEv": [
+    ]
+  }
+}
