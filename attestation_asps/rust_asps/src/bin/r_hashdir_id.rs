@@ -8,6 +8,7 @@ use rust_am_lib::copland::{self, handle_body};
 // e.g.
 use sha2::{Digest, Sha256};
 use std::{fs, io};
+use std::path::PathBuf;
 //use lexical_sort::{StringSort, natural_lexical_cmp};
 
 // function where the work of the ASP is performed.
@@ -19,6 +20,10 @@ fn body(_ev: copland::EvidenceT, args: copland::ASP_ARGS) -> Result<copland::Evi
     let dirname = args
         .get("dirpath")
         .context("dirpath argument not provided to ASP, hashdir_id")?;
+
+    let suffix = args
+        .get("suffix")
+        .context("suffix argument not provided to ASP, hashdir_id")?;
 
 
     let env_var_key = "DEMO_ROOT";
@@ -39,11 +44,17 @@ fn body(_ev: copland::EvidenceT, args: copland::ASP_ARGS) -> Result<copland::Evi
         .collect::<Result<Vec<_>, io::Error>>()?;
 
 
+    
+
     entries.sort();  /* string_sort_unstable(natural_lexical_cmp); */
+
+    let filtered_entries: Vec<PathBuf> = entries.into_iter()
+        .filter(|x| x.to_string_lossy().ends_with(&*suffix) /* x.to_owned().ends_with(".json") */ )
+        .collect();
     
     let mut comp_hash: Vec<u8> = Vec::new();
 
-    for entry in entries {
+    for entry in filtered_entries {
         // let dir = entry?;
 
         let bytes = std::fs::read(&entry)?;
