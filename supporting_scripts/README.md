@@ -2,7 +2,7 @@ These files are necessary for:
 1. running the swtpm installed on our testbed
 2. provisioning of signing keys
 
-To start the swtpm on the testbed, execute `source start_tpm.sh` (necessary to set environment variables).
+To start the swtpm on the testbed, execute `source asp-libs/supporting_scripts/start_tpm.sh` (necessary to set environment variables) from the home directory of the demo user.
 
 When you start the swtpm for the first time, you should then execute `./gen_policies.sh` and `./gen_keys.sh`.
 This will create the signing key and its policies. These should never need to be run again, unless you want new policies or keys.
