@@ -11,12 +11,36 @@ use std::{fs, io};
 use std::path::PathBuf;
 //use lexical_sort::{StringSort, natural_lexical_cmp};
 
+use serde::{Deserialize, Serialize};
+use serde_json::{Value};
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct ASP_ARGS_Copland {
+    env_var: String,
+    paths: Vec<String>,
+    filepath_golden: String
+}
+
 // function where the work of the ASP is performed.
 // May signal an error which will be handled in main.
 fn body(_ev: copland::EvidenceT, args: copland::ASP_ARGS) -> Result<copland::EvidenceT> {
     // Code for specific for this ASP.
     // This example computes the HASH of the file named in an argument for the ASP.
     // May return an Err Result, which will be captured in main.
+
+    let myaspargs : ASP_ARGS_Copland = serde_json::from_value(args)
+        .context("Could not parse ASP_ARGS for ASP r_hashdir_id")?;
+    
+
+    let env_var : String = myaspargs.env_var;
+    /*
+    .get("env-var")
+    .context("env_-ar key not provided to ASP_ARGS, hashdir_id");
+    */
+
+    let paths : Vec<String> = myaspargs.paths;
+
+
     let dirname = args
         .get("dirpath")
         .context("dirpath argument not provided to ASP, hashdir_id")?;
