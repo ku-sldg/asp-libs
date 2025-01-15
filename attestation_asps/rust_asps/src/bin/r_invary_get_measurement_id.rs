@@ -1,7 +1,6 @@
 // Common Packages
 use curl::easy::Easy;
 use curl::easy::List;
-use serde::{Deserialize, Serialize};
 use std::fs::{self, DirEntry};
 use std::io::Read;
 use std::io::{Error, ErrorKind};
@@ -10,6 +9,15 @@ use std::str;
 use std::thread;
 use std::time::{Duration, UNIX_EPOCH};
 use anyhow::{Context, Result};
+
+use serde::{Deserialize, Serialize};
+use serde_json::{Value};
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct ASP_ARGS_Invary {
+    dynamic: String,
+    appraisal_dir: String
+}
 
 //const APPRAISAL_DIR: &'static str = "/var/opt/invary-appraiser/appraisals";
 //    handle.url("https://127.0.0.1:8443/api/measurements/jobs")?;
@@ -32,6 +40,7 @@ use rust_am_lib::copland::{self, handle_body};
 // May signal an error which will be handled in main.
 fn body(_ev: copland::EvidenceT, args: copland::ASP_ARGS) -> Result<copland::EvidenceT> {
 
+    /*
     let dynamic_arg_val = args
         .get("dynamic").
         context("dynamic argument not provided to ASP, r_invary_get_measurement_id")?;
@@ -40,7 +49,15 @@ fn body(_ev: copland::EvidenceT, args: copland::ASP_ARGS) -> Result<copland::Evi
         .get("appraisal-dir").
         context("appraisal-dir argument not provided to ASP, r_invary_get_measurement_id")?;
 
-    let dynamic_arg_val_string : String = (*dynamic_arg_val).clone();
+        */
+
+    let myaspargs : ASP_ARGS_Invary = serde_json::from_value(args)
+    .context("Could not parse ASP_ARGS for ASP r_invary_get_measurement_id")?;
+
+    let dynamic_arg_val : String = myaspargs.dynamic;
+    let appraisaldir_arg_val = myaspargs.appraisal_dir;
+
+    let dynamic_arg_val_string : String = (dynamic_arg_val).clone();
     let true_val_string : String = "true".to_string();
     let dynamic_arg_bool: bool = dynamic_arg_val_string.eq(&true_val_string);
 
@@ -55,7 +72,7 @@ fn body(_ev: copland::EvidenceT, args: copland::ASP_ARGS) -> Result<copland::Evi
 
         if done {
             eprint!("Reading latest KIM appraisal from directory: {}\n", appraisaldir_arg_val);
-            let path = newest_file_in_dir(appraisaldir_arg_val)?;
+            let path = newest_file_in_dir(&appraisaldir_arg_val)?;
             let bytes = std::fs::read(path)?; // Vec<u8>
             Ok(vec![bytes])
         } else {
@@ -66,7 +83,7 @@ fn body(_ev: copland::EvidenceT, args: copland::ASP_ARGS) -> Result<copland::Evi
     else {
         eprint!("\nSkipping Request for dynamic KIM measurement...\n\n");
         eprint!("\nReading latest KIM appraisal from directory: {}\n\n", appraisaldir_arg_val);
-        let path = newest_file_in_dir(appraisaldir_arg_val)?;
+        let path = newest_file_in_dir(&appraisaldir_arg_val)?;
         let bytes = std::fs::read(path)?; // Vec<u8>
         Ok(vec![bytes])
     }

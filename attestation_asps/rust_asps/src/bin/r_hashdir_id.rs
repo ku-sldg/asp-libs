@@ -15,7 +15,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Value};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-struct ASP_ARGS_Copland {
+struct ASP_ARGS_Hashdir {
     env_var: String,
     paths: Vec<String>,
     filepath_golden: String
@@ -28,7 +28,7 @@ fn body(_ev: copland::EvidenceT, args: copland::ASP_ARGS) -> Result<copland::Evi
     // This example computes the HASH of the file named in an argument for the ASP.
     // May return an Err Result, which will be captured in main.
 
-    let myaspargs : ASP_ARGS_Copland = serde_json::from_value(args)
+    let myaspargs : ASP_ARGS_Hashdir = serde_json::from_value(args)
         .context("Could not parse ASP_ARGS for ASP r_hashdir_id")?;
     
 
@@ -41,6 +41,7 @@ fn body(_ev: copland::EvidenceT, args: copland::ASP_ARGS) -> Result<copland::Evi
     let paths : Vec<String> = myaspargs.paths;
 
 
+    /*
     let dirname = args
         .get("dirpath")
         .context("dirpath argument not provided to ASP, hashdir_id")?;
@@ -48,33 +49,67 @@ fn body(_ev: copland::EvidenceT, args: copland::ASP_ARGS) -> Result<copland::Evi
     let suffix = args
         .get("suffix")
         .context("suffix argument not provided to ASP, hashdir_id")?;
+    */
 
 
-    let env_var_key = "DEMO_ROOT";
-    let env_var_string = match std::env::var(env_var_key) {
+    /* let env_var_key = "DEMO_ROOT"; */
+
+    /* TODO: check for empty string, if so set env_var_string to "" */
+    let env_var_string = match std::env::var(&env_var) {
         Ok(val) => val,
         Err(_e) => {
-            panic!("Did not set environment variable DEMO_ROOT")
+            panic!("Did not set environment variable {}\n", env_var)
         }
     };
 
+    let mut dir_entries : Vec<PathBuf> = Vec::new();
+
+    for path in paths {
+
+        let dirname_string = (path).clone();
+        let dirname_full = format! {"{env_var_string}{dirname_string}"};
+        dir_entries.push(dirname_full.into());
+
+    }
+
+    /*
     let dirname_string = (*dirname).clone();
     let dirname_full = format! {"{env_var_string}{dirname_string}"};
+    */
 
-    eprint!("Attempting to read from direcory: {}\n", dirname_full);
+    let mut file_entries : Vec<PathBuf> = Vec::new();
 
-    let mut entries = fs::read_dir(&dirname_full)?
-        .map(|res| res.map(|e| e.path()))
-        .collect::<Result<Vec<_>, io::Error>>()?;
+    for dir_entry in dir_entries {
+
+        eprint!("Attempting to read from direcory: {}\n", dir_entry.display());
+
+        let mut entries = fs::read_dir(&dir_entry)?
+            .map(|res| res.map(|e| e.path()))
+            .collect::<Result<Vec<_>, io::Error>>()?;
+
+        file_entries.append(&mut entries);
+
+    }
 
 
-    
+
+
+    /*
 
     entries.sort();  /* string_sort_unstable(natural_lexical_cmp); */
 
-    let filtered_entries: Vec<PathBuf> = entries.into_iter()
-        .filter(|x| x.to_string_lossy().ends_with(&*suffix) /* x.to_owned().ends_with(".json") */ )
+    */
+
+    let filtered_entries: Vec<PathBuf> = file_entries.into_iter()
+        .filter(|x| x.is_file()/* x.to_string_lossy().ends_with(&*suffix) */ /* x.to_owned().ends_with(".json") */ )
         .collect();
+
+
+        /*
+    file_entries.sort();
+    */
+
+
     
     let mut comp_hash: Vec<u8> = Vec::new();
 

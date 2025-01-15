@@ -2,17 +2,34 @@
 use anyhow::{Context, Result};
 use rust_am_lib::copland::{self, handle_body};
 
+use serde::{Deserialize, Serialize};
+use serde_json::{Value};
+
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct ASP_ARGS_Provision {
+    filepath_golden: String
+}
+
 // function where the work of the ASP is performed.
 // May signal an error which will be handled in main.
 fn body(ev: copland::EvidenceT, args: copland::ASP_ARGS) -> Result<copland::EvidenceT> {
     let evidence_in = ev.first().context("No file evidence found")?;
 
+
+    let myaspargs : ASP_ARGS_Provision = serde_json::from_value(args)
+    .context("Could not parse ASP_ARGS for ASP r_provision_id")?;
+
     // Code for specific for this ASP.
     // This example computes the HASH of the file named in an argument for the ASP.
     // May return an Err Result, which will be captured in main.
-    let filename: &String = args
+    let filename: String = myaspargs.filepath_golden;
+    
+    /*
+    args
         .get("filepath-golden")
         .context("filepath-golden argument not provided to ASP, r_readfile_id")?;
+    */
 
     let env_var_key = "DEMO_ROOT";
     let env_var_string = match std::env::var(env_var_key) {
@@ -22,7 +39,7 @@ fn body(ev: copland::EvidenceT, args: copland::ASP_ARGS) -> Result<copland::Evid
         }
     };
 
-    let filename_string = (*filename).clone();
+    let filename_string = (filename).clone();
     let filename_full = format! {"{env_var_string}{filename_string}"};
 
     //let bytes = std::fs::read(filename).context("could not read file contents in ASP, r_readfile_id.  Perhaps the file doesn't exits?")?; // Vec<u8>
