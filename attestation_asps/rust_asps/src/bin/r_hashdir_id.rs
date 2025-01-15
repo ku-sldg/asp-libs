@@ -100,7 +100,7 @@ fn body(_ev: copland::EvidenceT, args: copland::ASP_ARGS) -> Result<copland::Evi
 
     */
 
-    let filtered_entries: Vec<PathBuf> = file_entries.into_iter()
+    let mut filtered_entries: Vec<PathBuf> = file_entries.into_iter()
         .filter(|x| x.is_file()/* x.to_string_lossy().ends_with(&*suffix) */ /* x.to_owned().ends_with(".json") */ )
         .collect();
 
@@ -109,6 +109,7 @@ fn body(_ev: copland::EvidenceT, args: copland::ASP_ARGS) -> Result<copland::Evi
     file_entries.sort();
     */
 
+    filtered_entries.sort();
 
     
     let mut comp_hash: Vec<u8> = Vec::new();
