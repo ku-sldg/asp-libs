@@ -1,5 +1,5 @@
-// TEMPLATE.txt
-// General structure for ASP's written in rust
+// r_hashdir_ids.rs
+// Follows general structure for ASP's written in rust
 
 use anyhow::{Context, Result};
 use rust_am_lib::copland::{self, handle_body};
@@ -12,8 +12,10 @@ use std::path::PathBuf;
 //use lexical_sort::{StringSort, natural_lexical_cmp};
 
 use serde::{Deserialize, Serialize};
-use serde_json::{Value};
+use serde_json::Value;
 
+
+// ASP Arguments (JSON-decoded)
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct ASP_ARGS_Hashdir {
     env_var: String,
@@ -25,34 +27,15 @@ struct ASP_ARGS_Hashdir {
 // May signal an error which will be handled in main.
 fn body(_ev: copland::EvidenceT, args: copland::ASP_ARGS) -> Result<copland::EvidenceT> {
     // Code for specific for this ASP.
-    // This example computes the HASH of the file named in an argument for the ASP.
+    // This example computes the HASH Composite of file paths specified in the "paths" argument to the ASP.
     // May return an Err Result, which will be captured in main.
 
     let myaspargs : ASP_ARGS_Hashdir = serde_json::from_value(args)
         .context("Could not parse ASP_ARGS for ASP r_hashdir_id")?;
     
-
     let env_var : String = myaspargs.env_var;
-    /*
-    .get("env-var")
-    .context("env_-ar key not provided to ASP_ARGS, hashdir_id");
-    */
 
     let paths : Vec<String> = myaspargs.paths;
-
-
-    /*
-    let dirname = args
-        .get("dirpath")
-        .context("dirpath argument not provided to ASP, hashdir_id")?;
-
-    let suffix = args
-        .get("suffix")
-        .context("suffix argument not provided to ASP, hashdir_id")?;
-    */
-
-
-    /* let env_var_key = "DEMO_ROOT"; */
 
     /* TODO: check for empty string, if so set env_var_string to "" */
     let env_var_string = match std::env::var(&env_var) {
@@ -72,11 +55,6 @@ fn body(_ev: copland::EvidenceT, args: copland::ASP_ARGS) -> Result<copland::Evi
 
     }
 
-    /*
-    let dirname_string = (*dirname).clone();
-    let dirname_full = format! {"{env_var_string}{dirname_string}"};
-    */
-
     let mut file_entries : Vec<PathBuf> = Vec::new();
 
     for dir_entry in dir_entries {
@@ -91,23 +69,9 @@ fn body(_ev: copland::EvidenceT, args: copland::ASP_ARGS) -> Result<copland::Evi
 
     }
 
-
-
-
-    /*
-
-    entries.sort();  /* string_sort_unstable(natural_lexical_cmp); */
-
-    */
-
     let mut filtered_entries: Vec<PathBuf> = file_entries.into_iter()
-        .filter(|x| x.is_file()/* x.to_string_lossy().ends_with(&*suffix) */ /* x.to_owned().ends_with(".json") */ )
+        .filter(|x| x.is_file() )
         .collect();
-
-
-        /*
-    file_entries.sort();
-    */
 
     filtered_entries.sort();
 
@@ -122,17 +86,6 @@ fn body(_ev: copland::EvidenceT, args: copland::ASP_ARGS) -> Result<copland::Evi
         //let v = entry.to_owned();
         eprintln!("{:?}", entry);
     }
-
-
-    /*
-        let ev_flattened: Vec<u8> = ev.into_iter().flatten().collect();
-
-    let hash = Sha256::digest(&ev_flattened);
-    */
-
-
-    
-    //let bytes = std::fs::read(dirname_full)?; // Vec<u8>
 
     let hash = Sha256::digest(&comp_hash);
     
