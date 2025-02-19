@@ -1,4 +1,5 @@
 #!/bin/sh
+[ -z "${AM_TPM_DIR}" ] || cd "${AM_TPM_DIR}" || exit 1
 
 mkdir -p policy
 cd policy
