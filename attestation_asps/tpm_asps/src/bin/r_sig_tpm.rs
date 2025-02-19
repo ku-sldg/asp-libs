@@ -28,11 +28,11 @@ use anyhow::Context as _;
 use std::{env, fs, path::Path};
 
 fn body(ev: copland::EvidenceT, _args: copland::ASP_ARGS) -> anyhow::Result<copland::EvidenceT> {
-    let env_var_key = "AM_ROOT";
+    let env_var_key = "AM_TPM_DIR";
     let env_var_string = match std::env::var(env_var_key) {
         Ok(val) => val,
         Err(_e) => {
-            panic!("Did not set environment variable AM_ROOT")
+            panic!("Did not set environment variable AM_TPM_DIR")
         }
     };
 
