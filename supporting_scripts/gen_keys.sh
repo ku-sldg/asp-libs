@@ -1,4 +1,6 @@
 #!/bin/sh
+[ -z "${AM_TPM_DIR}" ] || cd "${AM_TPM_DIR}" || exit 1
+
 if [ ! -f key.pem ] && [ -f key.pub ] && [ -f key.priv ] 
 then
 	echo "missing key.pem, recreating from existing key"
@@ -13,6 +15,8 @@ then
 	echo "key.pub and/or key.priv already exists, not reprovisioning"
 	exit 1
 fi
+
+rm -f /tmp/policy.ctx /tmp/signing.ctx
 
 tpm2_createprimary -C o -g sha256 -G aes128cfb -c prim.ctx
 tpm2_create -u key.pub -r key.priv -g sha256 -G "rsa2048:rsapss:null" -a "sign|fixedtpm|fixedparent|sensitivedataorigin" -C prim.ctx -c signing.ctx -L policy/authorized.policy

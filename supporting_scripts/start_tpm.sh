@@ -1,5 +1,6 @@
 #!/bin/sh
 mkdir -p mytpm
+rm -f /tmp/policy.ctx /tmp/signing.ctx
 echo "starting swtpm"
 swtpm socket --tpmstate dir=mytpm --tpm2 --ctrl type=tcp,port=2322 --server type=tcp,port=2321 --flags not-need-init &
 sleep 0.5
