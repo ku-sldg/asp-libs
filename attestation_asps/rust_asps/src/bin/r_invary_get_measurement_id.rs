@@ -50,7 +50,7 @@ fn body(_ev: copland::EvidenceT, args: copland::ASP_ARGS) -> Result<copland::Evi
         eprint!("\nRequesting dynamic KIM measurement...\n\n");
 
         let measure_job_id = demand_measure("veritas")?;
-        thread::sleep(Duration::new(6, 0));
+        thread::sleep(Duration::new(10, 0));
         let done = check_job_complete(&measure_job_id)?;
 
         if done {
