@@ -1,3 +1,3 @@
 #!/bin/bash
 
-sudo insmod invary-test-kit.ko
+insmod invary-test-kit.ko
