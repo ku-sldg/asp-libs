@@ -1,0 +1,6 @@
+{
+  "rust-analyzer.linkedProjects": [
+    "attestation_asps/rust_asps/Cargo.toml",
+    "attestation_asps/tpm_asps/Cargo.toml"
+  ]
+}
