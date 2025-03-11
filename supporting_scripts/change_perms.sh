@@ -22,5 +22,5 @@ run_command_on_file() {
 }
 
 # Example usage
-run_command_on_file "../bin/r_invary_get_measurement_id"
-run_command_on_file "../bin/r_selinux_pol_dump"
+run_command_on_file "../target/release/invary_get_measurement"
+run_command_on_file "../target/release/selinux_pol_dump"

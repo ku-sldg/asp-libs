@@ -1,0 +1,9 @@
+[package]
+name = "selinux_pol_dump"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = { workspace = true }
+lib = { path = "../../lib" }
+sha2 = "0.10.8"
