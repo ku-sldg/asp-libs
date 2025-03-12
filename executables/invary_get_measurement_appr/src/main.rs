@@ -16,11 +16,11 @@ pub struct InvaryAppraisal {
 
 // Common Packages
 use anyhow::{Context, Result};
-use lib::copland::{self, handle_body};
+use lib::copland::{self, handle_appraisal_body};
 
 // function where the work of the ASP is performed.
 // May signal an error which will be handled in main.
-fn body(ev: copland::EvidenceT, _args: copland::ASP_ARGS) -> Result<copland::EvidenceT> {
+fn body(ev: copland::EvidenceT, _args: copland::ASP_ARGS) -> Result<Result<()>> {
     // Suppose the file contents are to be extracted from evidence...
 
     let evidence_in = ev.first().context("No file evidence found")?;
@@ -31,11 +31,10 @@ fn body(ev: copland::EvidenceT, _args: copland::ASP_ARGS) -> Result<copland::Evi
 
     let app_resp_bool = appraisal_response_string == Some("SUCCESSFUL");
 
-    let out_contents: String = match app_resp_bool {
-        true => "PASSED".to_string(),
-        false => "FAILED".to_string(),
-    };
-    Ok(vec![out_contents.as_bytes().to_vec()])
+    match app_resp_bool {
+        true => Ok(Ok(())),
+        false => Ok(Err(anyhow::anyhow!("Appraisal was not successful"))),
+    }
 }
 
 // Main simply invokes the body() function above,
@@ -45,5 +44,5 @@ fn body(ev: copland::EvidenceT, _args: copland::ASP_ARGS) -> Result<copland::Evi
 // ASPRunResponse returned from body()
 
 fn main() {
-    handle_body(body);
+    handle_appraisal_body(body);
 }

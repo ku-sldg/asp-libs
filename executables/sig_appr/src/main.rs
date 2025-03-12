@@ -1,10 +1,10 @@
 // Common Packages
 use anyhow::{Context, Result};
-use lib::copland::{self, handle_body};
+use lib::copland::{self, handle_appraisal_body};
 
 // function where the work of the ASP is performed.
 // May signal an error which will be handled in main.
-fn body(ev: copland::EvidenceT, _args: copland::ASP_ARGS) -> Result<copland::EvidenceT> {
+fn body(ev: copland::EvidenceT, _args: copland::ASP_ARGS) -> Result<Result<()>> {
     let message_signature = ev.first().context("No message signature found")?;
     let message_sig_input = ev
         .get(1..)
@@ -29,12 +29,11 @@ fn body(ev: copland::EvidenceT, _args: copland::ASP_ARGS) -> Result<copland::Evi
      let hash_b64: String = BASE64_STANDARD.encode(bytes);
     */
 
-    let res_string: String = if res {
-        "PASSED".to_string()
+    if res {
+        Ok(Ok(()))
     } else {
-        "FAILED".to_string()
-    };
-    Ok(vec![res_string.as_bytes().to_vec()])
+        Ok(Err(anyhow::anyhow!("Signature verification failed")))
+    }
 }
 
 // Main simply invokes the body() function above,
@@ -44,5 +43,5 @@ fn body(ev: copland::EvidenceT, _args: copland::ASP_ARGS) -> Result<copland::Evi
 // ASPRunResponse returned from body()
 
 fn main() {
-    handle_body(body);
+    handle_appraisal_body(body);
 }

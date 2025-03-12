@@ -1,10 +1,10 @@
 // Common Packages
 use anyhow::{Context, Result};
-use lib::copland::{self, handle_body};
+use lib::copland::{self, handle_appraisal_body};
 
 // function where the work of the ASP is performed.
 // May signal an error which will be handled in main.
-fn body(ev: copland::EvidenceT, args: copland::ASP_ARGS) -> Result<copland::EvidenceT> {
+fn body(ev: copland::EvidenceT, args: copland::ASP_ARGS) -> Result<Result<()>> {
     let golden_filename = args
         .get("filepath-golden")
         .context("filepath-golden argument not provided to ASP, appraise_r_readfile_id")?;
@@ -45,11 +45,10 @@ fn body(ev: copland::EvidenceT, args: copland::ASP_ARGS) -> Result<copland::Evid
     // The return value for an ASP, must be
     // encoded in BASE64, and converted to ascii for JSON transmission
 
-    let out_contents: String = match bytes_equal {
-        true => "PASSED".to_string(),
-        false => "FAILED".to_string(),
-    };
-    Ok(vec![out_contents.as_bytes().to_vec()])
+    match bytes_equal {
+        true => Ok(Ok(())),
+        false => Ok(Err(anyhow::anyhow!("readfile: File contents do not match"))),
+    }
 }
 
 // Main simply invokes the body() function above,
@@ -59,5 +58,5 @@ fn body(ev: copland::EvidenceT, args: copland::ASP_ARGS) -> Result<copland::Evid
 // ASPRunResponse returned from body()
 
 fn main() {
-    handle_body(body);
+    handle_appraisal_body(body);
 }

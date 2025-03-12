@@ -5,7 +5,7 @@ use std::fs;
 
 // function where the work of the ASP is performed.
 // May signal an error which will be handled in main.
-fn body(ev: copland::EvidenceT, _args: copland::ASP_ARGS) -> Result<copland::EvidenceT> {
+fn body(ev: copland::EvidenceT, _args: copland::ASP_ARGS) -> Result<Result<()>> {
     let env_var_key = "AM_TPM_DIR";
     let env_var_string = match std::env::var(env_var_key) {
         Ok(val) => val,
@@ -30,12 +30,11 @@ fn body(ev: copland::EvidenceT, _args: copland::ASP_ARGS) -> Result<copland::Evi
     verifier.set_rsa_padding(openssl::rsa::Padding::PKCS1_PSS)?;
     let res = verifier.verify_oneshot(&message_signature, &message_sig_input)?;
 
-    let res_string: String = if res {
-        "PASSED".to_string()
+    if res {
+        Ok(Ok(()))
     } else {
-        "FAILED".to_string()
-    };
-    Ok(vec![res_string.as_bytes().to_vec()])
+        Ok(Err(anyhow::anyhow!("TPM Signature verification failed")))
+    }
 }
 
 // Main simply invokes the body() function above,
@@ -45,5 +44,5 @@ fn body(ev: copland::EvidenceT, _args: copland::ASP_ARGS) -> Result<copland::Evi
 // ASPRunResponse returned from body()
 
 fn main() {
-    copland::handle_body(body);
+    copland::handle_appraisal_body(body);
 }

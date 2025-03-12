@@ -1,10 +1,10 @@
 // Common Packages
 use anyhow::Result;
-use lib::copland::{self, handle_body};
+use lib::copland::{self, handle_appraisal_body};
 
 // function where the work of the ASP is performed.
 // May signal an error which will be handled in main.
-fn body(ev: copland::EvidenceT, _args: copland::ASP_ARGS) -> Result<copland::EvidenceT> {
+fn body(ev: copland::EvidenceT, _args: copland::ASP_ARGS) -> Result<Result<()>> {
     let env_var_key = "AM_ROOT";
     let env_var_string = match std::env::var(env_var_key) {
         Ok(val) => val,
@@ -27,12 +27,10 @@ fn body(ev: copland::EvidenceT, _args: copland::ASP_ARGS) -> Result<copland::Evi
     eprintln!("Policy Bytes: {:?}", pol_hash);
     eprintln!("Golden Bytes: {:?}", golden_bytes);
 
-    let out_contents: String = match golden_bytes.eq(pol_hash) {
-        true => "PASSED".to_string(),
-        false => "FAILED".to_string(),
-    };
-
-    Ok(vec![out_contents.as_bytes().to_vec()])
+    match golden_bytes.eq(pol_hash) {
+        true => Ok(Ok(())),
+        false => Ok(Err(anyhow::anyhow!("Policy contents do not match"))),
+    }
 }
 
 // Main simply invokes the body() function above,
@@ -42,5 +40,5 @@ fn body(ev: copland::EvidenceT, _args: copland::ASP_ARGS) -> Result<copland::Evi
 // ASPRunResponse returned from body()
 
 fn main() {
-    handle_body(body);
+    handle_appraisal_body(body);
 }
