@@ -2,9 +2,10 @@ BIN := target
 
 # list of targets to not build by default
 DEFAULT_EXCLUDES ?= sig_tpm sig_tpm_appr
+COMPUTED_EXCLUDES = $(foreach exclude,$(DEFAULT_EXCLUDES),--exclude $(exclude))
 
 default:
-	cargo build --release --workspace $(foreach exclude,$(DEFAULT_EXCLUDES),--exclude $(exclude))
+	cargo build --release --workspace $(COMPUTED_EXCLUDES)
 
 all: 
 	cargo build --release
@@ -13,8 +14,8 @@ debug:
 	cargo build 
 
 test:
-	cargo build --release
-	cargo test
+	make default
+	cargo test --workspace $(COMPUTED_EXCLUDES)
 
 clean:
 	rm -rf $(BIN)
