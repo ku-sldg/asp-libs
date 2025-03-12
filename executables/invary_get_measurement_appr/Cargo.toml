@@ -1,7 +1,7 @@
 [package]
 name = "invary_get_measurement_appr"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
 
 [dependencies]
 anyhow = { workspace = true }
