@@ -1,0 +1,9 @@
+[package]
+name = "uptime"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = { workspace = true }
+lib = { path = "../../lib" }
+sysinfo = "0.31.3"

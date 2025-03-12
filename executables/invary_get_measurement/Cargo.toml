@@ -1,0 +1,11 @@
+[package]
+name = "invary_get_measurement"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = { workspace = true }
+lib = { path = "../../lib" }
+curl = "0.4.47"
+serde = { workspace = true }
+serde_json = { workspace = true }

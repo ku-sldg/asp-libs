@@ -1,0 +1,11 @@
+{
+  "TYPE": "REQUEST",
+  "ACTION": "ASP_RUN",
+  "ASP_ID": "appraise_id",
+  "ASP_ARGS": {},
+  "ASP_PLC": "P2",
+  "ASP_TARG_ID": "sys_targ",
+  "RAWEV": {
+    "RawEv": ["kWBsZaVAbmkA+jGcqQjMGqPAe1+ledBL2+5HvK5p8oQ="]
+  }
+}

@@ -1,0 +1,8 @@
+[package]
+name = "selinux_pol_dump_appr"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = { workspace = true }
+lib = { path = "../../lib" }

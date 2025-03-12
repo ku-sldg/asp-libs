@@ -1,31 +1,22 @@
-# List of directories
+BIN := target
 
-# Find all directories that have a Makefile in them
-DIRS := $(shell find . -mindepth 2 -maxdepth 2 -type f -name Makefile | xargs -n 1 dirname)
+# list of targets to not build by default
+DEFAULT_EXCLUDES ?= sig_tpm sig_tpm_appr
+COMPUTED_EXCLUDES = $(foreach exclude,$(DEFAULT_EXCLUDES),--exclude $(exclude))
 
-IGNORED_DIRS := testing, $(OMIT_DIRS)
+default:
+	cargo build --release --workspace $(COMPUTED_EXCLUDES)
 
-BIN := ./bin
+all: 
+	cargo build --release
 
-# Target to run make in each directory
-.PHONY: all $(DIRS) 
+debug: 
+	cargo build 
 
-all: $(DIRS)
-
-$(DIRS):
-	@if ! echo $(IGNORED_DIRS) | grep -qw $@; then \
-		mkdir -p $(BIN); \
-		$(MAKE) -C $@; \
-		cp -r $@/bin/* $(BIN); \
-	fi
-
-# Optional: Define a clean target to clean all directories
-.PHONY: clean
+test:
+	make default
+	cargo test --workspace $(COMPUTED_EXCLUDES)
 
 clean:
-	@for dir in $(DIRS); do \
-		if ! echo $(IGNORED_DIRS) | grep -qw $$dir; then \
-			$(MAKE) -C $$dir clean; \
-		fi ; \
-	done ; \
-	rm -rf $(BIN); 
+	rm -rf $(BIN)
+	cargo clean

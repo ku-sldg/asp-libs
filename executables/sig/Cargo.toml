@@ -1,0 +1,9 @@
+[package]
+name = "sig"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = { workspace = true }
+lib = { path = "../../lib" }
+openssl = "0.10.68"

@@ -1,0 +1,12 @@
+[package]
+name = "sig_tpm"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = { workspace = true }
+tss-esapi = "7.5.1"
+openssl = "0.10.68"
+lib = { path = "../../lib" }
+serde = { workspace = true }
+serde_json = { workspace = true }

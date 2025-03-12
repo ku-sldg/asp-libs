@@ -1,0 +1,10 @@
+[package]
+name = "sig_tpm_appr"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = { workspace = true }
+tss-esapi = "7.5.1"
+lib = { path = "../../lib" }
+openssl = "0.10.68"

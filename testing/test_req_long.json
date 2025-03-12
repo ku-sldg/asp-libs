@@ -1,0 +1,13 @@
+{
+  "TYPE": "REQUEST",
+  "ACTION": "ASP_RUN",
+  "ASP_ID": "r_readfile_id",
+  "ASP_ARGS": {"filepath":"/Users/adampetz/Documents/Summer_2024/LayeredAttestation/src/demo_layered_attestation/email_header_mini_cds/bin/rewrite_one.ml",
+                "filepath-golden":"/Users/adampetz/Documents/Spring_2023/am-cakeml/tests/DemoFiles/goldenFiles/filter_one.ml"},
+  "ASP_PLC": "P2",
+  "ASP_TARG_ID": "sys_targ",
+  "RAWEV": {
+    "RawEv": [
+    ]
+  }
+}
