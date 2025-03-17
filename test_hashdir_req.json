@@ -2,8 +2,10 @@
   "TYPE": "REQUEST",
   "ACTION": "ASP_RUN",
   "ASP_ID": "r_hashdir_id",
-  "ASP_ARGS": {"dirpath":"/am-cakeml/tests/DemoFiles/goldenFiles",
-               "suffix":".system"},
+  "ASP_ARGS": {"env_var":"DEMO_ROOT",
+               "filepath_golden":"/am-cakeml/tests/DemoFiles/goldenFiles/micro_union_composite.txt",
+	       "paths":["/INSPECTA-models/micro-examples/microkit/aadl_port_types/data/base_type/aadl/","/INSPECTA-models/micro-examples/microkit/aadl_port_types/data/base_type/hamr/microkit/"
+         ]},
   "ASP_PLC": "P2",
   "ASP_TARG_ID": "sys_targ",
   "RAWEV": {
