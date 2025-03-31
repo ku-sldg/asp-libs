@@ -18,5 +18,4 @@ test:
 	cargo test --workspace $(COMPUTED_EXCLUDES)
 
 clean:
-	rm -rf $(BIN)
 	cargo clean

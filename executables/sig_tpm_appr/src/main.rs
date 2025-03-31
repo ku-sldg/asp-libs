@@ -5,14 +5,10 @@ use std::fs;
 
 // function where the work of the ASP is performed.
 // May signal an error which will be handled in main.
-fn body(ev: copland::EvidenceT, _args: copland::ASP_ARGS) -> Result<Result<()>> {
-    let env_var_key = "AM_TPM_DIR";
-    let env_var_string = match std::env::var(env_var_key) {
-        Ok(val) => val,
-        Err(_e) => {
-            panic!("Did not set environment variable AM_TPM_DIR")
-        }
-    };
+fn body(ev: copland::EvidenceT, args: copland::ASP_ARGS) -> Result<Result<()>> {
+    let tpm_folder = args
+        .get("tpm_folder")
+        .context("tpm_folder argument not provided to ASP, sig_tpm_appr")?;
 
     let message_signature = ev.first().context("No message signature found")?;
     let message_sig_input = ev
@@ -25,7 +21,7 @@ fn body(ev: copland::EvidenceT, _args: copland::ASP_ARGS) -> Result<Result<()>> 
     // Use openssl to verify the signature
     // TODO: fix reading key.pem with actual public key from args
     let pkey =
-        openssl::pkey::PKey::public_key_from_pem(&fs::read(format!("{env_var_string}/key.pem"))?)?;
+        openssl::pkey::PKey::public_key_from_pem(&fs::read(format!("{tpm_folder}/key.pem"))?)?;
     let mut verifier = openssl::sign::Verifier::new(openssl::hash::MessageDigest::sha256(), &pkey)?;
     verifier.set_rsa_padding(openssl::rsa::Padding::PKCS1_PSS)?;
     let res = verifier.verify_oneshot(&message_signature, &message_sig_input)?;
