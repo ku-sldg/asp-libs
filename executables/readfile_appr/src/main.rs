@@ -9,18 +9,7 @@ fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<Result<()>> {
         .get("filepath-golden")
         .context("filepath-golden argument not provided to ASP, appraise_r_readfile_id")?;
 
-    let env_var_key = "AM_ROOT";
-    let env_var_string = match std::env::var(env_var_key) {
-        Ok(val) => val,
-        Err(_e) => {
-            panic!("Did not set environment variable AM_ROOT")
-        }
-    };
-
-    let filename_string = (*golden_filename).to_string().clone();
-    let filename_full = format! {"{env_var_string}{filename_string}"};
-
-    let golden_bytes: Vec<u8> = std::fs::read(&filename_full)?; // Vec<u8>
+    let golden_bytes: Vec<u8> = std::fs::read(&golden_filename.to_string())?; // Vec<u8>
 
     // Common code to bundle computed value.
     // Step 1:

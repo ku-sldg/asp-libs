@@ -18,20 +18,9 @@ fn body(_ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP
         .get("filepath")
         .context("filename argument not provided to ASP, hashfile_id")?;
 
-    let env_var_key = "AM_ROOT";
-    let env_var_string = match std::env::var(env_var_key) {
-        Ok(val) => val,
-        Err(_e) => {
-            panic!("Did not set environment variable AM_ROOT")
-        }
-    };
+    eprint!("Attempting to read from file: {}\n", filename.to_string());
 
-    let filename_string = (*filename).clone();
-    let filename_full = format! {"{env_var_string}{filename_string}"};
-
-    eprint!("Attempting to read from file: {}\n", filename_full);
-
-    let bytes = std::fs::read(filename_full)?; // Vec<u8>
+    let bytes = std::fs::read(filename.to_string())?; // Vec<u8>
 
     let hash = Sha256::digest(&bytes);
     Ok(vec![hash.to_vec()])

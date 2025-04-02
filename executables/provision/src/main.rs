@@ -14,20 +14,7 @@ fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP_
         .get("filepath")
         .context("filepath argument not provided to ASP, r_readfile_id")?;
 
-    let env_var_key = "AM_ROOT";
-    let env_var_string = match std::env::var(env_var_key) {
-        Ok(val) => val,
-        Err(_e) => {
-            panic!("Did not set environment variable AM_ROOT")
-        }
-    };
-
-    let filename_string = (*filename).to_string().clone();
-    let filename_full = format! {"{env_var_string}{filename_string}"};
-
-    //let bytes = std::fs::read(filename).context("could not read file contents in ASP, r_readfile_id.  Perhaps the file doesn't exits?")?; // Vec<u8>
-
-    std::fs::write(filename_full, evidence_in)?;
+    std::fs::write(filename.to_string(), evidence_in)?;
     Ok(vec![])
 }
 
