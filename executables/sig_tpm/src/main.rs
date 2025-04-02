@@ -1,4 +1,4 @@
-use lib::copland;
+use rust_am_lib::copland;
 
 use tss_esapi::{
     attributes::{ObjectAttributesBuilder, SessionAttributesBuilder},
@@ -27,7 +27,7 @@ use tss_esapi::{
 use anyhow::Context as _;
 use std::{env, fs, path::Path};
 
-fn body(ev: copland::EvidenceT, _args: copland::ASP_ARGS) -> anyhow::Result<copland::EvidenceT> {
+fn body(ev: copland::ASP_RawEv, _args: copland::ASP_ARGS) -> anyhow::Result<copland::ASP_RawEv> {
     let env_var_key = "AM_TPM_DIR";
     let env_var_string = match std::env::var(env_var_key) {
         Ok(val) => val,

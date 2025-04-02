@@ -2,7 +2,7 @@
 // General structure for ASP's written in rust
 
 use anyhow::{Context, Result};
-use lib::copland::{self, handle_body};
+use rust_am_lib::copland::{self, handle_body};
 
 // Packages required to perform specific ASP action.
 // e.g.
@@ -10,7 +10,7 @@ use sha2::{Digest, Sha256};
 
 // function where the work of the ASP is performed.
 // May signal an error which will be handled in main.
-fn body(_ev: copland::EvidenceT, args: copland::ASP_ARGS) -> Result<copland::EvidenceT> {
+fn body(_ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP_RawEv> {
     // Code for specific for this ASP.
     // This example computes the HASH of the file named in an argument for the ASP.
     // May return an Err Result, which will be captured in main.

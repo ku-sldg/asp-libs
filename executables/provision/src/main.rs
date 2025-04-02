@@ -1,16 +1,16 @@
 // Common Packages
 use anyhow::{Context, Result};
-use lib::copland::{self, handle_body};
+use rust_am_lib::copland::{self, handle_body};
 
 // function where the work of the ASP is performed.
 // May signal an error which will be handled in main.
-fn body(ev: copland::EvidenceT, args: copland::ASP_ARGS) -> Result<copland::EvidenceT> {
+fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP_RawEv> {
     let evidence_in = ev.first().context("No file evidence found")?;
 
     // Code for specific for this ASP.
     // This example computes the HASH of the file named in an argument for the ASP.
     // May return an Err Result, which will be captured in main.
-    let filename: &String = args
+    let filename = args
         .get("filepath")
         .context("filepath argument not provided to ASP, r_readfile_id")?;
 
@@ -22,7 +22,7 @@ fn body(ev: copland::EvidenceT, args: copland::ASP_ARGS) -> Result<copland::Evid
         }
     };
 
-    let filename_string = (*filename).clone();
+    let filename_string = (*filename).to_string().clone();
     let filename_full = format! {"{env_var_string}{filename_string}"};
 
     //let bytes = std::fs::read(filename).context("could not read file contents in ASP, r_readfile_id.  Perhaps the file doesn't exits?")?; // Vec<u8>

@@ -26,11 +26,11 @@ pub struct InvaryMeasureCheck {
     pub measured: i64,
 }
 
-use lib::copland::{self, handle_body};
+use rust_am_lib::copland::{self, handle_body};
 
 // function where the work of the ASP is performed.
 // May signal an error which will be handled in main.
-fn body(_ev: copland::EvidenceT, args: copland::ASP_ARGS) -> Result<copland::EvidenceT> {
+fn body(_ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP_RawEv> {
     let dynamic_arg_val = args
         .get("dynamic")
         .context("dynamic argument not provided to ASP, r_invary_get_measurement_id")?;
@@ -39,7 +39,7 @@ fn body(_ev: copland::EvidenceT, args: copland::ASP_ARGS) -> Result<copland::Evi
         .get("appraisal-dir")
         .context("appraisal-dir argument not provided to ASP, r_invary_get_measurement_id")?;
 
-    let dynamic_arg_val_string: String = (*dynamic_arg_val).clone();
+    let dynamic_arg_val_string: String = (*dynamic_arg_val).to_string().clone();
     let true_val_string: String = "true".to_string();
     let dynamic_arg_bool: bool = dynamic_arg_val_string.eq(&true_val_string);
 
@@ -55,7 +55,7 @@ fn body(_ev: copland::EvidenceT, args: copland::ASP_ARGS) -> Result<copland::Evi
                 "Reading latest KIM appraisal from directory: {}\n",
                 appraisaldir_arg_val
             );
-            let path = newest_file_in_dir(appraisaldir_arg_val)?;
+            let path = newest_file_in_dir(appraisaldir_arg_val.to_string().as_str())?;
             let bytes = std::fs::read(path)?; // Vec<u8>
             Ok(vec![bytes])
         } else {
@@ -67,7 +67,7 @@ fn body(_ev: copland::EvidenceT, args: copland::ASP_ARGS) -> Result<copland::Evi
             "\nReading latest KIM appraisal from directory: {}\n\n",
             appraisaldir_arg_val
         );
-        let path = newest_file_in_dir(appraisaldir_arg_val)?;
+        let path = newest_file_in_dir(appraisaldir_arg_val.to_string().as_str())?;
         let bytes = std::fs::read(path)?; // Vec<u8>
         Ok(vec![bytes])
     }

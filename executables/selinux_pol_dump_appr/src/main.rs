@@ -1,10 +1,10 @@
 // Common Packages
 use anyhow::Result;
-use lib::copland::{self, handle_appraisal_body};
+use rust_am_lib::copland::{self, handle_appraisal_body};
 
 // function where the work of the ASP is performed.
 // May signal an error which will be handled in main.
-fn body(ev: copland::EvidenceT, _args: copland::ASP_ARGS) -> Result<Result<()>> {
+fn body(ev: copland::ASP_RawEv, _args: copland::ASP_ARGS) -> Result<Result<()>> {
     let env_var_key = "AM_ROOT";
     let env_var_string = match std::env::var(env_var_key) {
         Ok(val) => val,

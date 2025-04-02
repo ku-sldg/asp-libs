@@ -1,10 +1,10 @@
 // Common Packages
 use anyhow::{Context, Result};
-use lib::copland::{self, handle_appraisal_body};
+use rust_am_lib::copland::{self, handle_appraisal_body};
 
 // function where the work of the ASP is performed.
 // May signal an error which will be handled in main.
-fn body(ev: copland::EvidenceT, args: copland::ASP_ARGS) -> Result<Result<()>> {
+fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<Result<()>> {
     let golden_filename = args
         .get("filepath-golden")
         .context("filepath-golden argument not provided to ASP, appraise_r_readfile_id")?;
@@ -17,7 +17,7 @@ fn body(ev: copland::EvidenceT, args: copland::ASP_ARGS) -> Result<Result<()>> {
         }
     };
 
-    let filename_string = (*golden_filename).clone();
+    let filename_string = (*golden_filename).to_string().clone();
     let filename_full = format! {"{env_var_string}{filename_string}"};
 
     let golden_bytes: Vec<u8> = std::fs::read(&filename_full)?; // Vec<u8>
