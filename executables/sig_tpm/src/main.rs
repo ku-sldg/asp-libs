@@ -27,23 +27,18 @@ use tss_esapi::{
 use anyhow::Context as _;
 use std::{env, fs, path::Path};
 
-fn body(ev: copland::EvidenceT, _args: copland::ASP_ARGS) -> anyhow::Result<copland::EvidenceT> {
-    let env_var_key = "AM_TPM_DIR";
-    let env_var_string = match std::env::var(env_var_key) {
-        Ok(val) => val,
-        Err(_e) => {
-            panic!("Did not set environment variable AM_TPM_DIR")
-        }
-    };
+fn body(ev: copland::EvidenceT, args: copland::ASP_ARGS) -> anyhow::Result<copland::EvidenceT> {
+    let tpm_folder = args
+        .get("tpm_folder")
+        .context("tpm_folder argument not provided to ASP, sig_tpm")?;
 
     // Code adapted from tpm_sign
     let use_key_context: bool = true; // true = try to load keys from context
                                       // false = reload keys manually every time
     let mut context = Context::new(TctiNameConf::from_environment_variable()?)?;
 
-    let approved_policy = Digest::try_from(fs::read(format!(
-        "{env_var_string}/policy/pcr.policy_desired"
-    ))?)?;
+    let approved_policy =
+        Digest::try_from(fs::read(format!("{tpm_folder}/policy/pcr.policy_desired"))?)?;
     let policy_digest = Digest::try_from(&openssl::sha::sha256(&approved_policy)[..])?;
     let session = context
         .start_auth_session(
@@ -63,14 +58,14 @@ fn body(ev: copland::EvidenceT, _args: copland::ASP_ARGS) -> anyhow::Result<copl
         .build();
     context.tr_sess_set_attributes(session, session_attributes, session_attributes_mask)?;
     let policy_session: PolicySession = session.try_into()?;
-    set_policy(&env_var_string, &mut context, policy_session)?;
+    set_policy(&tpm_folder, &mut context, policy_session)?;
 
     let policy_key_handle = if use_key_context {
         if let Ok(key_handle) = reload_key_context(&mut context, env::temp_dir().join("policy.ctx"))
         {
             key_handle
         } else {
-            let policy_key_handle = load_external_signing_key(&env_var_string, &mut context)?;
+            let policy_key_handle = load_external_signing_key(&tpm_folder, &mut context)?;
             let _ = save_key_context(
                 &mut context,
                 policy_key_handle.into(),
@@ -79,13 +74,13 @@ fn body(ev: copland::EvidenceT, _args: copland::ASP_ARGS) -> anyhow::Result<copl
             policy_key_handle
         }
     } else {
-        load_external_signing_key(&env_var_string, &mut context)?
+        load_external_signing_key(&tpm_folder, &mut context)?
     };
     let key_sign = context.tr_get_name(policy_key_handle.into())?;
 
     let policy_signature = Signature::RsaSsa(RsaSignature::create(
         HashingAlgorithm::Sha256,
-        PublicKeyRsa::try_from(fs::read(format!("{env_var_string}/policy/pcr.signature"))?)?,
+        PublicKeyRsa::try_from(fs::read(format!("{tpm_folder}/policy/pcr.signature"))?)?,
     )?);
     let check_ticket =
         context.verify_signature(policy_key_handle, policy_digest, policy_signature)?;
@@ -103,7 +98,7 @@ fn body(ev: copland::EvidenceT, _args: copland::ASP_ARGS) -> anyhow::Result<copl
     let ev_flattened: Vec<u8> = ev.into_iter().flatten().collect();
     let digest = Digest::try_from(&openssl::sha::sha256(&ev_flattened)[..])?;
 
-    let key_handle = load_signing_key(&env_var_string, &mut context, use_key_context)?;
+    let key_handle = load_signing_key(&tpm_folder, &mut context, use_key_context)?;
 
     let signature = context.execute_with_session(Some(session), |context| {
         context.sign(
@@ -129,10 +124,10 @@ fn body(ev: copland::EvidenceT, _args: copland::ASP_ARGS) -> anyhow::Result<copl
 }
 
 fn load_external_signing_key(
-    env_var_string: &String,
+    tpm_folder: &String,
     context: &mut Context,
 ) -> anyhow::Result<KeyHandle> {
-    let der = fs::read(format!("{env_var_string}/policy/policy_key.pem"))?;
+    let der = fs::read(format!("{tpm_folder}/policy/policy_key.pem"))?;
     let key = openssl::rsa::Rsa::public_key_from_pem(&der)?;
     let modulus = key.n().to_vec();
     let exponent = key
@@ -169,7 +164,7 @@ fn load_external_signing_key(
 }
 
 fn set_policy(
-    env_var_string: &String,
+    tpm_folder: &String,
     context: &mut Context,
     session: PolicySession,
 ) -> anyhow::Result<()> {
@@ -177,7 +172,7 @@ fn set_policy(
         .with_selection(HashingAlgorithm::Sha256, &[PcrSlot::Slot0])
         .build()?;
 
-    let concatenated_pcr_values = fs::read(format!("{env_var_string}/policy/pcr0.sha256"))?;
+    let concatenated_pcr_values = fs::read(format!("{tpm_folder}/policy/pcr0.sha256"))?;
     let hashed_pcrs = Digest::try_from(&openssl::sha::sha256(&concatenated_pcr_values)[..])?;
 
     context.policy_pcr(session, hashed_pcrs, pcr_selection_list)?;
@@ -205,7 +200,7 @@ fn save_key_context<P: AsRef<Path>>(
 }
 
 fn load_signing_key(
-    env_var_string: &String,
+    tpm_folder: &String,
     context: &mut Context,
     use_key_context: bool,
 ) -> anyhow::Result<KeyHandle> {
@@ -238,12 +233,12 @@ fn load_signing_key(
     context.set_sessions((Some(auth_session), None, None));
     let primary_key_handle = create_primary_handle(context)?;
     let public = Public::unmarshall(
-        fs::read(format!("{env_var_string}/key.pub"))?
+        fs::read(format!("{tpm_folder}/key.pub"))?
             .get(2..)
             .context("Slicing out of bounds")?,
     )?;
     let private = Private::try_from(
-        fs::read(format!("{env_var_string}/key.priv"))?
+        fs::read(format!("{tpm_folder}/key.priv"))?
             .get(2..)
             .context("Slicing out of bounds")?,
     )?;
