@@ -10,12 +10,19 @@ fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP_
     // Code for specific for this ASP.
     // This example computes the HASH of the file named in an argument for the ASP.
     // May return an Err Result, which will be captured in main.
-    let filename = args
+    let filename_value = args
         .get("filepath")
-        .context("filepath argument not provided to ASP, r_readfile_id")?;
+        .context("'filepath' argument not provided to ASP, provision")?;
 
-    std::fs::write(filename.to_string(), evidence_in)?;
-    Ok(vec![])
+    if filename_value.is_string()
+    {
+        let filename: String = filename_value.to_string();
+        std::fs::write(filename, evidence_in)?;
+        Ok(vec![])
+    }
+    else {
+        Err(anyhow::anyhow!("Failed to decode 'filepath' ASP arg as JSON String in provision ASP"))
+    }
 }
 
 // Main simply invokes the body() function above,

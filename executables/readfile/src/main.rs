@@ -5,16 +5,25 @@ use rust_am_lib::copland::{self, handle_body};
 // function where the work of the ASP is performed.
 // May signal an error which will be handled in main.
 fn body(_ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP_RawEv> {
-    let filename = args
+    let filename_value = args
         .get("filepath")
-        .context("filepath argument not provided to ASP, r_readfile_id")?;
+        .context("'filepath' argument not provided to ASP, readfile")?;
 
-    eprint!("Attempting to read from file: {}\n", filename.to_string());
+    if filename_value.is_string()
+    {
+        let filename: String = filename_value.to_string();
 
-    let bytes = std::fs::read(&filename.to_string()).context(
-        "could not read file contents in ASP, r_readfile_id.  Perhaps the file doesn't exits?",
-    )?; // Vec<u8>
-    Ok(vec![bytes])
+        eprint!("Attempting to read from file: {}\n", filename);
+
+        let bytes = std::fs::read(&filename).context(
+            "could not read file contents in ASP, readfile.  Perhaps the file doesn't exits?",
+        )?;
+        Ok(vec![bytes])
+    }
+    else {
+        Err(anyhow::anyhow!("Failed to decode 'filepath' ASP arg as JSON String in readfile ASP"))
+    }
+
 }
 
 // Main simply invokes the body() function above,
