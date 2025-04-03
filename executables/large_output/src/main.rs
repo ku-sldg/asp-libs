@@ -1,10 +1,10 @@
 // Common Packages
 use anyhow::Result;
-use lib::copland::{self, handle_body};
+use rust_am_lib::copland::{self, handle_body};
 
 // function where the work of the ASP is performed.
 // May signal an error which will be handled in main.
-fn body(_ev: copland::EvidenceT, _args: copland::ASP_ARGS) -> Result<copland::EvidenceT> {
+fn body(_ev: copland::ASP_RawEv, _args: copland::ASP_ARGS) -> Result<copland::ASP_RawEv> {
     // construct a 4096 byte string to return
     let mut large_output = String::new();
     for i in 0..4096 / 4 {
