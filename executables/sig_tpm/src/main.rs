@@ -1,4 +1,9 @@
+
+#![allow(non_camel_case_types)]
+#![allow(non_snake_case)]
+
 use rust_am_lib::copland;
+use serde::{Deserialize, Serialize};
 
 use tss_esapi::{
     attributes::{ObjectAttributesBuilder, SessionAttributesBuilder},
@@ -27,107 +32,109 @@ use tss_esapi::{
 use anyhow::Context as _;
 use std::{env, fs, path::Path};
 
+// ASP Arguments (JSON-decoded)
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct ASP_ARGS_Sig_Tpm {
+    tpm_folder: String
+}
+
 fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> anyhow::Result<copland::EvidenceT> {
-    let tpm_folder_value = args
-        .get("tpm_folder")
-        .context("tpm_folder argument not provided to ASP, sig_tpm")?;
 
-    if tpm_folder_value.is_string()
-    {
-        let tpm_folder : String = tpm_folder_value.to_string();
-        // Code adapted from tpm_sign
-        let use_key_context: bool = true; // true = try to load keys from context
-                                        // false = reload keys manually every time
-        let mut context = Context::new(TctiNameConf::from_environment_variable()?)?;
+    let myaspargs : ASP_ARGS_Sig_Tpm = serde_json::from_value(args)
+    .context("Could not decode ASP_ARGS for ASP sig_tpm")?;
+    
+    let tpm_folder : String = myaspargs.tpm_folder;
 
-        let approved_policy =
-            Digest::try_from(fs::read(format!("{tpm_folder}/policy/pcr.policy_desired"))?)?;
-        let policy_digest = Digest::try_from(&openssl::sha::sha256(&approved_policy)[..])?;
-        let session = context
-            .start_auth_session(
-                None,
-                None,
-                None,
-                SessionType::Policy,
-                SymmetricDefinition::AES_128_CFB,
-                HashingAlgorithm::Sha256,
-            )?
-            .ok_or(tss_esapi::Error::WrapperError(
-                tss_esapi::WrapperErrorKind::WrongValueFromTpm,
-            ))?;
-        let (session_attributes, session_attributes_mask) = SessionAttributesBuilder::new()
-            .with_decrypt(true)
-            .with_encrypt(true)
-            .build();
-        context.tr_sess_set_attributes(session, session_attributes, session_attributes_mask)?;
-        let policy_session: PolicySession = session.try_into()?;
-        set_policy(&tpm_folder, &mut context, policy_session)?;
+    // Code adapted from tpm_sign
+    let use_key_context: bool = true; // true = try to load keys from context
+                                    // false = reload keys manually every time
+    let mut context = Context::new(TctiNameConf::from_environment_variable()?)?;
 
-        let policy_key_handle = if use_key_context {
-            if let Ok(key_handle) = reload_key_context(&mut context, env::temp_dir().join("policy.ctx"))
-            {
-                key_handle
-            } else {
-                let policy_key_handle = load_external_signing_key(&tpm_folder, &mut context)?;
-                let _ = save_key_context(
-                    &mut context,
-                    policy_key_handle.into(),
-                    env::temp_dir().join("policy.ctx"),
-                );
-                policy_key_handle
-            }
-        } else {
-            load_external_signing_key(&tpm_folder, &mut context)?
-        };
-        let key_sign = context.tr_get_name(policy_key_handle.into())?;
-
-        let policy_signature = Signature::RsaSsa(RsaSignature::create(
+    let approved_policy =
+        Digest::try_from(fs::read(format!("{tpm_folder}/policy/pcr.policy_desired"))?)?;
+    let policy_digest = Digest::try_from(&openssl::sha::sha256(&approved_policy)[..])?;
+    let session = context
+        .start_auth_session(
+            None,
+            None,
+            None,
+            SessionType::Policy,
+            SymmetricDefinition::AES_128_CFB,
             HashingAlgorithm::Sha256,
-            PublicKeyRsa::try_from(fs::read(format!("{tpm_folder}/policy/pcr.signature"))?)?,
-        )?);
-        let check_ticket =
-            context.verify_signature(policy_key_handle, policy_digest, policy_signature)?;
-        // policy_key_handle is no longer necessary and keeping it loaded slows things down
-        context.flush_context(policy_key_handle.into())?;
+        )?
+        .ok_or(tss_esapi::Error::WrapperError(
+            tss_esapi::WrapperErrorKind::WrongValueFromTpm,
+        ))?;
+    let (session_attributes, session_attributes_mask) = SessionAttributesBuilder::new()
+        .with_decrypt(true)
+        .with_encrypt(true)
+        .build();
+    context.tr_sess_set_attributes(session, session_attributes, session_attributes_mask)?;
+    let policy_session: PolicySession = session.try_into()?;
+    set_policy(&tpm_folder, &mut context, policy_session)?;
 
-        context.policy_authorize(
-            policy_session,
-            approved_policy,
-            Nonce::default(),
-            &key_sign,
-            check_ticket,
-        )?;
+    let policy_key_handle = if use_key_context {
+        if let Ok(key_handle) = reload_key_context(&mut context, env::temp_dir().join("policy.ctx"))
+        {
+            key_handle
+        } else {
+            let policy_key_handle = load_external_signing_key(&tpm_folder, &mut context)?;
+            let _ = save_key_context(
+                &mut context,
+                policy_key_handle.into(),
+                env::temp_dir().join("policy.ctx"),
+            );
+            policy_key_handle
+        }
+    } else {
+        load_external_signing_key(&tpm_folder, &mut context)?
+    };
+    let key_sign = context.tr_get_name(policy_key_handle.into())?;
 
-        let ev_flattened: Vec<u8> = ev.into_iter().flatten().collect();
-        let digest = Digest::try_from(&openssl::sha::sha256(&ev_flattened)[..])?;
+    let policy_signature = Signature::RsaSsa(RsaSignature::create(
+        HashingAlgorithm::Sha256,
+        PublicKeyRsa::try_from(fs::read(format!("{tpm_folder}/policy/pcr.signature"))?)?,
+    )?);
+    let check_ticket =
+        context.verify_signature(policy_key_handle, policy_digest, policy_signature)?;
+    // policy_key_handle is no longer necessary and keeping it loaded slows things down
+    context.flush_context(policy_key_handle.into())?;
 
-        let key_handle = load_signing_key(&tpm_folder, &mut context, use_key_context)?;
+    context.policy_authorize(
+        policy_session,
+        approved_policy,
+        Nonce::default(),
+        &key_sign,
+        check_ticket,
+    )?;
 
-        let signature = context.execute_with_session(Some(session), |context| {
-            context.sign(
-                key_handle,
-                digest.clone(),
-                SignatureScheme::RsaPss {
-                    //SignatureScheme::EcDsa {
-                    hash_scheme: HashScheme::new(HashingAlgorithm::Sha256),
-                },
-                // temporary workaround because validation is erroneously non-optional in tss_esapi v7.5.1
-                HashcheckTicket::try_from(TPMT_TK_HASHCHECK {
-                    tag: TPM2_ST_HASHCHECK,
-                    hierarchy: TPM2_RH_NULL,
-                    digest: Default::default(),
-                })?,
-            )
-        })?;
-        let signature = match signature {
-            Signature::RsaSsa(sig) | Signature::RsaPss(sig) => sig.signature().value().to_vec(),
-            _ => return Err(anyhow::anyhow!("really bad")),
-        };
-        Ok(vec![signature])
-    }
-    else {
-        Err(anyhow::anyhow!("Failed to decode 'tpm_folder' ASP arg as JSON String in sig_tpm ASP"))
-    }
+    let ev_flattened: Vec<u8> = ev.into_iter().flatten().collect();
+    let digest = Digest::try_from(&openssl::sha::sha256(&ev_flattened)[..])?;
+
+    let key_handle = load_signing_key(&tpm_folder, &mut context, use_key_context)?;
+
+    let signature = context.execute_with_session(Some(session), |context| {
+        context.sign(
+            key_handle,
+            digest.clone(),
+            SignatureScheme::RsaPss {
+                //SignatureScheme::EcDsa {
+                hash_scheme: HashScheme::new(HashingAlgorithm::Sha256),
+            },
+            // temporary workaround because validation is erroneously non-optional in tss_esapi v7.5.1
+            HashcheckTicket::try_from(TPMT_TK_HASHCHECK {
+                tag: TPM2_ST_HASHCHECK,
+                hierarchy: TPM2_RH_NULL,
+                digest: Default::default(),
+            })?,
+        )
+    })?;
+    let signature = match signature {
+        Signature::RsaSsa(sig) | Signature::RsaPss(sig) => sig.signature().value().to_vec(),
+        _ => return Err(anyhow::anyhow!("really bad")),
+    };
+    Ok(vec![signature])
+
 }
 
 fn load_external_signing_key(

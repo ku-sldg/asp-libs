@@ -6,6 +6,7 @@
 
 use anyhow::{Context, Result};
 use rust_am_lib::copland::{self, handle_body};
+use serde::{Deserialize, Serialize};
 
 // Packages required to perform specific ASP action.
 // e.g.
@@ -13,9 +14,6 @@ use sha2::{Digest, Sha256};
 use std::{fs, io};
 use std::path::PathBuf;
 //use lexical_sort::{StringSort, natural_lexical_cmp};
-
-use serde::{Deserialize, Serialize};
-//use serde_json::Value;
 
 
 // ASP Arguments (JSON-decoded)
@@ -34,7 +32,7 @@ fn body(_ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP
     // May return an Err Result, which will be captured in main.
 
     let myaspargs : ASP_ARGS_Hashdir = serde_json::from_value(args)
-        .context("Could not parse ASP_ARGS for ASP hashdir")?;
+        .context("Could not decode ASP_ARGS for ASP hashdir")?;
     
     let env_var : String = myaspargs.env_var;
 
