@@ -56,6 +56,8 @@ fn body(_ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP
 
     if dynamic_arg_bool {
 
+        eprint!("\nRequesting dynamic KIM measurement...\n\n");
+
         let measure_job_id = demand_measure("veritas")?;
         thread::sleep(Duration::new(10, 0));
         let done = check_job_complete(&measure_job_id)?;
@@ -72,7 +74,6 @@ fn body(_ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP
             Err(anyhow::anyhow!("Measurement did not complete."))
         }
     } else {
-        eprint!("\nRequesting dynamic KIM measurement...\n\n");
         eprint!("\nSkipping Request for dynamic KIM measurement...\n\n");
 
         let env_var: String = myaspargs.env_var;
@@ -84,7 +85,7 @@ fn body(_ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP
         };
     
         let appraisaldir_arg_val_string = format! {"{env_var_string}{appraisaldir_arg_val_string_relative}"};
-        
+
         eprint!(
             "\nReading latest KIM appraisal from directory: {}\n\n",
             appraisaldir_arg_val_string
