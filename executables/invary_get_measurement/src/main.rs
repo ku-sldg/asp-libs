@@ -56,6 +56,25 @@ fn body(_ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP
 
     if dynamic_arg_bool {
 
+        let measure_job_id = demand_measure("veritas")?;
+        thread::sleep(Duration::new(10, 0));
+        let done = check_job_complete(&measure_job_id)?;
+
+        if done {
+            eprint!(
+                "Reading latest KIM appraisal from directory: {}\n",
+                appraisaldir_arg_val_string_relative
+            );
+            let path = newest_file_in_dir(&appraisaldir_arg_val_string_relative.as_str())?;
+            let bytes = std::fs::read(path)?; // Vec<u8>
+            Ok(vec![bytes])
+        } else {
+            Err(anyhow::anyhow!("Measurement did not complete."))
+        }
+    } else {
+        eprint!("\nRequesting dynamic KIM measurement...\n\n");
+        eprint!("\nSkipping Request for dynamic KIM measurement...\n\n");
+
         let env_var: String = myaspargs.env_var;
         let env_var_string = match std::env::var(&env_var) {
             Ok(val) => val,
@@ -65,30 +84,12 @@ fn body(_ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP
         };
     
         let appraisaldir_arg_val_string = format! {"{env_var_string}{appraisaldir_arg_val_string_relative}"};
-        eprint!("\nRequesting dynamic KIM measurement...\n\n");
-
-        let measure_job_id = demand_measure("veritas")?;
-        thread::sleep(Duration::new(10, 0));
-        let done = check_job_complete(&measure_job_id)?;
-
-        if done {
-            eprint!(
-                "Reading latest KIM appraisal from directory: {}\n",
-                appraisaldir_arg_val_string
-            );
-            let path = newest_file_in_dir(appraisaldir_arg_val_string.as_str())?;
-            let bytes = std::fs::read(path)?; // Vec<u8>
-            Ok(vec![bytes])
-        } else {
-            Err(anyhow::anyhow!("Measurement did not complete."))
-        }
-    } else {
-        eprint!("\nSkipping Request for dynamic KIM measurement...\n\n");
+        
         eprint!(
             "\nReading latest KIM appraisal from directory: {}\n\n",
-            appraisaldir_arg_val_string_relative
+            appraisaldir_arg_val_string
         );
-        let path = newest_file_in_dir(appraisaldir_arg_val_string_relative.as_str())?;
+        let path = newest_file_in_dir(appraisaldir_arg_val_string.as_str())?;
         let bytes = std::fs::read(path)?; // Vec<u8>
         Ok(vec![bytes])
     }
