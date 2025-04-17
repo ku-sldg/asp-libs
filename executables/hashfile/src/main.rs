@@ -15,6 +15,7 @@ use sha2::{Digest, Sha256};
 // ASP Arguments (JSON-decoded)
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct ASP_ARGS_Hashfile {
+    env_var: String,
     filepath: String
 }
 
@@ -28,10 +29,22 @@ fn body(_ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP
     let myaspargs : ASP_ARGS_Hashfile = serde_json::from_value(args)
         .context("Could not decode JSON ASP_ARGS for ASP hashfile")?;
     
+    let env_var: String = myaspargs.env_var;
     let filename : String = myaspargs.filepath;
 
-    eprint!("Attempting to read from file: {}\n", filename);
-    let bytes = std::fs::read(filename)?; // Vec<u8>
+    let env_var_string = match std::env::var(&env_var) {
+        Ok(val) => val,
+        Err(_e) => {
+            panic!("Did not set environment variable {}\n", env_var)
+        }
+    };
+
+    //let filename_string = (filename).clone();
+    let filename_full = format! {"{env_var_string}{filename}"};
+
+
+    eprint!("Attempting to read from file: {}\n", filename_full);
+    let bytes = std::fs::read(filename_full)?; // Vec<u8>
 
     let hash = Sha256::digest(&bytes);
     Ok(vec![hash.to_vec()])

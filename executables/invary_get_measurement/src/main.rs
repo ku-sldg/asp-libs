@@ -36,6 +36,7 @@ pub struct InvaryMeasureCheck {
 // ASP Arguments (JSON-decoded)
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct ASP_ARGS_Invary_Get_Measurement {
+    env_var: String,
     dynamic: String,
     appraisal_dir: String
 }
@@ -46,10 +47,20 @@ fn body(_ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP
     
     let myaspargs : ASP_ARGS_Invary_Get_Measurement = serde_json::from_value(args)
         .context("Could not decode ASP_ARGS for ASP invary_get_measurement")?;
-    
-    let dynamic_arg_val_string: String = myaspargs.dynamic;
-    let appraisaldir_arg_val_string: String = myaspargs.appraisal_dir;
 
+    let env_var: String = myaspargs.env_var;
+        
+    let dynamic_arg_val_string: String = myaspargs.dynamic;
+    let appraisaldir_arg_val_string_tail: String = myaspargs.appraisal_dir;
+
+    let env_var_string = match std::env::var(&env_var) {
+        Ok(val) => val,
+        Err(_e) => {
+            panic!("Did not set environment variable {}\n", env_var)
+        }
+    };
+
+    let appraisaldir_arg_val_string = format! {"{env_var_string}{appraisaldir_arg_val_string_tail}"};
 
     let true_val_string: String = "true".to_string();
     let dynamic_arg_bool: bool = dynamic_arg_val_string.eq(&true_val_string);

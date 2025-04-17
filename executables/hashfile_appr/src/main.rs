@@ -10,6 +10,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct ASP_ARGS_Hashfile_Appr {
+    env_var_golden: String,
     filepath_golden: String
 }
 
@@ -20,14 +21,13 @@ fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<Result<()>> {
     let myaspargs : ASP_ARGS_Hashfile_Appr = serde_json::from_value(args)
     .context("Could not decode ASP_ARGS for ASP hashfile_appr")?;
 
+        let env_var: String = myaspargs.env_var_golden;
         let filename: String = myaspargs.filepath_golden;
     
-        // TODO:  consider making this an ASP_ARGS field
-        let env_var_key = "AM_ROOT";
-        let env_var_string = match std::env::var(env_var_key) {
+        let env_var_string = match std::env::var(&env_var) {
             Ok(val) => val,
             Err(_e) => {
-                panic!("Did not set environment variable AM_ROOT")
+                panic!("Did not set environment variable {}\n", env_var)
             }
         };
     

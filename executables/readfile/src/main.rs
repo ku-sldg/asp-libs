@@ -11,6 +11,7 @@ use serde::{Deserialize, Serialize};
 // ASP Arguments (JSON-decoded)
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct ASP_ARGS_Readfile {
+    env_var: String,
     filepath: String
 }
 
@@ -20,12 +21,22 @@ fn body(_ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP
 
     let myaspargs : ASP_ARGS_Readfile = serde_json::from_value(args)
     .context("Could not decode ASP_ARGS for ASP readfile")?;
-    
-    let filename : String = myaspargs.filepath;
 
-    eprint!("Attempting to read from file: {}\n", filename);
+    let env_var: String = myaspargs.env_var;
+    let filename: String = myaspargs.filepath;
 
-    let bytes = std::fs::read(&filename).context(
+    let env_var_string = match std::env::var(&env_var) {
+        Ok(val) => val,
+        Err(_e) => {
+            panic!("Did not set env variable {}", &env_var);
+        }
+    };
+
+    let filename_full = format! {"{env_var_string}{filename}"};
+
+    eprint!("Attempting to read from file: {}\n", filename_full);
+
+    let bytes = std::fs::read(&filename_full).context(
         "could not read file contents in ASP, readfile.  Perhaps the file doesn't exist?",
     )?;
     Ok(vec![bytes])

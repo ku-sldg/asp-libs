@@ -10,6 +10,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct ASP_ARGS_Provision {
+    env_var: String,
     filepath: String
 }
 
@@ -21,14 +22,14 @@ fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP_
     .context("Could not parse ASP_ARGS for ASP r_provision_id")?;
 
     // Code for specific for this ASP.
+    let env_var: String = myaspargs.env_var;
     let filename: String = myaspargs.filepath;
 
-    // TODO:  consider making this an ASP_ARGS field
-    let env_var_key = "AM_ROOT";
+    let env_var_key = &env_var;
     let env_var_string = match std::env::var(env_var_key) {
         Ok(val) => val,
         Err(_e) => {
-            panic!("Did not set environment variable AM_ROOT")
+            panic!("Did not set environment variable {}\n", env_var)
         }
     };
 
