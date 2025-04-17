@@ -38,7 +38,7 @@ struct ASP_ARGS_Sig_Tpm {
     tpm_folder: String
 }
 
-fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> anyhow::Result<copland::EvidenceT> {
+fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> anyhow::Result<copland::ASP_RawEv> {
 
     let myaspargs : ASP_ARGS_Sig_Tpm = serde_json::from_value(args)
     .context("Could not decode ASP_ARGS for ASP sig_tpm")?;
