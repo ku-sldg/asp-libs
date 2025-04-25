@@ -38,13 +38,7 @@ fn body(_ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP
 
     let paths : Vec<String> = myaspargs.paths;
 
-    /* TODO: check for empty string, if so set env_var_string to "" */
-    let env_var_string = match std::env::var(&env_var) {
-        Ok(val) => val,
-        Err(_e) => {
-            panic!("Did not set environment variable {}\n", env_var)
-        }
-    };
+    let env_var_string = rust_am_lib::copland::get_env_var_val(env_var)?;
 
     let mut dir_entries : Vec<PathBuf> = Vec::new();
 

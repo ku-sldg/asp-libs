@@ -25,15 +25,8 @@ fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP_
     let env_var: String = myaspargs.env_var;
     let filename: String = myaspargs.filepath;
 
-    let env_var_key = &env_var;
-    let env_var_string = match std::env::var(env_var_key) {
-        Ok(val) => val,
-        Err(_e) => {
-            panic!("Did not set environment variable {}\n", env_var)
-        }
-    };
+    let env_var_string = rust_am_lib::copland::get_env_var_val(env_var)?;
 
-    //let filename_string = (filename).clone();
     let filename_full = format! {"{env_var_string}{filename}"};
 
     let evidence_in = ev.first().context("No input evidence provided to ASP: provision")?;
@@ -44,49 +37,6 @@ fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP_
     Ok(vec![])
 
 }
-
-
-
-
-/*
-
-
-
-// function where the work of the ASP is performed.
-// May signal an error which will be handled in main.
-fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP_RawEv> {
-    let evidence_in = ev.first().context("No file evidence found")?;
-
-    // Code for specific for this ASP.
-    // This example computes the HASH of the file named in an argument for the ASP.
-    // May return an Err Result, which will be captured in main.
-    let filename_value = args
-        .get("filepath")
-        .context("'filepath' argument not provided to ASP, provision")?;
-
-    if filename_value.is_string()
-    {
-        let filename: String = filename_value.to_string();
-        let filename_full = filename.clone();
-        let filename2: String = filename.clone();
-        //let errstr = format!("Attempting to write to filename: {}", filename);
-        eprintln!("Attempting to write to filename: {filename}");
-        std::fs::write(filename_full, evidence_in)?;
-        eprintln!("WROTE TO filename!!!!: {filename2}");
-        Ok(vec![])
-    }
-    else {
-        Err(anyhow::anyhow!("Failed to decode 'filepath' ASP arg as JSON String in provision ASP"))
-    }
-}
-
-// Main simply invokes the body() function above,
-// and checks for Err Result.
-// If it detects an Err Result, this ASP will return
-// an ASPRunResponse with SUCCESS = false, o/w uses
-// ASPRunResponse returned from body()
-
-*/
 
 fn main() {
     handle_body(body);

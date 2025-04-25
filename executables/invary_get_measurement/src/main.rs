@@ -77,12 +77,8 @@ fn body(_ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP
         eprint!("\nSkipping Request for dynamic KIM measurement...\n\n");
 
         let env_var: String = myaspargs.env_var;
-        let env_var_string = match std::env::var(&env_var) {
-            Ok(val) => val,
-            Err(_e) => {
-                panic!("Did not set environment variable {}\n", env_var)
-            }
-        };
+
+        let env_var_string = rust_am_lib::copland::get_env_var_val(env_var)?;
     
         let appraisaldir_arg_val_string = format! {"{env_var_string}{appraisaldir_arg_val_string_relative}"};
 

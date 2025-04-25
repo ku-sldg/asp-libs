@@ -23,13 +23,8 @@ fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<Result<()>> {
 
         let env_var: String = myaspargs.env_var_golden;
         let filename: String = myaspargs.filepath_golden;
-    
-        let env_var_string = match std::env::var(&env_var) {
-            Ok(val) => val,
-            Err(_e) => {
-                panic!("Did not set environment variable {}\n", env_var)
-            }
-        };
+
+        let env_var_string = rust_am_lib::copland::get_env_var_val(env_var)?;
     
         //let filename_string = (filename).clone();
         let filename_full = format! {"{env_var_string}{filename}"};
