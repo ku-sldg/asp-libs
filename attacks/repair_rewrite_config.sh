@@ -2,7 +2,7 @@
 
 MOD_SCRIPT=./mod_userspace_file.sh
 
-ATTACKS_PATH=$ASP_BIN/../attacks
+ATTACKS_PATH=$ATTACK_BIN
 
 GOOD_PATH=$ATTACKS_PATH/targ_files/rewrite_one_config.json
 BAD_PATH=$ATTACKS_PATH/targ_files/rewrite_one_config_bad.json
