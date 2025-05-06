@@ -10,8 +10,8 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct ASP_ARGS_Provision {
-    env_var: String,
-    filepath: String
+    env_var_golden: String,
+    filepath_golden: String
 }
 
 // function where the work of the ASP is performed.
@@ -22,8 +22,8 @@ fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP_
     .context("Could not parse ASP_ARGS for ASP r_provision_id")?;
 
     // Code for specific for this ASP.
-    let env_var: String = myaspargs.env_var;
-    let filename: String = myaspargs.filepath;
+    let env_var: String = myaspargs.env_var_golden;
+    let filename: String = myaspargs.filepath_golden;
 
     let env_var_string = rust_am_lib::copland::get_env_var_val(env_var)?;
 
