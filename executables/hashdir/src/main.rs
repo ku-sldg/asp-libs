@@ -21,8 +21,97 @@ use std::path::PathBuf;
 struct ASP_ARGS_Hashdir {
     env_var: String,
     paths: Vec<String>,
-    filepath_golden: String
+    omit_file_suffixes: Vec<String>,
+    recursive: bool
 }
+
+fn has_suffix(in_path:&PathBuf, suffixes:&Vec<String>) -> bool {
+
+    let in_path_string : String = in_path.to_string_lossy().to_string();
+
+    for suffix in suffixes {
+        eprintln!("Checking if path:  {:?} ends in suffix: {}", in_path_string, suffix);
+        if /* (*in_path).ends_with(suffix.as_str()) */ in_path_string.ends_with(suffix)
+            {
+                eprintln! ("\n\n\n\n\n Found file with suffix:  {}\n\n\n\n", suffix); 
+                return true; }
+    };
+    return false
+}
+
+fn get_all_file_entries(in_path:&PathBuf, recursive:bool) -> Result<Vec<PathBuf>> {
+
+    eprintln!("get_all_file_entries ({}, _)", in_path.display());
+
+    let mut outvec : Vec<PathBuf> = Vec::new();
+
+    if in_path.is_file() {
+
+        outvec.push(in_path.into());
+        Ok (outvec)
+
+    }
+    else if in_path.is_dir() {
+
+        let entries = fs::read_dir(in_path.clone())?
+        .map(|res| res.map(|e| e.path()))
+        .collect::<Result<Vec<PathBuf>, io::Error>>()?;
+
+        if recursive {
+
+            for entry in entries {
+
+                if entry.is_file() {
+
+                    outvec.push(entry);
+
+                }
+                else if entry.is_dir() {
+
+                    let inner_entries = fs::read_dir(&entry)?
+                    .map(|res| res.map(|e| e.path()))
+                    .collect::<Result<Vec<PathBuf>, io::Error>>()?;
+
+                    for inner_entry in inner_entries {
+
+                        let mut v = get_all_file_entries(&inner_entry, recursive)?;
+                        outvec.append(&mut v);
+                    }
+                }
+                else {
+                    eprintln!("\n\nWARNING:  encountered file such that file.is_file() and file.is_dir() are both false\n");
+                }
+
+            }
+
+            Ok (outvec)
+
+        } // end if recursive
+        else {
+
+            let file_entries_only: Vec<PathBuf> = entries.into_iter()
+                .filter(|x| x.is_file() )
+                .collect();
+
+            Ok (file_entries_only)
+        }
+
+    } // end else if in_path.is_dir()
+
+    else {
+        eprintln!("\n\nWARNING:  encountered path such that path.is_file() and path.is_dir() are both false\n");
+        Ok(outvec)
+    }
+}
+
+fn string_path_into_full_pathbuf (env_var_string_prefix: &String, in_string_path: String) -> PathBuf {
+
+    let dirname_string = in_string_path;
+    let dirname_full = format! {"{env_var_string_prefix}{dirname_string}"};
+    dirname_full.into()
+}
+
+
 
 // function where the work of the ASP is performed.
 // May signal an error which will be handled in main.
@@ -38,17 +127,16 @@ fn body(_ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP
 
     let paths : Vec<String> = myaspargs.paths;
 
+    let suffixes : Vec<String> = myaspargs.omit_file_suffixes;
+
+    let is_recursive : bool = myaspargs.recursive;
+
+    eprintln!("Will omit suffixes:  {:?}", suffixes);
+
     let env_var_string = rust_am_lib::copland::get_env_var_val(env_var)?;
 
-    let mut dir_entries : Vec<PathBuf> = Vec::new();
+    let dir_entries : Vec<PathBuf> = paths.into_iter().map(|x| string_path_into_full_pathbuf(&env_var_string, x)).collect();           //Vec::new();
 
-    for path in paths {
-
-        let dirname_string = (path).clone();
-        let dirname_full = format! {"{env_var_string}{dirname_string}"};
-        dir_entries.push(dirname_full.into());
-
-    }
 
     let mut file_entries : Vec<PathBuf> = Vec::new();
 
@@ -56,35 +144,29 @@ fn body(_ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP
 
         eprint!("Attempting to read from direcory: {}\n", dir_entry.display());
 
-        let mut entries = fs::read_dir(&dir_entry)?
-            .map(|res| res.map(|e| e.path()))
-            .collect::<Result<Vec<_>, io::Error>>()?;
+        let mut v = get_all_file_entries(&dir_entry, is_recursive)?;
 
-        file_entries.append(&mut entries);
-
+        file_entries.append(&mut v);
     }
 
-    let mut filtered_entries: Vec<PathBuf> = file_entries.into_iter()
-        .filter(|x| x.is_file() )
+    let mut filtered_entries_no_suffixes: Vec<PathBuf> = file_entries.into_iter()
+        .filter(|x| !(has_suffix(x, &suffixes)))
         .collect();
 
-    filtered_entries.sort();
+    filtered_entries_no_suffixes.sort();
 
     
     let mut comp_hash: Vec<u8> = Vec::new();
 
-    for entry in filtered_entries {
-        // let dir = entry?;
+    for entry in filtered_entries_no_suffixes {
 
         let bytes = std::fs::read(&entry)?;
         comp_hash.extend_from_slice(&bytes);
-        //let v = entry.to_owned();
-        eprintln!("{:?}", entry);
+        eprintln!("Entry:  {:?}", entry);
     }
 
     let hash = Sha256::digest(&comp_hash);
     
-
     Ok(vec![hash.to_vec()])
 }
 
