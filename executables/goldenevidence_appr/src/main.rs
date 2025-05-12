@@ -1,0 +1,144 @@
+
+#![allow(non_camel_case_types)]
+#![allow(non_snake_case)]
+
+// Common Packages
+use anyhow::{Context, Result};
+use rust_am_lib::copland::{self, handle_appraisal_body, GlobalContext, Evidence, EvidenceT, ASP_PARAMS, EvidenceSliceRequest, EvidenceSliceResponse, rawev_to_vec, RawEv};
+use rust_am_lib::tcp::{am_sendRec_string, connect_tcp_stream};
+use serde::{Deserialize, Serialize};
+use tokio::runtime::Runtime;
+use serde_json::json;
+
+use std::fs;
+
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct ASP_ARGS_GoldenEvidence_Appr {
+    env_var_golden: String,
+    filepath_golden: String, 
+    attestation_aspid: String,
+    attestation_targid: String
+}
+/*
+        let dual_args' := add_string_kv_to_asp_args "attestation_aspid" asp_id args in
+    let dual_args  := add_string_kv_to_asp_args "attestation_targid" targ dual_args' in
+*/
+
+// function where the work of the ASP is performed.
+// May signal an error which will be handled in main.
+fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<Result<()>> {
+
+    let myaspargs : ASP_ARGS_GoldenEvidence_Appr = serde_json::from_value(args)
+    .context("Could not decode ASP_ARGS for ASP hashfile_appr")?;
+
+        let env_var: String = myaspargs.env_var_golden;
+        let rawev_filename: String = myaspargs.filepath_golden;
+        let et_filename: String = "".to_string();
+
+        let attest_id: String = myaspargs.attestation_aspid;
+        let targ_id: String = myaspargs.attestation_targid;
+
+        let env_var_string = rust_am_lib::copland::get_env_var_val(env_var)?;
+    
+        //let filename_string = (filename).clone();
+        let rawev_filename_full = format! {"{env_var_string}{rawev_filename}"};
+        let et_filename_full = format! {"{env_var_string}{et_filename}"};
+
+
+        let glob_ctxt_filepath = "";
+        let glob_ctxt_contents = fs::read_to_string(glob_ctxt_filepath).expect("Couldn't read glob_ctxt JSON file");
+        
+        let my_glob_ctxt: GlobalContext = serde_json::from_str(&glob_ctxt_contents)?;
+        eprintln!("\nDecoded glob_ctxt as:");
+        eprintln!("{:?}", my_glob_ctxt);
+
+        let rawev_contents = fs::read_to_string(rawev_filename_full).expect("Couldn't read RawEv JSON file");
+        let my_rawev: RawEv = serde_json::from_str(&rawev_contents)?;
+            eprintln!("\nDecoded RawEv as:");
+            eprintln!("{:?}", my_rawev);
+
+        let evidencet_contents = fs::read_to_string(et_filename_full).expect("Couldn't read EvidenceT JSON file");
+        let my_evidencet: EvidenceT = serde_json::from_str(&evidencet_contents)?;
+            eprintln!("\nDecoded RawEv as:");
+            eprintln!("{:?}", my_rawev);
+
+        let my_asp_params : ASP_PARAMS = 
+        ASP_PARAMS {
+            ASP_ID: attest_id,
+            ASP_PLC: "".to_string(),
+            ASP_TARG_ID: targ_id,
+            ASP_ARGS: json!({})
+        };
+
+    let my_evidence = 
+        Evidence {
+            EVIDENCET: my_evidencet, 
+            RAWEV: my_rawev
+        };
+
+    let vreq : EvidenceSliceRequest = 
+        EvidenceSliceRequest {
+            TYPE: "REQUEST".to_string(), 
+            ACTION: "EVSLICE".to_string(),
+            GLOBAL_CONTEXT: my_glob_ctxt, 
+            EVIDENCE: my_evidence,
+            ASP_PARAMS: my_asp_params};
+
+    let req_str = serde_json::to_string(&vreq)?;
+
+    let val = async {
+
+    let att_server_uuid_string = "".to_string();
+    let client_uuid_string = "".to_string();
+
+    let stream = connect_tcp_stream(att_server_uuid_string, client_uuid_string).await?;
+    println!("\nTrying to send EvidenceSliceRequest: \n");
+    println!("{req_str}\n");
+
+    let resp_str = am_sendRec_string(req_str,stream).await?;
+    eprintln!("Got a TCP Response String: \n");
+    eprintln!("{resp_str}\n");
+
+    let resp : EvidenceSliceResponse = serde_json::from_str(&resp_str)?;
+    println!("Decoded EvidenceSliceResponse: \n");
+    println!("{:?}\n", resp);
+
+    Ok::<EvidenceSliceResponse, std::io::Error> (resp)
+    };
+
+    let runtime: Runtime = tokio::runtime::Runtime::new().unwrap();
+
+    let resp:EvidenceSliceResponse = 
+    match runtime.block_on(val) {
+        Ok(x) => x,
+        Err(_) => panic!("Runtime failure in rust-am-client main.rs"),
+    };
+
+    /*
+        eprint!("Attempting to read from file: {}\n", filename_full);
+        let golden_bytes = std::fs::read(filename_full)?;
+        */
+
+        /* TODO:  handle non-singleton RawEv results here... */
+        let golden_bytes : &Vec<u8> = &rawev_to_vec(resp.PAYLOAD)[0];
+
+        let evidence_in = ev.first().context("No file evidence found")?;
+
+        let bytes_equal: bool = golden_bytes.eq(evidence_in);
+
+        match bytes_equal {
+            true => Ok(Ok(())),
+            false => Ok(Err(anyhow::anyhow!("File contents do not match"))),
+        }
+    }
+
+// Main simply invokes the body() function above,
+// and checks for Err Result.
+// If it detects an Err Result, this ASP will return
+// an ASPRunResponse with SUCCESS = false, o/w uses
+// ASPRunResponse returned from body()
+
+fn main() {
+    handle_appraisal_body(body);
+}
