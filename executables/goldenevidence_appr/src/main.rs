@@ -5,9 +5,8 @@
 // Common Packages
 use anyhow::{Context, Result};
 use rust_am_lib::copland::{self, handle_appraisal_body, GlobalContext, Evidence, EvidenceT, ASP_PARAMS, EvidenceSliceRequest, EvidenceSliceResponse, rawev_to_vec, RawEv};
-use rust_am_lib::tcp::{am_sendRec_string, connect_tcp_stream};
+use rust_am_lib::tcp::{am_sendRec_string_all};
 use serde::{Deserialize, Serialize};
-use tokio::runtime::Runtime;
 use serde_json::json;
 
 use std::fs;
@@ -87,34 +86,22 @@ fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<Result<()>> {
 
     let req_str = serde_json::to_string(&vreq)?;
 
-    let val = async {
 
     // TODO: remove these hardcodings
     let att_server_uuid_string = "127.0.0.1:5004".to_string();
     let client_uuid_string = "".to_string();
 
-    let stream = connect_tcp_stream(att_server_uuid_string, client_uuid_string).await?;
+    //let stream = connect_tcp_stream(att_server_uuid_string, client_uuid_string).await?;
     eprintln!("\nTrying to send EvidenceSliceRequest: \n");
     eprintln!("{req_str}\n");
 
-    let resp_str = am_sendRec_string(req_str,stream).await?;
+    let resp_str = am_sendRec_string_all(att_server_uuid_string, client_uuid_string, req_str)?;
     eprintln!("Got a TCP Response String: \n");
     eprintln!("{resp_str}\n");
 
     let resp : EvidenceSliceResponse = serde_json::from_str(&resp_str)?;
     eprintln!("Decoded EvidenceSliceResponse: \n");
     eprintln!("{:?}\n", resp);
-
-    Ok::<EvidenceSliceResponse, std::io::Error> (resp)
-    };
-
-    let runtime: Runtime = tokio::runtime::Runtime::new().unwrap();
-
-    let resp:EvidenceSliceResponse = 
-    match runtime.block_on(val) {
-        Ok(x) => x,
-        Err(_) => panic!("Runtime failure in goldenevidence_appr main.rs"),
-    };
 
     let golden_bytes = &rawev_to_vec(resp.PAYLOAD);
 
