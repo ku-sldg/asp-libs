@@ -17,13 +17,11 @@ use std::fs;
 struct ASP_ARGS_GoldenEvidence_Appr {
     env_var_golden: String,
     filepath_golden: String, 
+    filepath_et_golden: String,
+    filepath_glob_golden: String,
     attestation_aspid: String,
     attestation_targid: String
 }
-/*
-        let dual_args' := add_string_kv_to_asp_args "attestation_aspid" asp_id args in
-    let dual_args  := add_string_kv_to_asp_args "attestation_targid" targ dual_args' in
-*/
 
 // function where the work of the ASP is performed.
 // May signal an error which will be handled in main.
@@ -32,44 +30,46 @@ fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<Result<()>> {
     let myaspargs : ASP_ARGS_GoldenEvidence_Appr = serde_json::from_value(args)
     .context("Could not decode ASP_ARGS for ASP hashfile_appr")?;
 
-        let env_var: String = myaspargs.env_var_golden;
-        let rawev_filename: String = myaspargs.filepath_golden;
-        let et_filename: String = "".to_string();
+    let env_var: String = myaspargs.env_var_golden;
+    let rawev_filename: String = myaspargs.filepath_golden;
+    let et_filename: String = myaspargs.filepath_et_golden;
+    let glob_filename: String = myaspargs.filepath_glob_golden;
 
-        let attest_id: String = myaspargs.attestation_aspid;
-        let targ_id: String = myaspargs.attestation_targid;
+    let attest_id: String = myaspargs.attestation_aspid;
+    let targ_id: String = myaspargs.attestation_targid;
 
-        let env_var_string = rust_am_lib::copland::get_env_var_val(env_var)?;
+    let env_var_string = rust_am_lib::copland::get_env_var_val(env_var)?;
+
+    let rawev_filename_full = format! {"{env_var_string}{rawev_filename}"};
+    let et_filename_full = format! {"{env_var_string}{et_filename}"};
+    let glob_filename_full = format! {"{env_var_string}{glob_filename}"};
+
+    let glob_ctxt_filepath = glob_filename_full;
+    let glob_ctxt_contents = fs::read_to_string(glob_ctxt_filepath).expect("Couldn't read glob_ctxt JSON file");
     
-        //let filename_string = (filename).clone();
-        let rawev_filename_full = format! {"{env_var_string}{rawev_filename}"};
-        let et_filename_full = format! {"{env_var_string}{et_filename}"};
+    let my_glob_ctxt: GlobalContext = serde_json::from_str(&glob_ctxt_contents)?;
+    eprintln!("\nDecoded glob_ctxt as:");
+    eprintln!("{:?}", my_glob_ctxt);
 
 
-        let glob_ctxt_filepath = "";
-        let glob_ctxt_contents = fs::read_to_string(glob_ctxt_filepath).expect("Couldn't read glob_ctxt JSON file");
-        
-        let my_glob_ctxt: GlobalContext = serde_json::from_str(&glob_ctxt_contents)?;
-        eprintln!("\nDecoded glob_ctxt as:");
-        eprintln!("{:?}", my_glob_ctxt);
+    eprintln!("Trying to read from file: {}", rawev_filename_full);
+    let rawev_contents = fs::read_to_string(rawev_filename_full).expect("Couldn't read RawEv JSON file");
+    let my_rawev: RawEv = serde_json::from_str(&rawev_contents)?;
+        eprintln!("\nDecoded RawEv as:");
+        eprintln!("{:?}", my_rawev);
 
-        let rawev_contents = fs::read_to_string(rawev_filename_full).expect("Couldn't read RawEv JSON file");
-        let my_rawev: RawEv = serde_json::from_str(&rawev_contents)?;
-            eprintln!("\nDecoded RawEv as:");
-            eprintln!("{:?}", my_rawev);
+    let evidencet_contents = fs::read_to_string(et_filename_full).expect("Couldn't read EvidenceT JSON file");
+    let my_evidencet: EvidenceT = serde_json::from_str(&evidencet_contents)?;
+        eprintln!("\nDecoded EvidenceT as:");
+        eprintln!("{:?}", my_evidencet);
 
-        let evidencet_contents = fs::read_to_string(et_filename_full).expect("Couldn't read EvidenceT JSON file");
-        let my_evidencet: EvidenceT = serde_json::from_str(&evidencet_contents)?;
-            eprintln!("\nDecoded RawEv as:");
-            eprintln!("{:?}", my_rawev);
-
-        let my_asp_params : ASP_PARAMS = 
-        ASP_PARAMS {
-            ASP_ID: attest_id,
-            ASP_PLC: "".to_string(),
-            ASP_TARG_ID: targ_id,
-            ASP_ARGS: json!({})
-        };
+    let my_asp_params : ASP_PARAMS = 
+    ASP_PARAMS {
+        ASP_ID: attest_id,
+        ASP_PLC: "".to_string(),
+        ASP_TARG_ID: targ_id,
+        ASP_ARGS: json!({})
+    };
 
     let my_evidence = 
         Evidence {
@@ -89,20 +89,21 @@ fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<Result<()>> {
 
     let val = async {
 
-    let att_server_uuid_string = "".to_string();
+    // TODO: remove these hardcodings
+    let att_server_uuid_string = "127.0.0.1:5004".to_string();
     let client_uuid_string = "".to_string();
 
     let stream = connect_tcp_stream(att_server_uuid_string, client_uuid_string).await?;
-    println!("\nTrying to send EvidenceSliceRequest: \n");
-    println!("{req_str}\n");
+    eprintln!("\nTrying to send EvidenceSliceRequest: \n");
+    eprintln!("{req_str}\n");
 
     let resp_str = am_sendRec_string(req_str,stream).await?;
     eprintln!("Got a TCP Response String: \n");
     eprintln!("{resp_str}\n");
 
     let resp : EvidenceSliceResponse = serde_json::from_str(&resp_str)?;
-    println!("Decoded EvidenceSliceResponse: \n");
-    println!("{:?}\n", resp);
+    eprintln!("Decoded EvidenceSliceResponse: \n");
+    eprintln!("{:?}\n", resp);
 
     Ok::<EvidenceSliceResponse, std::io::Error> (resp)
     };
@@ -112,26 +113,26 @@ fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<Result<()>> {
     let resp:EvidenceSliceResponse = 
     match runtime.block_on(val) {
         Ok(x) => x,
-        Err(_) => panic!("Runtime failure in rust-am-client main.rs"),
+        Err(_) => panic!("Runtime failure in goldenevidence_appr main.rs"),
     };
 
-    /*
-        eprint!("Attempting to read from file: {}\n", filename_full);
-        let golden_bytes = std::fs::read(filename_full)?;
-        */
+    let golden_bytes = &rawev_to_vec(resp.PAYLOAD);
 
-        /* TODO:  handle non-singleton RawEv results here... */
-        let golden_bytes : &Vec<u8> = &rawev_to_vec(resp.PAYLOAD)[0];
+    /* TODO:  handle non-singleton RawEv results here...? */
+    let evidence_in = ev.first().context("No file evidence found")?;
 
-        let evidence_in = ev.first().context("No file evidence found")?;
+    let candidate_ev = vec!((evidence_in.clone()));
 
-        let bytes_equal: bool = golden_bytes.eq(evidence_in);
+    eprintln!("golden_bytes{:?}\n", golden_bytes);
+    eprintln!("evidence_in{:?}\n", candidate_ev);
 
-        match bytes_equal {
-            true => Ok(Ok(())),
-            false => Ok(Err(anyhow::anyhow!("File contents do not match"))),
-        }
+    let bytes_equal: bool = golden_bytes.eq(&candidate_ev);
+
+    match bytes_equal {
+        true => Ok(Ok(())),
+        false => Ok(Err(anyhow::anyhow!("File contents do not match"))),
     }
+}
 
 // Main simply invokes the body() function above,
 // and checks for Err Result.
