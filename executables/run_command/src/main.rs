@@ -52,7 +52,11 @@ fn body(_ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP
     .args(["-l", "-a"]).output().expect("hi");
 */
 
-    let res : Vec<u8> = output.stdout;
+    let err_res = output.stderr;
+    let out_res : Vec<u8> = output.stdout;
+
+    let res = if err_res.is_empty() {out_res} 
+                       else {err_res};
 
     Ok (vec![res])
 
