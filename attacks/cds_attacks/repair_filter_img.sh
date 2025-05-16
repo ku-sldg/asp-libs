@@ -1,11 +1,11 @@
 #!/bin/bash
 
-MOD_SCRIPT=./mod_userspace_file.sh
-
 ATTACKS_PATH=$ATTACK_BIN
 
-GOOD_PATH=$ATTACKS_PATH/targ_files/filter_one_good
-BAD_PATH=$ATTACKS_PATH/targ_files/filter_one_bad
+MOD_SCRIPT=$ATTACKS_PATH/mod_userspace_file.sh
+
+GOOD_PATH=$ATTACKS_PATH/targ_files/cds_targs/filter_one_good
+BAD_PATH=$ATTACKS_PATH/targ_files/cds_targs/filter_one_bad
 TARG_PATH=$DEMO_ROOT/installed_dir/bin/filter_one
 
 $MOD_SCRIPT -g  $GOOD_PATH \
