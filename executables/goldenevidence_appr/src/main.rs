@@ -5,11 +5,13 @@
 // Common Packages
 use anyhow::{Context, Result};
 use rust_am_lib::copland::{self, handle_appraisal_body, GlobalContext, Evidence, EvidenceT, ASP_PARAMS, EvidenceSliceRequest, EvidenceSliceResponse, rawev_to_vec, RawEv};
-use rust_am_lib::tcp::{am_sendRec_string_all};
+//use rust_am_lib::tcp::{am_sendRec_string_all};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
 use std::fs;
+use std::io::Write;
+use std::process::{Command, Stdio};
 
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -87,16 +89,44 @@ fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<Result<()>> {
     let req_str = serde_json::to_string(&vreq)?;
 
 
+    /*
     // TODO: remove these hardcodings
     let att_server_uuid_string = "127.0.0.1:5004".to_string();
     let client_uuid_string = "".to_string();
 
     //let stream = connect_tcp_stream(att_server_uuid_string, client_uuid_string).await?;
-    eprintln!("\nTrying to send EvidenceSliceRequest: \n");
+    */
+    eprintln!("\nTrying to send EvidenceSliceRequest via FS: \n");
     eprintln!("{req_str}\n");
 
-    let resp_str = am_sendRec_string_all(att_server_uuid_string, client_uuid_string, req_str)?;
-    eprintln!("Got a TCP Response String: \n");
+    let fs_path = "/Users/adampetz/Documents/Spring_2023/am-cakeml/build/bin/json_handler";
+
+
+    let mut child = Command::new(fs_path)
+    .stdin(Stdio::piped())
+    .stdout(Stdio::piped())
+    .spawn()
+    .expect(format!("Failed to spawn child proces: {}", fs_path).as_str());
+
+    let mut stdin = child.stdin.take().expect("Failed to open stdin");
+
+    std::thread::spawn(move || {
+        stdin.write_all(req_str.as_bytes()).expect("Failed to write to stdin"); 
+    });
+
+    let output = child.wait_with_output().expect("Failed to read stdout");
+
+    let err_res = output.stderr;
+    let out_res : Vec<u8> = output.stdout;
+
+    let res = if err_res.is_empty() {out_res} 
+                       else {err_res};
+
+
+    let resp_str = String::from_utf8_lossy(&res);
+
+    //let resp_str = am_sendRec_string_all(att_server_uuid_string, client_uuid_string, req_str)?;
+    eprintln!("Got a Response String from FS: \n");
     eprintln!("{resp_str}\n");
 
     let resp : EvidenceSliceResponse = serde_json::from_str(&resp_str)?;
