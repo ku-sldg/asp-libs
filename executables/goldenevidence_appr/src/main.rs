@@ -17,7 +17,7 @@ use std::process::{Command, Stdio};
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct ASP_ARGS_GoldenEvidence_Appr {
     env_var_golden: String,
-    filepath_golden: String, 
+    filepath_rawev_golden: String, 
     filepath_et_golden: String,
     filepath_glob_golden: String,
     attestation_aspid: String,
@@ -29,10 +29,10 @@ struct ASP_ARGS_GoldenEvidence_Appr {
 fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<Result<()>> {
 
     let myaspargs : ASP_ARGS_GoldenEvidence_Appr = serde_json::from_value(args)
-    .context("Could not decode ASP_ARGS for ASP hashfile_appr")?;
+    .context("Could not decode ASP_ARGS for ASP goldenevidence_appr")?;
 
     let env_var: String = myaspargs.env_var_golden;
-    let rawev_filename: String = myaspargs.filepath_golden;
+    let rawev_filename: String = myaspargs.filepath_rawev_golden;
     let et_filename: String = myaspargs.filepath_et_golden;
     let glob_filename: String = myaspargs.filepath_glob_golden;
 
