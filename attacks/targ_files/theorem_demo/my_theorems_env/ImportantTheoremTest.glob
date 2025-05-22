@@ -1,0 +1,25 @@
+DIGEST 68d1f94cdafda2e34aad46fec8faef0e
+FImportantTheoremTest
+R92:97 Coq.Strings.String <> <> lib
+ax 111:117 <> MISSING
+mod 135:139 <> Check
+R205:211 ImportantTheoremTest <> MISSING defax
+R205:211 ImportantTheoremTest <> MISSING defax
+R340:344 ImportantTheoremTest Check <> mod
+R356:360 ImportantTheoremTest Check <> mod
+R378:393 ImportantModule.ImportantTheorem <> <> lib
+def 397:405 <> Unnamed_thm
+R402:405 Coq.Init.Logic <> True ind
+R456:472 ImportantModule.ImportantTheorem <> important_theorem thm
+R507:509 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R476:496 ImportantModule.ImportantTheorem <> important_computation def
+R498:501 Coq.Init.Datatypes <> true constr
+R503:506 Coq.Init.Datatypes <> true constr
+R510:513 Coq.Init.Datatypes <> true constr
+R456:472 ImportantModule.ImportantTheorem <> important_theorem thm
+R507:509 Coq.Init.Logic <> ::type_scope:x_'='_x not
+R476:496 ImportantModule.ImportantTheorem <> important_computation def
+R498:501 Coq.Init.Datatypes <> true constr
+R503:506 Coq.Init.Datatypes <> true constr
+R510:513 Coq.Init.Datatypes <> true constr
+R565:581 ImportantModule.ImportantTheorem <> important_theorem thm
