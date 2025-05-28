@@ -1,5 +1,10 @@
 #!/bin/bash
 
+sh check_env_vars.sh
+if [ $? -ne 0 ]; then
+     exit 1
+fi
+
 ATTACKS_PATH=$ATTACK_BIN
 
 MOD_SCRIPT=$ATTACKS_PATH/mod_userspace_file.sh
