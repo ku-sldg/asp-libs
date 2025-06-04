@@ -27,17 +27,16 @@ use tss_esapi::{
 use anyhow::Context as _;
 use std::{env, fs, path::Path};
 
-fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> anyhow::Result<copland::EvidenceT> {
+fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> anyhow::Result<copland::ASP_RawEv> {
     let tpm_folder_value = args
         .get("tpm_folder")
         .context("tpm_folder argument not provided to ASP, sig_tpm")?;
 
-    if tpm_folder_value.is_string()
-    {
-        let tpm_folder : String = tpm_folder_value.to_string();
+    if tpm_folder_value.is_string() {
+        let tpm_folder: String = tpm_folder_value.to_string();
         // Code adapted from tpm_sign
         let use_key_context: bool = true; // true = try to load keys from context
-                                        // false = reload keys manually every time
+                                          // false = reload keys manually every time
         let mut context = Context::new(TctiNameConf::from_environment_variable()?)?;
 
         let approved_policy =
@@ -64,7 +63,8 @@ fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> anyhow::Result<copla
         set_policy(&tpm_folder, &mut context, policy_session)?;
 
         let policy_key_handle = if use_key_context {
-            if let Ok(key_handle) = reload_key_context(&mut context, env::temp_dir().join("policy.ctx"))
+            if let Ok(key_handle) =
+                reload_key_context(&mut context, env::temp_dir().join("policy.ctx"))
             {
                 key_handle
             } else {
@@ -124,9 +124,10 @@ fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> anyhow::Result<copla
             _ => return Err(anyhow::anyhow!("really bad")),
         };
         Ok(vec![signature])
-    }
-    else {
-        Err(anyhow::anyhow!("Failed to decode 'tpm_folder' ASP arg as JSON String in sig_tpm ASP"))
+    } else {
+        Err(anyhow::anyhow!(
+            "Failed to decode 'tpm_folder' ASP arg as JSON String in sig_tpm ASP"
+        ))
     }
 }
 
