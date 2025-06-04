@@ -1,10 +1,10 @@
 // Common Packages
 use anyhow::{Context, Result};
-use lib::copland::{self, handle_appraisal_body};
+use rust_am_lib::copland::{self, handle_appraisal_body};
 
 // function where the work of the ASP is performed.
 // May signal an error which will be handled in main.
-fn body(ev: copland::EvidenceT, _args: copland::ASP_ARGS) -> Result<Result<()>> {
+fn body(ev: copland::ASP_RawEv, _args: copland::ASP_ARGS) -> Result<Result<()>> {
     let message_signature = ev.first().context("No message signature found")?;
     let message_sig_input = ev
         .get(1..)

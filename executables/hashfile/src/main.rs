@@ -2,7 +2,7 @@
 // General structure for ASP's written in rust
 
 use anyhow::{Context, Result};
-use lib::copland::{self, handle_body};
+use rust_am_lib::copland::{self, handle_body};
 
 // Packages required to perform specific ASP action.
 // e.g.
@@ -10,20 +10,27 @@ use sha2::{Digest, Sha256};
 
 // function where the work of the ASP is performed.
 // May signal an error which will be handled in main.
-fn body(_ev: copland::EvidenceT, args: copland::ASP_ARGS) -> Result<copland::EvidenceT> {
+fn body(_ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP_RawEv> {
     // Code for specific for this ASP.
     // This example computes the HASH of the file named in an argument for the ASP.
     // May return an Err Result, which will be captured in main.
-    let filename = args
+    let filename_value = args
         .get("filepath")
-        .context("filename argument not provided to ASP, hashfile_id")?;
+        .context("'filepath' argument not provided to ASP, hashfile")?;
 
-    eprint!("Attempting to read from file: {}\n", filename);
+    if filename_value.is_string()
+    {
+        let filename: String = filename_value.to_string();
 
-    let bytes = std::fs::read(filename)?; // Vec<u8>
+        eprint!("Attempting to read from file: {}\n", filename);
+        let bytes = std::fs::read(filename)?; // Vec<u8>
 
-    let hash = Sha256::digest(&bytes);
-    Ok(vec![hash.to_vec()])
+        let hash = Sha256::digest(&bytes);
+        Ok(vec![hash.to_vec()])
+    }
+    else {
+        Err(anyhow::anyhow!("Failed to decode 'filepath' ASP arg as JSON String in hashfile ASP"))
+    }
 }
 
 // Main simply invokes the body() function above,

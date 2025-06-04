@@ -1,12 +1,12 @@
 // Common Packages
 use anyhow::Result;
-use lib::copland::{self, handle_body};
+use rust_am_lib::copland::{self, handle_body};
 
 use sha2::{Digest, Sha256};
 
 // function where the work of the ASP is performed.
 // May signal an error which will be handled in main.
-fn body(ev: copland::EvidenceT, _args: copland::ASP_ARGS) -> Result<copland::EvidenceT> {
+fn body(ev: copland::ASP_RawEv, _args: copland::ASP_ARGS) -> Result<copland::ASP_RawEv> {
     let ev_flattened: Vec<u8> = ev.into_iter().flatten().collect();
 
     let hash = Sha256::digest(&ev_flattened);

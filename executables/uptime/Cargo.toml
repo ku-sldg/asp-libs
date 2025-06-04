@@ -5,5 +5,5 @@ edition = "2021"
 
 [dependencies]
 anyhow = { workspace = true }
-lib = { path = "../../lib" }
+rust_am_lib = {workspace = true}
 sysinfo = "0.31.3"
