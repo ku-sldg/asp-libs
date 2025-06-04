@@ -39,8 +39,7 @@ fn body(_ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP
         .get("appraisal-dir")
         .context("'appraisal-dir' argument not provided to ASP, invary_get_measurement")?;
 
-    if dynamic_arg_val.is_string() && appraisaldir_arg_val.is_string()
-    {
+    if dynamic_arg_val.is_string() && appraisaldir_arg_val.is_string() {
         let dynamic_arg_val_string: String = dynamic_arg_val.to_string();
         let appraisaldir_arg_val_string: String = appraisaldir_arg_val.to_string();
         let true_val_string: String = "true".to_string();
@@ -74,8 +73,7 @@ fn body(_ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP
             let bytes = std::fs::read(path)?; // Vec<u8>
             Ok(vec![bytes])
         }
-    }
-    else {
+    } else {
         Err(anyhow::anyhow!("Failed to decode both 'dynamic' and 'appraisal-dir' ASP args as JSON Strings in invary_get_measurement ASP"))
     }
 }

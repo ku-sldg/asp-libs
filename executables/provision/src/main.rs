@@ -14,14 +14,14 @@ fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP_
         .get("filepath")
         .context("'filepath' argument not provided to ASP, provision")?;
 
-    if filename_value.is_string()
-    {
+    if filename_value.is_string() {
         let filename: String = filename_value.to_string();
         std::fs::write(filename, evidence_in)?;
         Ok(vec![])
-    }
-    else {
-        Err(anyhow::anyhow!("Failed to decode 'filepath' ASP arg as JSON String in provision ASP"))
+    } else {
+        Err(anyhow::anyhow!(
+            "Failed to decode 'filepath' ASP arg as JSON String in provision ASP"
+        ))
     }
 }
 

@@ -9,8 +9,7 @@ fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<Result<()>> {
         .get("filepath-golden")
         .context("'filepath-golden' argument not provided to ASP, hashfile_appr")?;
 
-    if golden_filename_value.is_string()
-    {
+    if golden_filename_value.is_string() {
         let golden_filename: String = golden_filename_value.to_string();
 
         eprint!("Attempting to read from file: {}\n", golden_filename);
@@ -34,9 +33,10 @@ fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<Result<()>> {
             true => Ok(Ok(())),
             false => Ok(Err(anyhow::anyhow!("File contents do not match"))),
         }
-    }
-    else {
-        Err(anyhow::anyhow!("Failed to decode 'filepath-golden' ASP arg as JSON String in hashfile_appr ASP"))
+    } else {
+        Err(anyhow::anyhow!(
+            "Failed to decode 'filepath-golden' ASP arg as JSON String in hashfile_appr ASP"
+        ))
     }
 }
 

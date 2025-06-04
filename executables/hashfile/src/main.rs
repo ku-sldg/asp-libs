@@ -18,8 +18,7 @@ fn body(_ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP
         .get("filepath")
         .context("'filepath' argument not provided to ASP, hashfile")?;
 
-    if filename_value.is_string()
-    {
+    if filename_value.is_string() {
         let filename: String = filename_value.to_string();
 
         eprint!("Attempting to read from file: {}\n", filename);
@@ -27,9 +26,10 @@ fn body(_ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP
 
         let hash = Sha256::digest(&bytes);
         Ok(vec![hash.to_vec()])
-    }
-    else {
-        Err(anyhow::anyhow!("Failed to decode 'filepath' ASP arg as JSON String in hashfile ASP"))
+    } else {
+        Err(anyhow::anyhow!(
+            "Failed to decode 'filepath' ASP arg as JSON String in hashfile ASP"
+        ))
     }
 }
 
