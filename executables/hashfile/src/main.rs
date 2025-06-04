@@ -2,7 +2,10 @@
 // General structure for ASP's written in rust
 
 use anyhow::{Context, Result};
-use rust_am_lib::copland::{self, handle_body};
+use rust_am_lib::{
+    copland::{self, handle_body},
+    debug_print,
+};
 
 // Packages required to perform specific ASP action.
 // e.g.
@@ -21,7 +24,7 @@ fn body(_ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP
     if filename_value.is_string() {
         let filename: String = filename_value.to_string();
 
-        eprint!("Attempting to read from file: {}\n", filename);
+        debug_print!("Attempting to read from file: {}\n", filename);
         let bytes = std::fs::read(filename)?; // Vec<u8>
 
         let hash = Sha256::digest(&bytes);

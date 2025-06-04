@@ -1,6 +1,9 @@
 // Common Packages
 use anyhow::Result;
-use rust_am_lib::copland::{self, handle_body};
+use rust_am_lib::{
+    copland::{self, handle_body},
+    debug_print,
+};
 use sha2::{Digest, Sha256};
 use std::process::Stdio;
 
@@ -13,13 +16,13 @@ fn body(_ev: copland::ASP_RawEv, _args: copland::ASP_ARGS) -> Result<copland::AS
     let command = "semodule";
     let args = ["--cil", "--extract", policy_name];
 
-    eprintln!("Executing command: {} {:?}", command, args);
+    debug_print!("Executing command: {} {:?}\n", command, args);
     let mut binding = std::process::Command::new(command); //.args(&args).stdout(Stdio::null());
     let output = binding.args(&args).stdout(Stdio::null());
 
     if output.status().is_err() {
-        eprintln!(
-            "Failed to execute the command to dump the policy: Error Code: {:?}",
+        debug_print!(
+            "Failed to execute the command to dump the policy: Error Code: {:?}\n",
             output.status()
         );
         return Err(anyhow::anyhow!(
@@ -30,7 +33,7 @@ fn body(_ev: copland::ASP_RawEv, _args: copland::ASP_ARGS) -> Result<copland::AS
     // This will place the output in a file named after the policy in the current directory
     let filename = format!("{policy_name}.cil");
 
-    eprint!("Attempting to read from file: {}\n", filename);
+    debug_print!("Attempting to read from file: {}\n", filename);
 
     let bytes = std::fs::read(filename.clone())?; // Vec<u8>
     std::fs::remove_file(filename)?;

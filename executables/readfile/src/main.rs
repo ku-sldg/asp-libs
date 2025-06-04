@@ -1,6 +1,9 @@
 // Common Packages
 use anyhow::{Context, Result};
-use rust_am_lib::copland::{self, handle_body};
+use rust_am_lib::{
+    copland::{self, handle_body},
+    debug_print,
+};
 
 // function where the work of the ASP is performed.
 // May signal an error which will be handled in main.
@@ -12,7 +15,7 @@ fn body(_ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP
     if filename_value.is_string() {
         let filename: String = filename_value.to_string();
 
-        eprint!("Attempting to read from file: {}\n", filename);
+        debug_print!("Attempting to read from file: {}\n", filename);
 
         let bytes = std::fs::read(&filename).context(
             "could not read file contents in ASP, readfile.  Perhaps the file doesn't exits?",
