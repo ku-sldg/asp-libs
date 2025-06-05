@@ -21,7 +21,8 @@ struct ASP_ARGS_GoldenEvidence_Appr {
     filepath_et_golden: String,
     filepath_glob_golden: String,
     attestation_aspid: String,
-    attestation_targid: String
+    attestation_targid: String, 
+    evslice_exe: String
 }
 
 // function where the work of the ASP is performed.
@@ -99,7 +100,7 @@ fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<Result<()>> {
     eprintln!("\nTrying to send EvidenceSliceRequest via FS: \n");
     eprintln!("{req_str}\n");
 
-    let fs_path = "/Users/adampetz/Documents/Spring_2023/am-cakeml/build/bin/json_handler";
+    let fs_path = myaspargs.evslice_exe.as_str();
 
 
     let mut child = Command::new(fs_path)
