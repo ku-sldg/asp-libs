@@ -1,11 +1,13 @@
 // Common Packages
 use anyhow::{Context, Result};
-use curl::easy::Easy;
-use curl::easy::List;
+use curl::easy::{Easy, List};
+use rust_am_lib::{
+    copland::{self, handle_body},
+    debug_print,
+};
 use serde::{Deserialize, Serialize};
 use std::fs::{self, DirEntry};
-use std::io::Read;
-use std::io::{Error, ErrorKind};
+use std::io::{Error, ErrorKind, Read};
 use std::path::PathBuf;
 use std::str;
 use std::thread;
@@ -26,35 +28,34 @@ pub struct InvaryMeasureCheck {
     pub measured: i64,
 }
 
-use rust_am_lib::copland::{self, handle_body};
-
 // function where the work of the ASP is performed.
 // May signal an error which will be handled in main.
 fn body(_ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP_RawEv> {
+    debug_print!("Starting invary_get_measurement ASP execution\n");
     let dynamic_arg_val = args
         .get("dynamic")
         .context("'dynamic' argument not provided to ASP, invary_get_measurement")?;
-
+    debug_print!("dynamic argument: {:?}\n", dynamic_arg_val);
     let appraisaldir_arg_val = args
         .get("appraisal-dir")
         .context("'appraisal-dir' argument not provided to ASP, invary_get_measurement")?;
+    debug_print!("appraisal-dir argument: {:?}\n", appraisaldir_arg_val);
 
-    if dynamic_arg_val.is_string() && appraisaldir_arg_val.is_string()
-    {
+    if dynamic_arg_val.is_string() && appraisaldir_arg_val.is_string() {
         let dynamic_arg_val_string: String = dynamic_arg_val.to_string();
         let appraisaldir_arg_val_string: String = appraisaldir_arg_val.to_string();
         let true_val_string: String = "true".to_string();
         let dynamic_arg_bool: bool = dynamic_arg_val_string.eq(&true_val_string);
 
         if dynamic_arg_bool {
-            eprint!("\nRequesting dynamic KIM measurement...\n\n");
+            debug_print!("\nRequesting dynamic KIM measurement...\n\n");
 
             let measure_job_id = demand_measure("veritas")?;
             thread::sleep(Duration::new(10, 0));
             let done = check_job_complete(&measure_job_id)?;
 
             if done {
-                eprint!(
+                debug_print!(
                     "Reading latest KIM appraisal from directory: {}\n",
                     appraisaldir_arg_val
                 );
@@ -65,8 +66,8 @@ fn body(_ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP
                 Err(anyhow::anyhow!("Measurement did not complete."))
             }
         } else {
-            eprint!("\nSkipping Request for dynamic KIM measurement...\n\n");
-            eprint!(
+            debug_print!("\nSkipping Request for dynamic KIM measurement...\n\n");
+            debug_print!(
                 "\nReading latest KIM appraisal from directory: {}\n\n",
                 appraisaldir_arg_val
             );
@@ -74,8 +75,7 @@ fn body(_ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP
             let bytes = std::fs::read(path)?; // Vec<u8>
             Ok(vec![bytes])
         }
-    }
-    else {
+    } else {
         Err(anyhow::anyhow!("Failed to decode both 'dynamic' and 'appraisal-dir' ASP args as JSON Strings in invary_get_measurement ASP"))
     }
 }

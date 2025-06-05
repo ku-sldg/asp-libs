@@ -1,20 +1,23 @@
 // Common Packages
 use anyhow::{Context, Result};
-use rust_am_lib::copland::{self, handle_appraisal_body};
+use rust_am_lib::{
+    copland::{self, handle_appraisal_body},
+    debug_print,
+};
 
 // function where the work of the ASP is performed.
 // May signal an error which will be handled in main.
 fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<Result<()>> {
+    debug_print!("Starting hashfile_appr ASP execution\n");
     let golden_filename_value = args
         .get("filepath-golden")
         .context("'filepath-golden' argument not provided to ASP, hashfile_appr")?;
 
-    if golden_filename_value.is_string()
-    {
+    if golden_filename_value.is_string() {
         let golden_filename: String = golden_filename_value.to_string();
-
-        eprint!("Attempting to read from file: {}\n", golden_filename);
+        debug_print!("Attempting to read from file: {}\n", golden_filename);
         let golden_bytes = std::fs::read(golden_filename)?;
+        debug_print!("Read {} bytes from golden file\n", golden_bytes.len());
 
         // Common code to bundle computed value.
         // Step 1:
@@ -34,9 +37,10 @@ fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<Result<()>> {
             true => Ok(Ok(())),
             false => Ok(Err(anyhow::anyhow!("File contents do not match"))),
         }
-    }
-    else {
-        Err(anyhow::anyhow!("Failed to decode 'filepath-golden' ASP arg as JSON String in hashfile_appr ASP"))
+    } else {
+        Err(anyhow::anyhow!(
+            "Failed to decode 'filepath-golden' ASP arg as JSON String in hashfile_appr ASP"
+        ))
     }
 }
 

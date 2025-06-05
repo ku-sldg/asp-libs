@@ -1,11 +1,17 @@
 // Common Packages
 use anyhow::{Context, Result};
 use rust_am_lib::copland::{self, handle_appraisal_body};
+use rust_am_lib::debug_print;
 
 // function where the work of the ASP is performed.
 // May signal an error which will be handled in main.
 fn body(ev: copland::ASP_RawEv, _args: copland::ASP_ARGS) -> Result<Result<()>> {
+    debug_print!("Starting sig_appr ASP execution\n");
     let message_signature = ev.first().context("No message signature found")?;
+    debug_print!(
+        "Got message signature of {} bytes\n",
+        message_signature.len()
+    );
     let message_sig_input = ev
         .get(1..)
         .context("No message found")?
@@ -13,6 +19,7 @@ fn body(ev: copland::ASP_RawEv, _args: copland::ASP_ARGS) -> Result<Result<()>> 
         .into_iter()
         .flatten()
         .collect::<Vec<u8>>();
+    debug_print!("Got message input of {} bytes\n", message_sig_input.len());
     // Use openssl to verify the signature
     let key = include_bytes!("../../../common_files/unsecure_pub_key_dont_use.pem");
     let pkey = openssl::pkey::PKey::public_key_from_pem(key)?;
