@@ -1,15 +1,18 @@
 // Common Packages
 use anyhow::{Context, Result};
 use rust_am_lib::copland::{self, handle_appraisal_body};
+use rust_am_lib::debug_print;
 
 // function where the work of the ASP is performed.
 // May signal an error which will be handled in main.
 fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<Result<()>> {
+    debug_print!("Starting readfile_appr ASP execution\n");
     let golden_filename = args
         .get("filepath-golden")
         .context("filepath-golden argument not provided to ASP, appraise_r_readfile_id")?;
-
+    debug_print!("Attempting to read from file: {}\n", golden_filename);
     let golden_bytes: Vec<u8> = std::fs::read(&golden_filename.to_string())?; // Vec<u8>
+    debug_print!("Read {} bytes from golden file\n", golden_bytes.len());
 
     // Common code to bundle computed value.
     // Step 1:

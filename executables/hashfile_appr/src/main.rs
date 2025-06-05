@@ -8,15 +8,16 @@ use rust_am_lib::{
 // function where the work of the ASP is performed.
 // May signal an error which will be handled in main.
 fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<Result<()>> {
+    debug_print!("Starting hashfile_appr ASP execution\n");
     let golden_filename_value = args
         .get("filepath-golden")
         .context("'filepath-golden' argument not provided to ASP, hashfile_appr")?;
 
     if golden_filename_value.is_string() {
         let golden_filename: String = golden_filename_value.to_string();
-
         debug_print!("Attempting to read from file: {}\n", golden_filename);
         let golden_bytes = std::fs::read(golden_filename)?;
+        debug_print!("Read {} bytes from golden file\n", golden_bytes.len());
 
         // Common code to bundle computed value.
         // Step 1:

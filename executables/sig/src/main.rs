@@ -8,7 +8,7 @@ use rust_am_lib::{
 // function where the work of the ASP is performed.
 // May signal an error which will be handled in main.
 fn body(ev: copland::ASP_RawEv, _args: copland::ASP_ARGS) -> Result<copland::ASP_RawEv> {
-    debug_print!("Starting signature ASP execution\n");
+    debug_print!("Starting sig ASP execution\n");
     let ev_flattened: Vec<u8> = ev.into_iter().flatten().collect();
     debug_print!("Flattened evidence to {} bytes\n", ev_flattened.len());
 

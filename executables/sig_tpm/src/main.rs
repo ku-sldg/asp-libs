@@ -1,4 +1,4 @@
-use rust_am_lib::copland;
+use rust_am_lib::{copland, debug_print};
 
 use tss_esapi::{
     attributes::{ObjectAttributesBuilder, SessionAttributesBuilder},
@@ -28,19 +28,23 @@ use anyhow::Context as _;
 use std::{env, fs, path::Path};
 
 fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> anyhow::Result<copland::ASP_RawEv> {
+    debug_print!("Starting sig_tpm ASP execution\n");
     let tpm_folder_value = args
         .get("tpm_folder")
         .context("tpm_folder argument not provided to ASP, sig_tpm")?;
 
     if tpm_folder_value.is_string() {
         let tpm_folder: String = tpm_folder_value.to_string();
+        debug_print!("Using tpm_folder: {}\n", tpm_folder);
         // Code adapted from tpm_sign
         let use_key_context: bool = true; // true = try to load keys from context
                                           // false = reload keys manually every time
         let mut context = Context::new(TctiNameConf::from_environment_variable()?)?;
+        debug_print!("TPM context initialized\n");
 
         let approved_policy =
             Digest::try_from(fs::read(format!("{tpm_folder}/policy/pcr.policy_desired"))?)?;
+        debug_print!("Loaded approved policy\n");
         let policy_digest = Digest::try_from(&openssl::sha::sha256(&approved_policy)[..])?;
         let session = context
             .start_auth_session(
@@ -54,6 +58,7 @@ fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> anyhow::Result<copla
             .ok_or(tss_esapi::Error::WrapperError(
                 tss_esapi::WrapperErrorKind::WrongValueFromTpm,
             ))?;
+        debug_print!("Started policy session\n");
         let (session_attributes, session_attributes_mask) = SessionAttributesBuilder::new()
             .with_decrypt(true)
             .with_encrypt(true)
@@ -61,13 +66,16 @@ fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> anyhow::Result<copla
         context.tr_sess_set_attributes(session, session_attributes, session_attributes_mask)?;
         let policy_session: PolicySession = session.try_into()?;
         set_policy(&tpm_folder, &mut context, policy_session)?;
+        debug_print!("Policy set for session\n");
 
         let policy_key_handle = if use_key_context {
             if let Ok(key_handle) =
                 reload_key_context(&mut context, env::temp_dir().join("policy.ctx"))
             {
+                debug_print!("Reloaded policy key from context\n");
                 key_handle
             } else {
+                debug_print!("Loading external signing key for policy\n");
                 let policy_key_handle = load_external_signing_key(&tpm_folder, &mut context)?;
                 let _ = save_key_context(
                     &mut context,
@@ -80,6 +88,7 @@ fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> anyhow::Result<copla
             load_external_signing_key(&tpm_folder, &mut context)?
         };
         let key_sign = context.tr_get_name(policy_key_handle.into())?;
+        debug_print!("Got key_sign for policy\n");
 
         let policy_signature = Signature::RsaSsa(RsaSignature::create(
             HashingAlgorithm::Sha256,
@@ -87,8 +96,10 @@ fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> anyhow::Result<copla
         )?);
         let check_ticket =
             context.verify_signature(policy_key_handle, policy_digest, policy_signature)?;
+        debug_print!("Verified policy signature\n");
         // policy_key_handle is no longer necessary and keeping it loaded slows things down
         context.flush_context(policy_key_handle.into())?;
+        debug_print!("Flushed policy key handle\n");
 
         context.policy_authorize(
             policy_session,
@@ -97,11 +108,15 @@ fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> anyhow::Result<copla
             &key_sign,
             check_ticket,
         )?;
+        debug_print!("Policy authorized\n");
 
         let ev_flattened: Vec<u8> = ev.into_iter().flatten().collect();
+        debug_print!("Flattened evidence to {} bytes\n", ev_flattened.len());
         let digest = Digest::try_from(&openssl::sha::sha256(&ev_flattened)[..])?;
+        debug_print!("Created digest of evidence\n");
 
         let key_handle = load_signing_key(&tpm_folder, &mut context, use_key_context)?;
+        debug_print!("Loaded signing key\n");
 
         let signature = context.execute_with_session(Some(session), |context| {
             context.sign(
@@ -119,10 +134,12 @@ fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> anyhow::Result<copla
                 })?,
             )
         })?;
+        debug_print!("Signature created\n");
         let signature = match signature {
             Signature::RsaSsa(sig) | Signature::RsaPss(sig) => sig.signature().value().to_vec(),
             _ => return Err(anyhow::anyhow!("really bad")),
         };
+        debug_print!("Returning signature of {} bytes\n", signature.len());
         Ok(vec![signature])
     } else {
         Err(anyhow::anyhow!(

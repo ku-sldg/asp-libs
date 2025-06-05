@@ -31,13 +31,15 @@ pub struct InvaryMeasureCheck {
 // function where the work of the ASP is performed.
 // May signal an error which will be handled in main.
 fn body(_ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP_RawEv> {
+    debug_print!("Starting invary_get_measurement ASP execution\n");
     let dynamic_arg_val = args
         .get("dynamic")
         .context("'dynamic' argument not provided to ASP, invary_get_measurement")?;
-
+    debug_print!("dynamic argument: {:?}\n", dynamic_arg_val);
     let appraisaldir_arg_val = args
         .get("appraisal-dir")
         .context("'appraisal-dir' argument not provided to ASP, invary_get_measurement")?;
+    debug_print!("appraisal-dir argument: {:?}\n", appraisaldir_arg_val);
 
     if dynamic_arg_val.is_string() && appraisaldir_arg_val.is_string() {
         let dynamic_arg_val_string: String = dynamic_arg_val.to_string();

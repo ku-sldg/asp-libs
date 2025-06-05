@@ -1,10 +1,12 @@
 // Common Packages
 use anyhow::Result;
 use rust_am_lib::copland::{self, handle_body};
+use rust_am_lib::debug_print;
 
 // function where the work of the ASP is performed.
 // May signal an error which will be handled in main.
 fn body(_ev: copland::ASP_RawEv, _args: copland::ASP_ARGS) -> Result<copland::ASP_RawEv> {
+    debug_print!("Starting large_output ASP execution\n");
     // construct a 4096 byte string to return
     let mut large_output = String::new();
     for i in 0..4096 / 4 {
@@ -12,6 +14,7 @@ fn body(_ev: copland::ASP_RawEv, _args: copland::ASP_ARGS) -> Result<copland::AS
         // 0000 0001 0002 0003 ... 4096/4
         large_output.push_str(&format!("{:04}", i));
     }
+    debug_print!("Generated large output of {} bytes\n", large_output.len());
     Ok(vec![large_output.as_bytes().to_vec()])
 }
 
