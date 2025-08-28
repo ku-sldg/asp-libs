@@ -5,7 +5,10 @@
 
 // Common Packages
 use anyhow::{Context, Result};
-use rust_am_lib::copland::{self, handle_body};
+use rust_am_lib::{
+    copland::{self, handle_body},
+    debug_print,
+};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -17,6 +20,8 @@ struct ASP_ARGS_Provision {
 // function where the work of the ASP is performed.
 // May signal an error which will be handled in main.
 fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP_RawEv> {
+ 
+    debug_print!("Starting provision ASP execution\n");
 
     let myaspargs : ASP_ARGS_Provision = serde_json::from_value(args)
     .context("Could not parse ASP_ARGS for ASP r_provision_id")?;
@@ -31,9 +36,11 @@ fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP_
 
     let evidence_in = ev.first().context("No input evidence provided to ASP: provision")?;
 
-    eprintln!("Attempting to write to filename: {filename_full}");
+    debug_print!("Retrieved evidence of {} bytes\n", evidence_in.len());
+
+    debug_print!("Writing evidence to file: {}\n", filename_full);
     std::fs::write(filename_full, evidence_in)?;
-    //eprintln!("WROTE TO filename!!!!: {filename_full}");
+    debug_print!("Successfully wrote evidence to file: {}\n", filename_full);
     Ok(vec![])
 
 }

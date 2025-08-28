@@ -4,7 +4,11 @@
 
 // Common Packages
 use anyhow::{Context, Result};
-use rust_am_lib::copland::{self, handle_appraisal_body};
+
+use rust_am_lib::{
+    copland::{self, handle_appraisal_body},
+    debug_print,
+};
 use serde::{Deserialize, Serialize};
 
 
@@ -18,6 +22,7 @@ struct ASP_ARGS_Hashfile_Appr {
 // May signal an error which will be handled in main.
 fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<Result<()>> {
 
+    debug_print!("Starting hashfile_appr ASP execution\n");
     let myaspargs : ASP_ARGS_Hashfile_Appr = serde_json::from_value(args)
     .context("Could not decode ASP_ARGS for ASP hashfile_appr")?;
 
@@ -29,8 +34,9 @@ fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<Result<()>> {
         //let filename_string = (filename).clone();
         let filename_full = format! {"{env_var_string}{filename}"};
 
-        eprint!("Attempting to read from file: {}\n", filename_full);
+        debug_print!("Attempting to read from file: {}\n", filename_full);
         let golden_bytes = std::fs::read(filename_full)?;
+        debug_print!("Read {} bytes from golden file\n", golden_bytes.len());
 
         // Suppose the file contents are to be extracted from evidence...
 

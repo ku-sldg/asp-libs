@@ -4,19 +4,19 @@
 
 // Common Packages
 use anyhow::{Context, Result};
-use curl::easy::Easy;
-use curl::easy::List;
+use curl::easy::{Easy, List};
+use rust_am_lib::{
+    copland::{self, handle_body},
+    debug_print,
+};
 use serde::{Deserialize, Serialize};
 use std::fs::{self, DirEntry};
-use std::io::Read;
-use std::io::{Error, ErrorKind};
+use std::io::{Error, ErrorKind, Read};
 use std::path::PathBuf;
 use std::str;
 use std::thread;
 use std::time::{Duration, UNIX_EPOCH};
 
-
-use rust_am_lib::copland::{self, handle_body};
 
 //const APPRAISAL_DIR: &'static str = "/var/opt/invary-appraiser/appraisals";
 //    handle.url("https://127.0.0.1:8443/api/measurements/jobs")?;

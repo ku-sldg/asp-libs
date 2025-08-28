@@ -5,8 +5,11 @@
 #![allow(non_snake_case)]
 
 use anyhow::{Context, Result};
-use rust_am_lib::copland::{self, handle_body};
 use serde::{Deserialize, Serialize};
+use rust_am_lib::{
+    copland::{self, handle_body},
+    debug_print,
+};
 
 // Packages required to perform specific ASP action.
 // e.g.
@@ -36,10 +39,11 @@ fn body(_ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP
 
     let filename_full = format! {"{env_var_string}{filename}"};
 
-    eprint!("Attempting to read from file: {}\n", filename_full);
+    debug_print!("Attempting to read from file: {}\n", filename_full);
     let bytes = std::fs::read(filename_full)?; // Vec<u8>
-
+    debug_print!("Read {} bytes from file\n", bytes.len());
     let hash = Sha256::digest(&bytes);
+    debug_print!("Generated hash of {} bytes\n", hash.len());
     Ok(vec![hash.to_vec()])
 }
 

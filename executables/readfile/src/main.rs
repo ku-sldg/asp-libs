@@ -4,7 +4,10 @@
 
 // Common Packages
 use anyhow::{Context, Result};
-use rust_am_lib::copland::{self, handle_body};
+use rust_am_lib::{
+    copland::{self, handle_body},
+    debug_print,
+};
 use serde::{Deserialize, Serialize};
 
 
@@ -18,6 +21,8 @@ struct ASP_ARGS_Readfile {
 // function where the work of the ASP is performed.
 // May signal an error which will be handled in main.
 fn body(_ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP_RawEv> {
+  
+    debug_print!("Starting readfile ASP execution\n");
 
     let myaspargs : ASP_ARGS_Readfile = serde_json::from_value(args)
     .context("Could not decode ASP_ARGS for ASP readfile")?;
@@ -29,11 +34,12 @@ fn body(_ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP
 
     let filename_full = format! {"{env_var_string}{filename}"};
 
-    eprint!("Attempting to read from file: {}\n", filename_full);
+    debug_print!("Attempting to read from file: {}\n", filename_full);
 
     let bytes = std::fs::read(&filename_full).context(
         "could not read file contents in ASP, readfile.  Perhaps the file doesn't exist?",
     )?;
+    debug_print!("Read {} bytes from file\n", bytes.len());
     Ok(vec![bytes])
 }
 
