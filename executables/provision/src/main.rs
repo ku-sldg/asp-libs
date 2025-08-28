@@ -38,9 +38,9 @@ fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP_
 
     debug_print!("Retrieved evidence of {} bytes\n", evidence_in.len());
 
-    debug_print!("Writing evidence to file: {}\n", filename_full);
+    debug_print!("Writing evidence to file: {}\n", filename_full.clone());
     std::fs::write(filename_full, evidence_in)?;
-    debug_print!("Successfully wrote evidence to file: {}\n", filename_full);
+    debug_print!("Successfully wrote evidence to file: {}\n", filename_full.clone());
     Ok(vec![])
 
 }
