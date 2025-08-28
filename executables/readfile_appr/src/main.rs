@@ -1,41 +1,45 @@
+#![allow(non_camel_case_types)]
+#![allow(non_snake_case)]
+
 // Common Packages
 use anyhow::{Context, Result};
 use rust_am_lib::copland::{self, handle_appraisal_body};
 use rust_am_lib::debug_print;
+use serde::{Deserialize, Serialize};
+
+// ASP Arguments (JSON-decoded)
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct ASP_ARGS_Readfile_Appr {
+    env_var_golden: String,
+    filepath_golden: String
+}
 
 // function where the work of the ASP is performed.
 // May signal an error which will be handled in main.
 fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<Result<()>> {
+  
     debug_print!("Starting readfile_appr ASP execution\n");
-    let golden_filename = args
-        .get("filepath-golden")
-        .context("filepath-golden argument not provided to ASP, appraise_r_readfile_id")?;
+
+    let myaspargs : ASP_ARGS_Readfile_Appr = serde_json::from_value(args)
+    .context("Could not decode ASP_ARGS for ASP readfile_appr")?;
+
+    let env_var: String = myaspargs.env_var_golden;
+    let filename: String = myaspargs.filepath_golden;
+
+    let env_var_string = rust_am_lib::copland::get_env_var_val(env_var)?;
+
+    let golden_filename = format! {"{env_var_string}{filename}"};
+  
     debug_print!("Attempting to read from file: {}\n", golden_filename);
+
     let golden_bytes: Vec<u8> = std::fs::read(&golden_filename.to_string())?; // Vec<u8>
+  
     debug_print!("Read {} bytes from golden file\n", golden_bytes.len());
 
-    // Common code to bundle computed value.
-    // Step 1:
-    // The return value for an ASP, must be
-    // encoded in BASE64, and converted to ascii for JSON transmission
-    //let golden_bytes_b64: String = base64::encode(bytes);
-
     // Suppose the file contents are to be extracted from evidence...
-
     let evidence_in = ev.first().context("No file evidence found")?;
 
-    // Evidence is always base64 encoded, so decode this
-    // Using HEX decoding for now...will switch to b64
-    //let file_bytes = hex::decode(latest_evidence)?; //base64::decode(latest_evidence)?;
     let bytes_equal: bool = golden_bytes.eq(evidence_in);
-    /*file_bytes*/
-
-    // End of code specific for this ASP.
-
-    // Common code to bundle computed value.
-    // Step 1:
-    // The return value for an ASP, must be
-    // encoded in BASE64, and converted to ascii for JSON transmission
 
     match bytes_equal {
         true => Ok(Ok(())),

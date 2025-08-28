@@ -7,4 +7,6 @@ edition = "2021"
 anyhow = { workspace = true }
 tss-esapi = "7.5.1"
 rust_am_lib = {workspace = true}
+serde = {workspace = true}
+serde_json = {workspace = true}
 openssl = "0.10.68"

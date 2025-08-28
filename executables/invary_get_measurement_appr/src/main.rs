@@ -1,4 +1,6 @@
 // Common Packages
+use anyhow::{Context, Result};
+use rust_am_lib::copland::{self, handle_appraisal_body};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -13,10 +15,6 @@ pub struct InvaryAppraisal {
                         pub measured  : i64
                         */
 }
-
-// Common Packages
-use anyhow::{Context, Result};
-use rust_am_lib::copland::{self, handle_appraisal_body};
 
 // function where the work of the ASP is performed.
 // May signal an error which will be handled in main.

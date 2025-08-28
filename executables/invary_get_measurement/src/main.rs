@@ -1,3 +1,6 @@
+#![allow(non_camel_case_types)]
+#![allow(non_snake_case)]
+
 // Common Packages
 use anyhow::{Context, Result};
 use curl::easy::{Easy, List};
@@ -28,55 +31,61 @@ pub struct InvaryMeasureCheck {
     pub measured: i64,
 }
 
+// ASP Arguments (JSON-decoded)
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct ASP_ARGS_Invary_Get_Measurement {
+    env_var: String,
+    dynamic: String,
+    appraisal_dir: String,
+}
+
 // function where the work of the ASP is performed.
 // May signal an error which will be handled in main.
 fn body(_ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP_RawEv> {
-    debug_print!("Starting invary_get_measurement ASP execution\n");
-    let dynamic_arg_val = args
-        .get("dynamic")
-        .context("'dynamic' argument not provided to ASP, invary_get_measurement")?;
-    debug_print!("dynamic argument: {:?}\n", dynamic_arg_val);
-    let appraisaldir_arg_val = args
-        .get("appraisal-dir")
-        .context("'appraisal-dir' argument not provided to ASP, invary_get_measurement")?;
-    debug_print!("appraisal-dir argument: {:?}\n", appraisaldir_arg_val);
+    let myaspargs: ASP_ARGS_Invary_Get_Measurement = serde_json::from_value(args)
+        .context("Could not decode ASP_ARGS for ASP invary_get_measurement")?;
 
-    if dynamic_arg_val.is_string() && appraisaldir_arg_val.is_string() {
-        let dynamic_arg_val_string: String = dynamic_arg_val.to_string();
-        let appraisaldir_arg_val_string: String = appraisaldir_arg_val.to_string();
-        let true_val_string: String = "true".to_string();
-        let dynamic_arg_bool: bool = dynamic_arg_val_string.eq(&true_val_string);
+    let dynamic_arg_val_string: String = myaspargs.dynamic;
+    let appraisaldir_arg_val_string_relative: String = myaspargs.appraisal_dir;
 
-        if dynamic_arg_bool {
-            debug_print!("\nRequesting dynamic KIM measurement...\n\n");
+    let true_val_string: String = "true".to_string();
+    let dynamic_arg_bool: bool = dynamic_arg_val_string.eq(&true_val_string);
 
-            let measure_job_id = demand_measure("veritas")?;
-            thread::sleep(Duration::new(10, 0));
-            let done = check_job_complete(&measure_job_id)?;
+    if dynamic_arg_bool {
+        debug_print!("\nRequesting dynamic KIM measurement...\n\n");
 
-            if done {
-                debug_print!(
-                    "Reading latest KIM appraisal from directory: {}\n",
-                    appraisaldir_arg_val
-                );
-                let path = newest_file_in_dir(appraisaldir_arg_val_string.as_str())?;
-                let bytes = std::fs::read(path)?; // Vec<u8>
-                Ok(vec![bytes])
-            } else {
-                Err(anyhow::anyhow!("Measurement did not complete."))
-            }
-        } else {
-            debug_print!("\nSkipping Request for dynamic KIM measurement...\n\n");
+        let measure_job_id = demand_measure("veritas")?;
+        thread::sleep(Duration::new(10, 0));
+        let done = check_job_complete(&measure_job_id)?;
+
+        if done {
             debug_print!(
-                "\nReading latest KIM appraisal from directory: {}\n\n",
-                appraisaldir_arg_val
+                "Reading latest KIM appraisal from directory: {}\n",
+                appraisaldir_arg_val_string_relative
             );
-            let path = newest_file_in_dir(appraisaldir_arg_val_string.as_str())?;
+            let path = newest_file_in_dir(&appraisaldir_arg_val_string_relative.as_str())?;
             let bytes = std::fs::read(path)?; // Vec<u8>
             Ok(vec![bytes])
+        } else {
+            Err(anyhow::anyhow!("Measurement did not complete."))
         }
     } else {
-        Err(anyhow::anyhow!("Failed to decode both 'dynamic' and 'appraisal-dir' ASP args as JSON Strings in invary_get_measurement ASP"))
+        debug_print!("\nSkipping Request for dynamic KIM measurement...\n\n");
+
+        let env_var: String = myaspargs.env_var;
+
+        let env_var_string = rust_am_lib::copland::get_env_var_val(env_var)?;
+
+        let appraisaldir_arg_val_string =
+            format! {"{env_var_string}{appraisaldir_arg_val_string_relative}"};
+
+        debug_print!(
+            "\nReading latest KIM appraisal from directory: {}\n\n",
+            appraisaldir_arg_val_string
+        );
+        let path = newest_file_in_dir(appraisaldir_arg_val_string.as_str())?;
+        let bytes = std::fs::read(path)?; // Vec<u8>
+        Ok(vec![bytes])
     }
 }
 

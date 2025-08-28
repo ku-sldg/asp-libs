@@ -1,7 +1,11 @@
 // TEMPLATE.txt
 // General structure for ASP's written in rust
 
+#![allow(non_camel_case_types)]
+#![allow(non_snake_case)]
+
 use anyhow::{Context, Result};
+use serde::{Deserialize, Serialize};
 use rust_am_lib::{
     copland::{self, handle_body},
     debug_print,
@@ -11,27 +15,36 @@ use rust_am_lib::{
 // e.g.
 use sha2::{Digest, Sha256};
 
+// ASP Arguments (JSON-decoded)
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct ASP_ARGS_Hashfile {
+    env_var: String,
+    filepath: String
+}
+
 // function where the work of the ASP is performed.
 // May signal an error which will be handled in main.
 fn body(_ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP_RawEv> {
-    debug_print!("Starting hashfile ASP execution\n");
-    let filename_value = args
-        .get("filepath")
-        .context("'filepath' argument not provided to ASP, hashfile")?;
+    // Code for specific for this ASP.
+    // This example computes the HASH of the file named in an argument for the ASP.
+    // May return an Err Result, which will be captured in main.
 
-    if filename_value.is_string() {
-        let filename: String = filename_value.to_string();
-        debug_print!("Attempting to read from file: {}\n", filename);
-        let bytes = std::fs::read(filename)?; // Vec<u8>
-        debug_print!("Read {} bytes from file\n", bytes.len());
-        let hash = Sha256::digest(&bytes);
-        debug_print!("Generated hash of {} bytes\n", hash.len());
-        Ok(vec![hash.to_vec()])
-    } else {
-        Err(anyhow::anyhow!(
-            "Failed to decode 'filepath' ASP arg as JSON String in hashfile ASP"
-        ))
-    }
+    let myaspargs : ASP_ARGS_Hashfile = serde_json::from_value(args)
+        .context("Could not decode JSON ASP_ARGS for ASP hashfile")?;
+    
+    let env_var: String = myaspargs.env_var;
+    let filename : String = myaspargs.filepath;
+
+    let env_var_string = rust_am_lib::copland::get_env_var_val(env_var)?;
+
+    let filename_full = format! {"{env_var_string}{filename}"};
+
+    debug_print!("Attempting to read from file: {}\n", filename_full);
+    let bytes = std::fs::read(filename_full)?; // Vec<u8>
+    debug_print!("Read {} bytes from file\n", bytes.len());
+    let hash = Sha256::digest(&bytes);
+    debug_print!("Generated hash of {} bytes\n", hash.len());
+    Ok(vec![hash.to_vec()])
 }
 
 // Main simply invokes the body() function above,

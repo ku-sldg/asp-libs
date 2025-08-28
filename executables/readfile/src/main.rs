@@ -1,31 +1,46 @@
+
+#![allow(non_camel_case_types)]
+#![allow(non_snake_case)]
+
 // Common Packages
 use anyhow::{Context, Result};
 use rust_am_lib::{
     copland::{self, handle_body},
     debug_print,
 };
+use serde::{Deserialize, Serialize};
+
+
+// ASP Arguments (JSON-decoded)
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct ASP_ARGS_Readfile {
+    env_var: String,
+    filepath: String
+}
 
 // function where the work of the ASP is performed.
 // May signal an error which will be handled in main.
 fn body(_ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP_RawEv> {
+  
     debug_print!("Starting readfile ASP execution\n");
-    let filename_value = args
-        .get("filepath")
-        .context("'filepath' argument not provided to ASP, readfile")?;
 
-    if filename_value.is_string() {
-        let filename: String = filename_value.to_string();
-        debug_print!("Attempting to read from file: {}\n", filename);
-        let bytes = std::fs::read(&filename).context(
-            "could not read file contents in ASP, readfile.  Perhaps the file doesn't exits?",
-        )?;
-        debug_print!("Read {} bytes from file\n", bytes.len());
-        Ok(vec![bytes])
-    } else {
-        Err(anyhow::anyhow!(
-            "Failed to decode 'filepath' ASP arg as JSON String in readfile ASP"
-        ))
-    }
+    let myaspargs : ASP_ARGS_Readfile = serde_json::from_value(args)
+    .context("Could not decode ASP_ARGS for ASP readfile")?;
+
+    let env_var: String = myaspargs.env_var;
+    let filename: String = myaspargs.filepath;
+
+    let env_var_string = rust_am_lib::copland::get_env_var_val(env_var)?;
+
+    let filename_full = format! {"{env_var_string}{filename}"};
+
+    debug_print!("Attempting to read from file: {}\n", filename_full);
+
+    let bytes = std::fs::read(&filename_full).context(
+        "could not read file contents in ASP, readfile.  Perhaps the file doesn't exist?",
+    )?;
+    debug_print!("Read {} bytes from file\n", bytes.len());
+    Ok(vec![bytes])
 }
 
 // Main simply invokes the body() function above,

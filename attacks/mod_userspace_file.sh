@@ -57,19 +57,4 @@ fi
 
 if ($REPAIR_BOOL) then 
   cp $GOOD_PATH $TARG_PATH 
-fi 
-
-# Check if the JSON file exists
-#if [[ ! -f "$JSON_TERM_FILE" ]]; then
-#  echo "JSON file not found: $JSON_TERM_FILE"
-#  exit 1
-#fi
-
-
-
-
-# Combine the length prefix and the message and send to the host and port
-
-# NOTE: This is EXTREMELY COMPLEX, but basically we calculate the message length ourselves and send it as a 4-byte prefix before the actual message
-#echo -e "\x$(printf "%x" $(((MESSAGE_LENGTH >> 24) & 0xFF)))\x$(printf "%x" $(((MESSAGE_LENGTH >> 16) & 0xFF)))\x$(printf "%x" $(((MESSAGE_LENGTH >> 8) & 0xFF)))\x$(printf "%x" $(((MESSAGE_LENGTH >> 0) & 0xFF)))$JSON_MESSAGE" \
-#  | nc $HOST $PORT
+fi
