@@ -55,8 +55,11 @@ fn body(_ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP
     let err_res = output.stderr;
     let out_res : Vec<u8> = output.stdout;
 
-    let res = if err_res.is_empty() {out_res} 
-                       else {err_res};
+    if ! err_res.is_empty() {eprint!("FYI:  stderr output after invoking run_command ASP via the CVM: {:?}", String::from_utf8(err_res))}
+
+    let res = out_res; 
+    //if err_res.is_empty() {out_res} 
+    //else {err_res};
 
     Ok (vec![res])
 
