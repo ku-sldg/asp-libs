@@ -35,7 +35,7 @@ fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP_
 
     let my_rawev_json_string = serde_json::to_string(&my_rawev)?;
 
-    debug_print!("Attempting to write to filename: {filename_full}");
+    debug_print!("Attempting to write golden (raw) evidence to filename: {filename_full}");
     std::fs::write(filename_full, my_rawev_json_string)?;
     Ok(vec![])
 }
