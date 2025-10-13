@@ -4,7 +4,7 @@
 // Common Packages
 use anyhow::{Context, Result};
 use rust_am_lib::{
-    copland::{self, handle_body, vec_to_rawev},
+    copland::{self, handle_body, vec_to_rawev, EvidenceT, GlobalContext},
     debug_print,
 };
 use serde::{Deserialize, Serialize};
@@ -13,6 +13,8 @@ use serde::{Deserialize, Serialize};
 struct ASP_ARGS_Provision_GoldenEvidence {
     env_var_golden: String,
     filepath_golden: String,
+    et_context: GlobalContext,
+    et_golden: EvidenceT
 }
 
 // function where the work of the ASP is performed.
@@ -33,10 +35,16 @@ fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP_
 
     let my_rawev = vec_to_rawev(vecvec);
 
-    let my_rawev_json_string = serde_json::to_string(&my_rawev)?;
+    let my_evidence: copland::Evidence = (my_rawev, myaspargs.et_golden);
 
-    debug_print!("Attempting to write golden (raw) evidence to filename: {filename_full}");
-    std::fs::write(filename_full, my_rawev_json_string)?;
+    let my_ctxt: copland::GlobalContext = myaspargs.et_context;
+
+    let my_evidence_w_context: (copland::Evidence, copland::GlobalContext) = (my_evidence, my_ctxt);
+
+    let my_json_string = serde_json::to_string(&my_evidence_w_context)?;
+
+    debug_print!("Attempting to write golden evidence to filename: {filename_full}");
+    std::fs::write(filename_full, my_json_string)?;
     Ok(vec![])
 }
 
