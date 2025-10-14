@@ -3,8 +3,8 @@
   "ACTION": "ASP_RUN",
   "ASP_ID": "verus_compare_id",
   "ASP_ARGS": {
-    "original": "./executables/verus_compare/test1.rs",
-    "modified": "./executables/verus_compare/test3.rs"
+    "original": "./test_files/test_orig.rs",
+    "modified": "./test_files/test_same_impl.rs"
   },
   "ASP_PLC": "P2",
   "ASP_TARG_ID": "sys_targ",
