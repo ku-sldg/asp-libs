@@ -16,7 +16,11 @@ use syn::spanned::Spanned;
 pub enum Error {
     //IncorrectUsage,
     ReadFile(io::Error),
-    ParseFile { error: syn_verus::Error, filepath: PathBuf, source_code: String },
+    ParseFile {
+        error: syn_verus::Error,
+        filepath: PathBuf,
+        source_code: String,
+    },
     NotFound(String),
     Conflict(String),
 }
@@ -28,9 +32,11 @@ impl Display for Error {
         match self {
             //IncorrectUsage => write!(f, "Usage: dump-syntax path/to/filename.rs"),
             ReadFile(error) => write!(f, "Unable to read file: {}", error),
-            ParseFile { error, filepath, source_code } => {
-                render_location(f, error, filepath, source_code)
-            }
+            ParseFile {
+                error,
+                filepath,
+                source_code,
+            } => render_location(f, error, filepath, source_code),
             NotFound(func) => write!(f, "{} not found", func),
             Conflict(func) => write!(f, "Conflict: {}", func),
         }
@@ -70,8 +76,10 @@ fn render_location(
         end.column = code_line.len();
     }
 
-    let filename =
-        filepath.file_name().map(OsStr::to_string_lossy).unwrap_or(Cow::Borrowed("main.rs"));
+    let filename = filepath
+        .file_name()
+        .map(OsStr::to_string_lossy)
+        .unwrap_or(Cow::Borrowed("main.rs"));
 
     write!(
         formatter,
@@ -188,7 +196,8 @@ pub fn format_token_stream(ts: &TokenStream, formatter: Formatter) -> String {
             Command::new("verusfmt")
         }
         Formatter::VerusFmtNoMacro => {
-            write!(tmp_file, "verus! {{{}}} // verus!", verus_s).expect("Failed to write to temp file");
+            write!(tmp_file, "verus! {{{}}} // verus!", verus_s)
+                .expect("Failed to write to temp file");
             Command::new("verusfmt")
         }
         Formatter::RustFmt => {
@@ -221,7 +230,9 @@ pub fn format_token_stream(ts: &TokenStream, formatter: Formatter) -> String {
 
     if formatter == Formatter::VerusFmtNoMacro {
         // Remove the verus! macro from the formatted code
-        formatted_code.replace("verus! {", "").replace("} // verus!", "")
+        formatted_code
+            .replace("verus! {", "")
+            .replace("} // verus!", "")
     } else {
         formatted_code
     }
@@ -284,7 +295,11 @@ pub fn update_verus_macros_tss(
         }
     }
 
-    syn_verus::File { shebang: orig.shebang.clone(), attrs: orig.attrs.clone(), items: new_items }
+    syn_verus::File {
+        shebang: orig.shebang.clone(),
+        attrs: orig.attrs.clone(),
+        items: new_items,
+    }
 }
 
 pub fn print_block(filepath: &PathBuf, block: Rect) -> io::Result<()> {
@@ -367,7 +382,11 @@ impl FnMethodExt for FnMethod {
             FnMethod::Fn(f) => f.sig.ident.to_string(),
             // TODO: Do we return only the method name or the qualified name?
             FnMethod::Method(i, m) => {
-                format!("{}::{}", type_path_to_string(&*i.self_ty), m.sig.ident.to_string())
+                format!(
+                    "{}::{}",
+                    type_path_to_string(&*i.self_ty),
+                    m.sig.ident.to_string()
+                )
             }
             FnMethod::MethodDefault(i, m) => {
                 format!("{}::{}", i.ident.to_string(), &m.sig.ident.to_string())
@@ -423,7 +442,9 @@ impl FnMethodExt for FnMethod {
 pub fn arg_list_to_string(
     args: &syn_verus::punctuated::Punctuated<syn_verus::Expr, syn_verus::token::Comma>,
 ) -> Vec<String> {
-    args.iter().map(|arg| arg.to_token_stream().to_string()).collect::<Vec<_>>()
+    args.iter()
+        .map(|arg| arg.to_token_stream().to_string())
+        .collect::<Vec<_>>()
 }
 
 pub type Rect = ((usize, usize), (usize, usize));
@@ -462,7 +483,9 @@ pub fn update_verus_macros_files(
 static TARGET_IDENT: &str = "(llm4verus_target)";
 
 pub fn attrs_have_target(attrs: &Vec<syn_verus::Attribute>) -> bool {
-    attrs.iter().any(|attr| attr.tokens.to_string() == TARGET_IDENT)
+    attrs
+        .iter()
+        .any(|attr| attr.tokens.to_string() == TARGET_IDENT)
 }
 
 pub fn func_is_target(f: &syn_verus::ItemFn) -> bool {
@@ -507,7 +530,12 @@ pub fn method_is_ext_spec(m: &syn_verus::ImplItemMethod) -> bool {
 
 pub fn type_path_to_string(t: &syn_verus::Type) -> String {
     if let syn_verus::Type::Path(p) = t {
-        p.path.segments.iter().map(|s| s.ident.to_string()).collect::<Vec<_>>().join("::")
+        p.path
+            .segments
+            .iter()
+            .map(|s| s.ident.to_string())
+            .collect::<Vec<_>>()
+            .join("::")
     } else {
         String::new()
     }

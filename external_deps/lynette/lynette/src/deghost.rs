@@ -55,8 +55,16 @@ fn remove_ghost_expr(expr: &syn_verus::Expr, mode: &DeghostMode) -> Option<syn_v
                 inputs: c.inputs.clone(),
                 or2_token: c.or2_token.clone(),
                 output: c.output.clone(),
-                requires: if mode.requires { c.requires.clone() } else { None },
-                ensures: if mode.ensures { c.ensures.clone() } else { None },
+                requires: if mode.requires {
+                    c.requires.clone()
+                } else {
+                    None
+                },
+                ensures: if mode.ensures {
+                    c.ensures.clone()
+                } else {
+                    None
+                },
                 inner_attrs: c.inner_attrs.clone(),
                 body: Box::new(new_body),
             })
@@ -172,7 +180,9 @@ fn remove_ghost_expr(expr: &syn_verus::Expr, mode: &DeghostMode) -> Option<syn_v
         // veurs:
         syn_verus::Expr::Assert(a) => {
             fn annotated_assert(a: &syn_verus::Assert) -> bool {
-                a.attrs.iter().any(|attr| attr.tokens.to_string() == "(llm_do_not_change)")
+                a.attrs
+                    .iter()
+                    .any(|attr| attr.tokens.to_string() == "(llm_do_not_change)")
             }
 
             if mode.asserts || (mode.asserts_anno && annotated_assert(a)) {
@@ -214,14 +224,20 @@ fn remove_ghost_stmt(stmt: &syn_verus::Stmt, mode: &DeghostMode) -> Option<syn_v
 }
 
 fn remove_ghost_block(block: &syn_verus::Block, mode: &DeghostMode) -> Option<syn_verus::Block> {
-    let new_stms: Vec<syn_verus::Stmt> =
-        block.stmts.iter().filter_map(|stmt| remove_ghost_stmt(stmt, mode)).collect();
+    let new_stms: Vec<syn_verus::Stmt> = block
+        .stmts
+        .iter()
+        .filter_map(|stmt| remove_ghost_stmt(stmt, mode))
+        .collect();
 
     if new_stms.is_empty() {
         return None;
     }
 
-    Some(syn_verus::Block { brace_token: block.brace_token.clone(), stmts: new_stms })
+    Some(syn_verus::Block {
+        brace_token: block.brace_token.clone(),
+        stmts: new_stms,
+    })
 }
 
 fn remove_ghost_sig(
@@ -241,7 +257,10 @@ fn remove_ghost_sig(
      * - invariants
      */
     if (!mode.spec
-        && matches!(sig.mode, syn_verus::FnMode::Spec(_) | syn_verus::FnMode::SpecChecked(_)))
+        && matches!(
+            sig.mode,
+            syn_verus::FnMode::Spec(_) | syn_verus::FnMode::SpecChecked(_)
+        ))
         || matches!(sig.mode, syn_verus::FnMode::Proof(_))
     {
         return None;
@@ -268,7 +287,7 @@ fn remove_ghost_sig(
                     syn_verus::ReturnType::Type(Default::default(), None, None, ty.clone())
                 }
                 syn_verus::ReturnType::Default => syn_verus::ReturnType::Default,
-            }
+            },
         },
         prover: sig.prover.clone(), // Removed
         // TODO: This fix needs to be propagated to other places using `Specification`
@@ -317,7 +336,10 @@ fn is_verifier_attr(attr: &syn_verus::Attribute) -> bool {
 }
 
 fn remove_verifier_attr(attr: &Vec<syn_verus::Attribute>) -> Vec<syn_verus::Attribute> {
-    attr.iter().filter(|a| !is_verifier_attr(a)).map(|a| a.clone()).collect()
+    attr.iter()
+        .filter(|a| !is_verifier_attr(a))
+        .map(|a| a.clone())
+        .collect()
 }
 
 /*
@@ -333,7 +355,10 @@ fn remove_verifier_attr(attr: &Vec<syn_verus::Attribute>) -> Vec<syn_verus::Attr
 
 fn remove_ghost_fn(func: &syn_verus::ItemFn, mode: &DeghostMode) -> Option<syn_verus::ItemFn> {
     remove_ghost_sig(&func.sig, mode).and_then(|new_sig| {
-        if matches!(new_sig.mode, syn_verus::FnMode::Spec(_) | syn_verus::FnMode::SpecChecked(_)) {
+        if matches!(
+            new_sig.mode,
+            syn_verus::FnMode::Spec(_) | syn_verus::FnMode::SpecChecked(_)
+        ) {
             Some(func.clone())
         } else {
             remove_ghost_block(&(*func.block), mode).map(|new_block| {

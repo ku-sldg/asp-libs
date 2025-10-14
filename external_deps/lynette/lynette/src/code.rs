@@ -30,9 +30,10 @@ fn get_calls_expr(expr: &syn_verus::Expr) -> Vec<CallType> {
         }
         syn_verus::Expr::Async(asy) => asy.block.stmts.iter().flat_map(get_calls_stmt).collect(),
         syn_verus::Expr::Await(aw) => get_calls_expr(&aw.base),
-        syn_verus::Expr::Binary(b) => {
-            get_calls_expr(&b.left).into_iter().chain(get_calls_expr(&b.right)).collect()
-        }
+        syn_verus::Expr::Binary(b) => get_calls_expr(&b.left)
+            .into_iter()
+            .chain(get_calls_expr(&b.right))
+            .collect(),
         syn_verus::Expr::Block(bl) => bl.block.stmts.iter().flat_map(get_calls_stmt).collect(),
         syn_verus::Expr::Box(bx) => get_calls_expr(&bx.expr),
         syn_verus::Expr::Break(br) => br.expr.as_ref().map_or(vec![], |expr| get_calls_expr(expr)),
@@ -47,12 +48,23 @@ fn get_calls_expr(expr: &syn_verus::Expr) -> Vec<CallType> {
         syn_verus::Expr::Group(g) => get_calls_expr(&g.expr),
         syn_verus::Expr::If(i) => get_calls_expr(&i.cond)
             .into_iter()
-            .chain(i.then_branch.stmts.iter().map(|stmt| get_calls_stmt(stmt)).flatten())
-            .chain(i.else_branch.as_ref().map_or(vec![], |(_, eexpr)| get_calls_expr(&*eexpr)))
+            .chain(
+                i.then_branch
+                    .stmts
+                    .iter()
+                    .map(|stmt| get_calls_stmt(stmt))
+                    .flatten(),
+            )
+            .chain(
+                i.else_branch
+                    .as_ref()
+                    .map_or(vec![], |(_, eexpr)| get_calls_expr(&*eexpr)),
+            )
             .collect(),
-        syn_verus::Expr::Index(i) => {
-            get_calls_expr(&i.expr).into_iter().chain(get_calls_expr(&i.index)).collect()
-        }
+        syn_verus::Expr::Index(i) => get_calls_expr(&i.expr)
+            .into_iter()
+            .chain(get_calls_expr(&i.index))
+            .collect(),
         syn_verus::Expr::Let(l) => get_calls_expr(&l.expr),
         // syn_verus::Expr::Lit(l) => {}
         syn_verus::Expr::Loop(l) => l.body.stmts.iter().flat_map(get_calls_stmt).collect(),
@@ -75,7 +87,10 @@ fn get_calls_expr(expr: &syn_verus::Expr) -> Vec<CallType> {
         syn_verus::Expr::MethodCall(m) => {
             let mut calls = get_calls_expr(&m.receiver);
             calls.push(CallType::Method(m));
-            calls.into_iter().chain(m.args.iter().flat_map(get_calls_expr)).collect::<Vec<_>>()
+            calls
+                .into_iter()
+                .chain(m.args.iter().flat_map(get_calls_expr))
+                .collect::<Vec<_>>()
         }
         syn_verus::Expr::Paren(p) => get_calls_expr(&p.expr),
         // syn_verus::Expr::Path(p) => {}
@@ -87,9 +102,10 @@ fn get_calls_expr(expr: &syn_verus::Expr) -> Vec<CallType> {
             .chain(r.to.as_ref().map_or(vec![], |expr| get_calls_expr(expr)))
             .collect(),
         syn_verus::Expr::Reference(r) => get_calls_expr(&r.expr),
-        syn_verus::Expr::Repeat(r) => {
-            get_calls_expr(&r.expr).into_iter().chain(get_calls_expr(&r.len)).collect()
-        }
+        syn_verus::Expr::Repeat(r) => get_calls_expr(&r.expr)
+            .into_iter()
+            .chain(get_calls_expr(&r.len))
+            .collect(),
         syn_verus::Expr::Return(r) => r.expr.as_ref().map_or(vec![], |expr| get_calls_expr(expr)),
         syn_verus::Expr::Struct(s) => s
             .fields
@@ -121,9 +137,10 @@ fn get_calls_expr(expr: &syn_verus::Expr) -> Vec<CallType> {
 fn get_calls_stmt(stmt: &syn_verus::Stmt) -> Vec<CallType> {
     match stmt {
         syn_verus::Stmt::Expr(e) => get_calls_expr(e),
-        syn_verus::Stmt::Local(l) => {
-            l.init.as_ref().map_or(vec![], |(_, expr)| get_calls_expr(&*expr))
-        }
+        syn_verus::Stmt::Local(l) => l
+            .init
+            .as_ref()
+            .map_or(vec![], |(_, expr)| get_calls_expr(&*expr)),
         syn_verus::Stmt::Item(i) => get_calls_item(i),
         syn_verus::Stmt::Semi(e, _) => get_calls_expr(e),
     }
@@ -284,7 +301,13 @@ impl<'a, 'b> GhostVariant<'_> {
     }
 
     fn to_tagged_loc(&self) -> (&'b str, (usize, usize)) {
-        (self.tag(), (self.expr().span().start().line, self.expr().span().end().line))
+        (
+            self.tag(),
+            (
+                self.expr().span().start().line,
+                self.expr().span().end().line,
+            ),
+        )
     }
 }
 
@@ -296,7 +319,11 @@ fn extract_ghost_expr(stmt: &syn_verus::Expr) -> Vec<GhostVariant> {
             .stmts
             .iter()
             .flat_map(extract_ghost_stmt)
-            .chain(i.else_branch.as_ref().map_or(vec![], |(_, eexpr)| extract_ghost_expr(&*eexpr)))
+            .chain(
+                i.else_branch
+                    .as_ref()
+                    .map_or(vec![], |(_, eexpr)| extract_ghost_expr(&*eexpr)),
+            )
             .collect(),
         syn_verus::Expr::Match(m) => m
             .arms
@@ -315,10 +342,18 @@ fn extract_ghost_expr(stmt: &syn_verus::Expr) -> Vec<GhostVariant> {
                 .iter()
                 .map(GhostVariant::Invariant)
                 .chain(w.invariant_ensures.as_ref().map_or(vec![], |ie| {
-                    ie.exprs.exprs.iter().map(GhostVariant::InvariantEnsures).collect()
+                    ie.exprs
+                        .exprs
+                        .iter()
+                        .map(GhostVariant::InvariantEnsures)
+                        .collect()
                 }))
                 .chain(w.invariant_except_break.as_ref().map_or(vec![], |ieb| {
-                    ieb.exprs.exprs.iter().map(GhostVariant::InvariantExceptBreak).collect()
+                    ieb.exprs
+                        .exprs
+                        .iter()
+                        .map(GhostVariant::InvariantExceptBreak)
+                        .collect()
                 }))
                 .chain(w.body.stmts.iter().flat_map(extract_ghost_stmt))
                 .collect()
@@ -340,10 +375,18 @@ fn extract_ghost_expr(stmt: &syn_verus::Expr) -> Vec<GhostVariant> {
                 .iter()
                 .map(GhostVariant::Invariant)
                 .chain(l.invariant_ensures.as_ref().map_or(vec![], |ie| {
-                    ie.exprs.exprs.iter().map(GhostVariant::InvariantEnsures).collect()
+                    ie.exprs
+                        .exprs
+                        .iter()
+                        .map(GhostVariant::InvariantEnsures)
+                        .collect()
                 }))
                 .chain(l.invariant_except_break.as_ref().map_or(vec![], |ieb| {
-                    ieb.exprs.exprs.iter().map(GhostVariant::InvariantExceptBreak).collect()
+                    ieb.exprs
+                        .exprs
+                        .iter()
+                        .map(GhostVariant::InvariantExceptBreak)
+                        .collect()
                 }))
                 .chain(l.body.stmts.iter().flat_map(extract_ghost_stmt))
                 .collect()
@@ -357,9 +400,10 @@ fn extract_ghost_expr(stmt: &syn_verus::Expr) -> Vec<GhostVariant> {
 fn extract_ghost_stmt(stmt: &syn_verus::Stmt) -> Vec<GhostVariant> {
     match stmt {
         syn_verus::Stmt::Expr(e) => extract_ghost_expr(e),
-        syn_verus::Stmt::Local(l) => {
-            l.init.as_ref().map_or(vec![], |(_, expr)| extract_ghost_expr(&*expr))
-        }
+        syn_verus::Stmt::Local(l) => l
+            .init
+            .as_ref()
+            .map_or(vec![], |(_, expr)| extract_ghost_expr(&*expr)),
         syn_verus::Stmt::Item(i) => extract_ghost_item(i),
         syn_verus::Stmt::Semi(e, _) => extract_ghost_expr(e),
     }
@@ -423,7 +467,10 @@ pub fn fget_target(filepath: &PathBuf) -> Result<Vec<FnMethod>, Error> {
                         if let syn_verus::ImplItem::Method(m) = item {
                             if method_is_target(&m) {
                                 ret.push(FnMethod::Method(
-                                    syn_verus::ItemImpl { items: vec![], ..i.clone() },
+                                    syn_verus::ItemImpl {
+                                        items: vec![],
+                                        ..i.clone()
+                                    },
                                     m.clone(),
                                 ));
                             }

@@ -1,10 +1,10 @@
 // MODIFICATION: This entire file is new.
-// It contains functions for extracting specific parts of a Verus file.
+// It contains functions for extracting specific parts of a Verus file that we care about most (the specification parts vs. the implementations part).
 
-use std::path::PathBuf;
-use crate::utils::{fextract_verus_macro, fprint_file, Formatter};
 use crate::deghost::remove_ghost_from_file;
+use crate::utils::{fextract_verus_macro, fprint_file, Formatter};
 use crate::DeghostMode;
+use std::path::PathBuf;
 
 pub fn extract_spec_functions(filepath: &PathBuf) -> Result<String, crate::utils::Error> {
     let spec_mode = DeghostMode {

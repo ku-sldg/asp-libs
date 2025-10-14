@@ -2,23 +2,17 @@ use clap::Args;
 use std::cell::RefCell;
 use std::path::PathBuf;
 
-mod code;
-mod deghost;
-mod func;
-mod merge;
-mod unimpl;
-pub mod utils;
-// MODIFICATION: Add the extract module to the library.
+pub mod code;
+pub mod deghost;
 pub mod extract;
+pub mod func;
+pub mod merge;
+pub mod unimpl;
+pub mod utils;
 
-use crate::code::*;
 use crate::deghost::*;
-use crate::func::*;
-use crate::merge::*;
-use crate::unimpl::*;
 use crate::utils::*;
-// MODIFICATION: Expose the new extraction functions.
-pub use extract::{extract_spec_functions, extract_implementation};
+pub use extract::{extract_implementation, extract_spec_functions};
 
 /// When a flag is set, the corresponding ghost code will not be removed by the
 /// deghost functions.
@@ -34,13 +28,16 @@ pub struct DeghostMode {
     pub spec: bool,
     #[clap(long, help = "Compare asserts")]
     pub asserts: bool,
-    #[clap(long, help = "Compare asserts with annotations(e.g. #[warn(llm_do_not_change)])")]
+    #[clap(
+        long,
+        help = "Compare asserts with annotations(e.g. #[warn(llm_do_not_change)])"
+    )]
     pub asserts_anno: bool,
     #[clap(long, help = "Compare decreases")]
     pub decreases: bool,
     #[clap(long, help = "Compare assumes")]
     pub assumes: bool,
-    # [clap(long, help = "Compare signature output")]
+    #[clap(long, help = "Compare signature output")]
     pub sig_output: bool,
 }
 
@@ -87,7 +84,7 @@ pub struct CompareArgs {
         short,
         long,
         action,
-        long_help = "(Deprecated)Targer mode. If set, the comparison will be more strict on the qualifier and spec function.
+        long_help = "(Deprecated)Target mode. If set, the comparison will be more strict on the qualifier and spec function.
  This flag may be extended futher in the future."
     )]
     pub target: bool,
@@ -125,7 +122,6 @@ pub fn compare_files(args: &CompareArgs) -> Result<bool, Error> {
 
     fextract_pure_rust(f1, &mode).and_then(|result1| {
         fextract_pure_rust(f2, &mode).and_then(|result2| {
-
             if args.verbose {
                 println!("{}", fprint_file(&result1, Formatter::VerusFmt));
                 println!("{}", fprint_file(&result2, Formatter::VerusFmt));

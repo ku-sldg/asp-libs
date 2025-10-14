@@ -96,7 +96,10 @@ fn unimpl_item(item: &Item, target: bool) -> Item {
                 })
                 .collect::<Vec<_>>();
 
-            Item::Trait(syn_verus::ItemTrait { items: new_items, ..t.clone() })
+            Item::Trait(syn_verus::ItemTrait {
+                items: new_items,
+                ..t.clone()
+            })
         }
         Item::Impl(ip) => {
             let new_items = ip
@@ -122,7 +125,10 @@ fn unimpl_item(item: &Item, target: bool) -> Item {
                 })
                 .collect::<Vec<_>>();
 
-            Item::Impl(syn_verus::ItemImpl { items: new_items, ..ip.clone() })
+            Item::Impl(syn_verus::ItemImpl {
+                items: new_items,
+                ..ip.clone()
+            })
         }
         _ => item.clone(),
     }
@@ -218,7 +224,12 @@ pub fn funimpl_file(
                         &new_files,
                         i,
                         j,
-                        |items| Item::Trait(syn_verus::ItemTrait { items, ..unimpl_t.clone() }),
+                        |items| {
+                            Item::Trait(syn_verus::ItemTrait {
+                                items,
+                                ..unimpl_t.clone()
+                            })
+                        },
                         |i| match i {
                             syn_verus::TraitItem::Method(m) => {
                                 !(sig_is_ghost(&m.sig)
@@ -240,7 +251,12 @@ pub fn funimpl_file(
                         &new_files,
                         i,
                         j,
-                        |items| Item::Impl(syn_verus::ItemImpl { items, ..unimpl_i.clone() }),
+                        |items| {
+                            Item::Impl(syn_verus::ItemImpl {
+                                items,
+                                ..unimpl_i.clone()
+                            })
+                        },
                         |i| match i {
                             syn_verus::ImplItem::Method(m) => {
                                 !(method_is_ghost(m)

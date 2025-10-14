@@ -90,7 +90,10 @@ pub fn extract_functions_by_name(file: &syn_verus::File, names: &[String]) -> Ve
                             ))
                         {
                             Some(FnMethod::MethodDefault(
-                                syn_verus::ItemTrait { items: vec![], ..t.clone() },
+                                syn_verus::ItemTrait {
+                                    items: vec![],
+                                    ..t.clone()
+                                },
                                 m.clone(),
                             ))
                         } else {
@@ -112,7 +115,10 @@ pub fn extract_functions_by_name(file: &syn_verus::File, names: &[String]) -> Ve
                             m.sig.ident.to_string()
                         ))) {
                             Some(FnMethod::Method(
-                                syn_verus::ItemImpl { items: vec![], ..ii.clone() },
+                                syn_verus::ItemImpl {
+                                    items: vec![],
+                                    ..ii.clone()
+                                },
                                 m.clone(),
                             ))
                         } else {
@@ -274,21 +280,32 @@ pub fn insert_functions(
 pub fn find_all_functions(file: &syn_verus::File) -> Vec<syn_verus::ItemFn> {
     file.items
         .iter()
-        .filter_map(|item| if let syn_verus::Item::Fn(f) = item { Some(f.clone()) } else { None })
+        .filter_map(|item| {
+            if let syn_verus::Item::Fn(f) = item {
+                Some(f.clone())
+            } else {
+                None
+            }
+        })
         .collect::<Vec<syn_verus::ItemFn>>()
 }
 
 #[allow(dead_code)]
 pub fn ffind_all_functions(filepath: &PathBuf) -> Result<Vec<syn_verus::ItemFn>, Error> {
-    fextract_verus_macro(filepath)
-        .map(|(files, _)| files.iter().flat_map(|file| find_all_functions(file)).collect())
+    fextract_verus_macro(filepath).map(|(files, _)| {
+        files
+            .iter()
+            .flat_map(|file| find_all_functions(file))
+            .collect()
+    })
 }
 
 fn detect_non_linear_assert_stmt(stmt: &syn_verus::Stmt) -> bool {
     match stmt {
-        syn_verus::Stmt::Local(l) => {
-            l.init.as_ref().map_or(false, |(_, e)| detect_non_linear_assert_expr(e))
-        }
+        syn_verus::Stmt::Local(l) => l
+            .init
+            .as_ref()
+            .map_or(false, |(_, e)| detect_non_linear_assert_expr(e)),
         syn_verus::Stmt::Item(_) => false,
         syn_verus::Stmt::Expr(e) => detect_non_linear_assert_expr(e),
         syn_verus::Stmt::Semi(e, _) => detect_non_linear_assert_expr(e),
@@ -353,7 +370,11 @@ pub fn detect_non_linear_assert_expr(expr: &syn_verus::Expr) -> bool {
                     detect_non_linear_assert_expr(b.right.as_ref())
             }
         }
-        syn_verus::Expr::Block(b) => b.block.stmts.iter().any(|s| detect_non_linear_assert_stmt(s)),
+        syn_verus::Expr::Block(b) => b
+            .block
+            .stmts
+            .iter()
+            .any(|s| detect_non_linear_assert_stmt(s)),
         syn_verus::Expr::Box(b) => detect_non_linear_assert_expr(b.expr.as_ref()),
         syn_verus::Expr::Break(_) => false,
         syn_verus::Expr::Call(c) => c.args.iter().any(|e| detect_non_linear_assert_expr(e)),
@@ -363,12 +384,18 @@ pub fn detect_non_linear_assert_expr(expr: &syn_verus::Expr) -> bool {
         syn_verus::Expr::Field(f) => detect_non_linear_assert_expr(&f.base.as_ref()),
         syn_verus::Expr::ForLoop(f) => {
             detect_non_linear_assert_expr(f.expr.as_ref())
-                || f.body.stmts.iter().any(|s| detect_non_linear_assert_stmt(s))
+                || f.body
+                    .stmts
+                    .iter()
+                    .any(|s| detect_non_linear_assert_stmt(s))
         }
         syn_verus::Expr::Group(g) => detect_non_linear_assert_expr(g.expr.as_ref()),
         syn_verus::Expr::If(i) => {
             detect_non_linear_assert_expr(i.cond.as_ref())
-                || i.then_branch.stmts.iter().any(|s| detect_non_linear_assert_stmt(s))
+                || i.then_branch
+                    .stmts
+                    .iter()
+                    .any(|s| detect_non_linear_assert_stmt(s))
                 || i.else_branch
                     .as_ref()
                     .map_or(false, |(_, e)| detect_non_linear_assert_expr(e.as_ref()))
@@ -379,11 +406,17 @@ pub fn detect_non_linear_assert_expr(expr: &syn_verus::Expr) -> bool {
         }
         syn_verus::Expr::Let(l) => detect_non_linear_assert_expr(l.expr.as_ref()),
         syn_verus::Expr::Lit(_) => false,
-        syn_verus::Expr::Loop(l) => l.body.stmts.iter().any(|s| detect_non_linear_assert_stmt(s)),
+        syn_verus::Expr::Loop(l) => l
+            .body
+            .stmts
+            .iter()
+            .any(|s| detect_non_linear_assert_stmt(s)),
         syn_verus::Expr::Macro(_) => false,
         syn_verus::Expr::Match(m) => {
             detect_non_linear_assert_expr(m.expr.as_ref())
-                || m.arms.iter().any(|a| detect_non_linear_assert_expr(a.body.as_ref()))
+                || m.arms
+                    .iter()
+                    .any(|a| detect_non_linear_assert_expr(a.body.as_ref()))
         }
         syn_verus::Expr::MethodCall(m) => {
             detect_non_linear_assert_expr(m.receiver.as_ref())
@@ -392,17 +425,22 @@ pub fn detect_non_linear_assert_expr(expr: &syn_verus::Expr) -> bool {
         syn_verus::Expr::Paren(p) => detect_non_linear_assert_expr(p.expr.as_ref()),
         syn_verus::Expr::Path(_) => false,
         syn_verus::Expr::Range(r) => {
-            r.from.as_ref().map_or(false, |e| detect_non_linear_assert_expr(e.as_ref()))
-                || r.to.as_ref().map_or(false, |e| detect_non_linear_assert_expr(e.as_ref()))
+            r.from
+                .as_ref()
+                .map_or(false, |e| detect_non_linear_assert_expr(e.as_ref()))
+                || r.to
+                    .as_ref()
+                    .map_or(false, |e| detect_non_linear_assert_expr(e.as_ref()))
         }
         syn_verus::Expr::Reference(r) => detect_non_linear_assert_expr(&r.expr.as_ref()),
         syn_verus::Expr::Repeat(r) => {
             detect_non_linear_assert_expr(r.len.as_ref())
                 || detect_non_linear_assert_expr(r.expr.as_ref())
         }
-        syn_verus::Expr::Return(r) => {
-            r.expr.as_ref().map_or(false, |e| detect_non_linear_assert_expr(e))
-        }
+        syn_verus::Expr::Return(r) => r
+            .expr
+            .as_ref()
+            .map_or(false, |e| detect_non_linear_assert_expr(e)),
         syn_verus::Expr::Struct(_) => false,
         syn_verus::Expr::Try(_) => false,
         syn_verus::Expr::TryBlock(_) => false,
@@ -413,7 +451,10 @@ pub fn detect_non_linear_assert_expr(expr: &syn_verus::Expr) -> bool {
         syn_verus::Expr::Verbatim(_) => false,
         syn_verus::Expr::While(w) => {
             detect_non_linear_assert_expr(w.cond.as_ref())
-                || w.body.stmts.iter().any(|s| detect_non_linear_assert_stmt(s))
+                || w.body
+                    .stmts
+                    .iter()
+                    .any(|s| detect_non_linear_assert_stmt(s))
         }
         syn_verus::Expr::Yield(_) => false,
         _ => false,
@@ -430,13 +471,20 @@ fn detect_non_linear_expr(expr: &syn_verus::Expr) -> bool {
         }
         syn_verus::Expr::If(i) => {
             //detect_non_linear_assert_expr(i.cond.as_ref()) ||
-            i.then_branch.stmts.iter().any(|s| detect_non_linear_stmt(s))
-                || i.else_branch.as_ref().map_or(false, |(_, e)| detect_non_linear_expr(e.as_ref()))
+            i.then_branch
+                .stmts
+                .iter()
+                .any(|s| detect_non_linear_stmt(s))
+                || i.else_branch
+                    .as_ref()
+                    .map_or(false, |(_, e)| detect_non_linear_expr(e.as_ref()))
         }
         syn_verus::Expr::Loop(l) => l.body.stmts.iter().any(|s| detect_non_linear_stmt(s)),
         syn_verus::Expr::Match(m) => {
             //detect_non_linear_assert_expr(m.expr.as_ref()) ||
-            m.arms.iter().any(|a| detect_non_linear_expr(a.body.as_ref()))
+            m.arms
+                .iter()
+                .any(|a| detect_non_linear_expr(a.body.as_ref()))
         }
         syn_verus::Expr::Repeat(r) => {
             //detect_non_linear_assert_expr(r.len.as_ref()) ||
