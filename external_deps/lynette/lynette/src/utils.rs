@@ -210,6 +210,23 @@ pub fn format_token_stream(ts: &TokenStream, formatter: Formatter) -> String {
             Command::new("verusfmt")
         }
     };
+    // Make sure either "rustfmt" or "verusfmt" is installed
+    match cmd.get_program().to_str() {
+        None => panic!("Failed to get formatter program name"),
+        Some("rustfmt") => {
+            if which::which("rustfmt").is_err() {
+                panic!("rustfmt is not installed. Please install rustfmt.");
+            }
+        }
+        Some("verusfmt") => {
+            if which::which("verusfmt").is_err() {
+                panic!("verusfmt is not installed. Please install verusfmt.");
+            }
+        }
+        Some(prog) => {
+            panic!("Unsupported formatter: {}", prog)
+        }
+    }
 
     cmd.arg(tmp_path.clone());
 

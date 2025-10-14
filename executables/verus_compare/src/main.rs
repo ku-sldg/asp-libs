@@ -1,4 +1,3 @@
-
 #![allow(non_camel_case_types)]
 #![allow(non_snake_case)]
 
@@ -9,7 +8,6 @@ use rust_am_lib::{
     debug_print,
 };
 use serde::{Deserialize, Serialize};
-
 
 // This ASP ("verus_compare") is a measurement ASP that extracts specification and implementation code
 // from two Verus files.
@@ -31,7 +29,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct ASP_ARGS_VerusCompare {
     original: String,
-    modified: String
+    modified: String,
 }
 
 use lynette::{extract_implementation, extract_spec_functions};
@@ -40,16 +38,32 @@ use std::path::PathBuf;
 // function where the work of the ASP is performed.
 // May signal an error which will be handled in main.
 fn body(_ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP_RawEv> {
-
     debug_print!("Starting verus_compare ASP execution\n");
 
-    let myaspargs : ASP_ARGS_VerusCompare = serde_json::from_value(args)
-    .context("Could not decode ASP_ARGS for ASP verus_compare")?;
+    let myaspargs: ASP_ARGS_VerusCompare =
+        serde_json::from_value(args).context("Could not decode ASP_ARGS for ASP verus_compare")?;
 
     let original_path = PathBuf::from(myaspargs.original);
     let modified_path = PathBuf::from(myaspargs.modified);
+    // check that the files exist
+    if !original_path.exists() {
+        return Err(anyhow::anyhow!(
+            "Original file does not exist: {}",
+            original_path.display()
+        ));
+    }
+    if !modified_path.exists() {
+        return Err(anyhow::anyhow!(
+            "Modified file does not exist: {}",
+            modified_path.display()
+        ));
+    }
 
-    debug_print!("Original file: {}\\nModified file: {}\\n", original_path.display(), modified_path.display());
+    debug_print!(
+        "Original file: {}\\nModified file: {}\\n",
+        original_path.display(),
+        modified_path.display()
+    );
 
     let original_spec = extract_spec_functions(&original_path)?;
     let modified_spec = extract_spec_functions(&modified_path)?;
