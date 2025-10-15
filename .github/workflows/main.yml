@@ -28,7 +28,7 @@ jobs:
       - name: Install Deps
         run: |
           cd ${{ github.workspace }}
-          tools/install_deps.sh
+          tools/install_deps.sh --yes
 
       - name: Test Build
         run: |
