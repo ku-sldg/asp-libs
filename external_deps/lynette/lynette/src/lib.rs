@@ -12,7 +12,7 @@ pub mod utils;
 
 use crate::deghost::*;
 use crate::utils::*;
-pub use extract::{extract_implementation, extract_spec_functions};
+pub use extract::{extract_implementation, extract_spec_signatures};
 
 /// When a flag is set, the corresponding ghost code will not be removed by the
 /// deghost functions.
@@ -39,6 +39,8 @@ pub struct DeghostMode {
     pub assumes: bool,
     #[clap(long, help = "Compare signature output")]
     pub sig_output: bool,
+    #[clap(long, help = "Strip implementation related code")]
+    pub strip_bodies: bool,
 }
 
 impl DeghostMode {
@@ -51,6 +53,7 @@ impl DeghostMode {
         self.asserts_anno = other.asserts_anno;
         self.decreases = other.decreases;
         self.assumes = other.assumes;
+        self.strip_bodies = other.strip_bodies;
     }
 }
 
@@ -71,6 +74,7 @@ impl Default for DeghostMode {
             decreases: false,
             assumes: false,
             sig_output: false,
+            strip_bodies: false,
         }
     }
 }

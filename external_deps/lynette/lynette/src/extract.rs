@@ -6,7 +6,7 @@ use crate::utils::{fextract_verus_macro, fprint_file, Formatter};
 use crate::DeghostMode;
 use std::path::PathBuf;
 
-pub fn extract_spec_functions(filepath: &PathBuf) -> Result<String, crate::utils::Error> {
+pub fn extract_spec_signatures(filepath: &PathBuf) -> Result<String, crate::utils::Error> {
     let spec_mode = DeghostMode {
         requires: true,
         ensures: true,
@@ -17,9 +17,11 @@ pub fn extract_spec_functions(filepath: &PathBuf) -> Result<String, crate::utils
         decreases: true,
         assumes: true,
         sig_output: true,
+        strip_bodies: true,
     };
 
-    let (_, file) = fextract_verus_macro(filepath)?;
+    let (mut files, _) = fextract_verus_macro(filepath)?;
+    let file = files.pop().unwrap();
     let spec_file = remove_ghost_from_file(&file, &spec_mode);
     Ok(fprint_file(&spec_file, Formatter::VerusFmt))
 }
@@ -35,9 +37,11 @@ pub fn extract_implementation(filepath: &PathBuf) -> Result<String, crate::utils
         decreases: false,
         assumes: false,
         sig_output: false,
+        strip_bodies: false,
     };
 
-    let (_, file) = fextract_verus_macro(filepath)?;
+    let (mut files, _) = fextract_verus_macro(filepath)?;
+    let file = files.pop().unwrap();
     let impl_file = remove_ghost_from_file(&file, &impl_mode);
     Ok(fprint_file(&impl_file, Formatter::VerusFmt))
 }

@@ -355,21 +355,31 @@ fn remove_verifier_attr(attr: &Vec<syn_verus::Attribute>) -> Vec<syn_verus::Attr
 
 fn remove_ghost_fn(func: &syn_verus::ItemFn, mode: &DeghostMode) -> Option<syn_verus::ItemFn> {
     remove_ghost_sig(&func.sig, mode).and_then(|new_sig| {
-        if matches!(
-            new_sig.mode,
-            syn_verus::FnMode::Spec(_) | syn_verus::FnMode::SpecChecked(_)
-        ) {
-            Some(func.clone())
+        if mode.strip_bodies {
+            let mut new_func = func.clone();
+            new_func.sig = new_sig;
+            new_func.block = Box::new(syn_verus::Block {
+                brace_token: Default::default(),
+                stmts: Vec::new(),
+            });
+            Some(new_func)
         } else {
-            remove_ghost_block(&(*func.block), mode).map(|new_block| {
-                syn_verus::ItemFn {
-                    attrs: remove_verifier_attr(&func.attrs),
-                    vis: func.vis.clone(),
-                    sig: new_sig,
-                    block: Box::new(new_block), // Box the new block
-                    semi_token: func.semi_token.clone(), // XXX: What is this?
-                }
-            })
+            if matches!(
+                new_sig.mode,
+                syn_verus::FnMode::Spec(_) | syn_verus::FnMode::SpecChecked(_)
+            ) {
+                Some(func.clone())
+            } else {
+                remove_ghost_block(&(*func.block), mode).map(|new_block| {
+                    syn_verus::ItemFn {
+                        attrs: remove_verifier_attr(&func.attrs),
+                        vis: func.vis.clone(),
+                        sig: new_sig,
+                        block: Box::new(new_block), // Box the new block
+                        semi_token: func.semi_token.clone(), // XXX: What is this?
+                    }
+                })
+            }
         }
     })
 }
@@ -390,7 +400,15 @@ fn remove_ghost_impl(i: &syn_verus::ItemImpl, mode: &DeghostMode) -> syn_verus::
             .filter_map(|it| {
                 if let syn_verus::ImplItem::Method(func) = it {
                     remove_ghost_sig(&func.sig, mode).and_then(|new_sig| {
-                        {
+                        if mode.strip_bodies {
+                            let mut new_func = func.clone();
+                            new_func.sig = new_sig;
+                            new_func.block = syn_verus::Block {
+                                brace_token: Default::default(),
+                                stmts: Vec::new(),
+                            };
+                            Some(new_func)
+                        } else {
                             if matches!(
                                 new_sig.mode,
                                 syn_verus::FnMode::Spec(_) | syn_verus::FnMode::SpecChecked(_)
@@ -409,7 +427,7 @@ fn remove_ghost_impl(i: &syn_verus::ItemImpl, mode: &DeghostMode) -> syn_verus::
                                 })
                             }
                         }
-                        .and_then(|new_method| Some(syn_verus::ImplItem::Method(new_method)))
+                        .map(|new_method| syn_verus::ImplItem::Method(new_method))
                     })
                 } else {
                     Some(it.clone())

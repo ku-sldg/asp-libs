@@ -32,7 +32,7 @@ struct ASP_ARGS_VerusCompare {
     modified: String,
 }
 
-use lynette::{extract_implementation, extract_spec_functions};
+use lynette::{extract_implementation, extract_spec_signatures};
 use std::path::PathBuf;
 
 // function where the work of the ASP is performed.
@@ -65,8 +65,8 @@ fn body(_ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP
         modified_path.display()
     );
 
-    let original_spec = extract_spec_functions(&original_path)?;
-    let modified_spec = extract_spec_functions(&modified_path)?;
+    let original_spec = extract_spec_signatures(&original_path)?;
+    let modified_spec = extract_spec_signatures(&modified_path)?;
     let original_impl = extract_implementation(&original_path)?;
     let modified_impl = extract_implementation(&modified_path)?;
 

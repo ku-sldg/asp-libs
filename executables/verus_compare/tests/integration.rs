@@ -34,7 +34,7 @@ fn same_req() {
         "Same Request",
         OUR_EXEC,
         SAME_REQ,
-        r#"{"TYPE":"RESPONSE","ACTION":"ASP_RUN","SUCCESS":true,"PAYLOAD":{"RawEv":["dmVydXMhIHsKCnZlcnVzICEgeyBmbiB0ZXN0X2Z1bmN0aW9uICh4IDogdTMyKSAtPiAocmVzIDogdTMyKSByZXF1aXJlcyB4IDwgMTAwIGVuc3VyZXMgcmVzIDwgMjAwIHsgeCAqIDIgfSB9Cgp9IC8vIHZlcnVzIQo=","dmVydXMhIHsKCnZlcnVzICEgeyBmbiB0ZXN0X2Z1bmN0aW9uICh4IDogdTMyKSAtPiAocmVzIDogdTMyKSByZXF1aXJlcyB4IDwgMTAwIGVuc3VyZXMgcmVzIDwgMjAwIHsgeCAqIDIgfSB9Cgp9IC8vIHZlcnVzIQo=","dmVydXMhIHsKCnZlcnVzICEgeyBmbiB0ZXN0X2Z1bmN0aW9uICh4IDogdTMyKSAtPiAocmVzIDogdTMyKSByZXF1aXJlcyB4IDwgMTAwIGVuc3VyZXMgcmVzIDwgMjAwIHsgeCAqIDIgfSB9Cgp9IC8vIHZlcnVzIQo=","dmVydXMhIHsKCnZlcnVzICEgeyBmbiB0ZXN0X2Z1bmN0aW9uICh4IDogdTMyKSAtPiAocmVzIDogdTMyKSByZXF1aXJlcyB4IDwgMTAwIGVuc3VyZXMgcmVzIDwgMjAwIHsgeCAqIDIgfSB9Cgp9IC8vIHZlcnVzIQo="]}}"#,
+        r#"{"TYPE":"RESPONSE","ACTION":"ASP_RUN","SUCCESS":true,"PAYLOAD":{"RawEv":["dmVydXMhIHsKCmZuIHRlc3RfZnVuY3Rpb24oeDogdTMyKSAtPiAocmVzOiB1MzIpCiAgICByZXF1aXJlcwogICAgICAgIHggPCAxMDAsCiAgICBlbnN1cmVzCiAgICAgICAgcmVzIDwgMjAwLAp7Cn0KCn0gLy8gdmVydXMhCg==","dmVydXMhIHsKCmZuIHRlc3RfZnVuY3Rpb24oeDogdTMyKSAtPiAocmVzOiB1MzIpCiAgICByZXF1aXJlcwogICAgICAgIHggPCAxMDAsCiAgICBlbnN1cmVzCiAgICAgICAgcmVzIDwgMjAwLAp7Cn0KCn0gLy8gdmVydXMhCg==","dmVydXMhIHsKCmZuIHRlc3RfZnVuY3Rpb24oeDogdTMyKSAtPiB1MzIgewogICAgeCAqIDIKfQoKfSAvLyB2ZXJ1cyEK","dmVydXMhIHsKCmZuIHRlc3RfZnVuY3Rpb24oeDogdTMyKSAtPiB1MzIgewogICAgeCAqIDIKfQoKfSAvLyB2ZXJ1cyEK"]}}"#,
     );
 }
 
@@ -44,7 +44,7 @@ fn same_impl_req() {
         "Same Implementation Request",
         OUR_EXEC,
         SAME_IMPL_REQ,
-        r#"FAILING, needs to have same impl's but different spec's"#,
+        r#"{"TYPE":"RESPONSE","ACTION":"ASP_RUN","SUCCESS":true,"PAYLOAD":{"RawEv":["dmVydXMhIHsKCmZuIHRlc3RfZnVuY3Rpb24oeDogdTMyKSAtPiAocmVzOiB1MzIpCiAgICByZXF1aXJlcwogICAgICAgIHggPCAxMDAsCiAgICBlbnN1cmVzCiAgICAgICAgcmVzIDwgMjAwLAp7Cn0KCn0gLy8gdmVydXMhCg==","dmVydXMhIHsKCmZuIHRlc3RfZnVuY3Rpb24oeDogdTMyKSAtPiAocmVzOiB1MzIpCiAgICByZXF1aXJlcwogICAgICAgIHggPCAxMDAsCiAgICBlbnN1cmVzCiAgICAgICAgcmVzIDwgMzAwLAp7Cn0KCn0gLy8gdmVydXMhCg==","dmVydXMhIHsKCmZuIHRlc3RfZnVuY3Rpb24oeDogdTMyKSAtPiB1MzIgewogICAgeCAqIDIKfQoKfSAvLyB2ZXJ1cyEK","dmVydXMhIHsKCmZuIHRlc3RfZnVuY3Rpb24oeDogdTMyKSAtPiB1MzIgewogICAgeCAqIDIKfQoKfSAvLyB2ZXJ1cyEK"]}}"#,
     );
 }
 
@@ -54,7 +54,7 @@ fn same_spec_req() {
         "Same Specification Request",
         OUR_EXEC,
         SAME_SPEC_REQ,
-        r#"FAILING, needs to have same spec's but different impl's"#,
+        r#"{"TYPE":"RESPONSE","ACTION":"ASP_RUN","SUCCESS":true,"PAYLOAD":{"RawEv":["dmVydXMhIHsKCmZuIHRlc3RfZnVuY3Rpb24oeDogdTMyKSAtPiAocmVzOiB1MzIpCiAgICByZXF1aXJlcwogICAgICAgIHggPCAxMDAsCiAgICBlbnN1cmVzCiAgICAgICAgcmVzIDwgMjAwLAp7Cn0KCn0gLy8gdmVydXMhCg==","dmVydXMhIHsKCmZuIHRlc3RfZnVuY3Rpb24oeDogdTMyKSAtPiAocmVzOiB1MzIpCiAgICByZXF1aXJlcwogICAgICAgIHggPCAxMDAsCiAgICBlbnN1cmVzCiAgICAgICAgcmVzIDwgMjAwLAp7Cn0KCn0gLy8gdmVydXMhCg==","dmVydXMhIHsKCmZuIHRlc3RfZnVuY3Rpb24oeDogdTMyKSAtPiB1MzIgewogICAgeCAqIDIKfQoKfSAvLyB2ZXJ1cyEK","dmVydXMhIHsKCmZuIHRlc3RfZnVuY3Rpb24oeDogdTMyKSAtPiB1MzIgewogICAgeCAqIDEKfQoKfSAvLyB2ZXJ1cyEK"]}}"#,
     );
 }
 
@@ -64,6 +64,6 @@ fn different_req() {
         "Different Request",
         OUR_EXEC,
         DIFF_REQ,
-        r#"FAILING, needs to have different spec's and different impl's"#,
+        r#"{"TYPE":"RESPONSE","ACTION":"ASP_RUN","SUCCESS":true,"PAYLOAD":{"RawEv":["dmVydXMhIHsKCmZuIHRlc3RfZnVuY3Rpb24oeDogdTMyKSAtPiAocmVzOiB1MzIpCiAgICByZXF1aXJlcwogICAgICAgIHggPCAxMDAsCiAgICBlbnN1cmVzCiAgICAgICAgcmVzIDwgMjAwLAp7Cn0KCn0gLy8gdmVydXMhCg==","dmVydXMhIHsKCmZuIHRlc3RfZnVuY3Rpb24oeDogdTMyKSAtPiAocmVzOiB1MzIpCiAgICByZXF1aXJlcwogICAgICAgIHggPCAxMDAsCiAgICBlbnN1cmVzCiAgICAgICAgcmVzIDwgMTAwLAp7Cn0KCn0gLy8gdmVydXMhCg==","dmVydXMhIHsKCmZuIHRlc3RfZnVuY3Rpb24oeDogdTMyKSAtPiB1MzIgewogICAgeCAqIDIKfQoKfSAvLyB2ZXJ1cyEK","dmVydXMhIHsKCmZuIHRlc3RfZnVuY3Rpb24oeDogdTMyKSAtPiB1MzIgewogICAgeCAqIDEKfQoKfSAvLyB2ZXJ1cyEK"]}}"#,
     );
 }

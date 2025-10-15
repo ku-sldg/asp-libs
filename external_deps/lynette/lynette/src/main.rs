@@ -618,6 +618,7 @@ fn main() {
                             decreases: true,
                             assumes: true,
                             sig_output: true,
+                            strip_bodies: false,
                         }
                     } else {
                         &arg.opts
@@ -673,6 +674,7 @@ fn main() {
                             decreases: false,
                             assumes: true,    // Keep all assumes
                             sig_output: true, // Keep signature output
+                            strip_bodies: false,
                         },
                         "raw" => DeghostMode {
                             requires: false,
@@ -684,6 +686,7 @@ fn main() {
                             decreases: false,
                             assumes: false,
                             sig_output: false,
+                            strip_bodies: false,
                         },
                         _ => {
                             eprintln!("Invalid mode: {}. Use 'raw' or 'unverified'", mode_str);
