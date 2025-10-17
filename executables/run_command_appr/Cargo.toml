@@ -1,5 +1,5 @@
 [package]
-name = "run_command_verus_appr"
+name = "run_command_appr"
 version = "0.1.0"
 edition = "2021"
 
