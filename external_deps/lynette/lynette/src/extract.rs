@@ -10,13 +10,13 @@ pub fn extract_spec_signatures(filepath: &PathBuf) -> Result<String, crate::util
     let spec_mode = DeghostMode {
         requires: true,
         ensures: true,
-        invariants: true,
-        spec: true,
-        asserts: true,
-        asserts_anno: true,
-        decreases: true,
+        invariants: false,
+        spec: false,
+        asserts: false,
+        asserts_anno: false,
+        decreases: false,
         assumes: true,
-        sig_output: true,
+        sig_output: false,
         strip_bodies: true,
     };
 
