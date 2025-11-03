@@ -23,8 +23,7 @@ use std::process::{Command};
 
 // ASP Arguments (JSON-decoded)
 #[derive(Serialize, Deserialize, Debug, Clone)]
-struct ASP_ARGS_RunCommand {
-    exe_path: String,
+struct ASP_ARGS_RunCommandRocq {
     exe_args: Vec<String>
 }
 
@@ -35,16 +34,17 @@ fn body(_ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP
     // This example computes the HASH of the file named in an argument for the ASP.
     // May return an Err Result, which will be captured in main.
 
-    let myaspargs : ASP_ARGS_RunCommand = serde_json::from_value(args)
-    .context("Could not decode JSON ASP_ARGS for ASP run_command")?;
+    let myaspargs : ASP_ARGS_RunCommandRocq = serde_json::from_value(args)
+    .context("Could not decode JSON ASP_ARGS for ASP run_command_rocq")?;
 
 
-    let my_exe_path: String = myaspargs.exe_path;
+    //let my_exe_path: String = myaspargs.exe_path;
+    let rocq_command_string = "rocq".to_string();
     let my_exe_args= myaspargs.exe_args;
 
 
-    let output = Command::new(my_exe_path)
-                                .args(my_exe_args).output().expect("hi");
+    let output = Command::new(rocq_command_string)
+                                .args(my_exe_args).output().expect("Error executing 'rocq' command on PATH");
                             
 
     /*
@@ -55,7 +55,7 @@ fn body(_ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP
     let err_res = output.stderr;
     let out_res : Vec<u8> = output.stdout;
 
-    if ! err_res.is_empty() {eprint!("FYI:  stderr output after invoking run_command ASP via the CVM: {:?}", String::from_utf8(err_res))}
+    if ! err_res.is_empty() {eprint!("FYI:  stderr output after invoking run_command_rocq ASP via the CVM: {:?}", String::from_utf8(err_res))}
 
     let res = out_res; 
     //if err_res.is_empty() {out_res} 
