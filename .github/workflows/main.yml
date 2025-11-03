@@ -15,13 +15,20 @@ jobs:
   build-and-test:
     strategy:
       fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
 
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
 
     steps:
       ############### Testing Checkout and that all ASPs build
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Install Deps
+        run: |
+          cd ${{ github.workspace }}
+          tools/install_deps.sh --yes
 
       - name: Test Build
         run: |

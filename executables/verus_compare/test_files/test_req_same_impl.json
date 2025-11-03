@@ -1,0 +1,16 @@
+{
+  "TYPE": "REQUEST",
+  "ACTION": "ASP_RUN",
+  "ASP_ID": "verus_compare_id",
+  "ASP_ARGS": {
+    "original": "./test_files/test_orig.rs",
+    "modified": "./test_files/test_same_impl.rs"
+  },
+  "ASP_PLC": "P2",
+  "ASP_TARG_ID": "sys_targ",
+  "RAWEV": {
+    "RawEv": [
+      ""
+    ]
+  }
+}

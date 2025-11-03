@@ -1,0 +1,11 @@
+[package]
+name = "verus_compare"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+rust_am_lib = { workspace = true }
+lynette = { path = "../../external_deps/lynette/lynette" }
