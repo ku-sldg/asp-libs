@@ -5,12 +5,10 @@
 use std::fs;
 use anyhow::{Context, Result};
 use rust_am_lib::copland::{self, handle_appraisal_body, RawEv};
-//use serde::{Deserialize, Serialize};
-//use serde_json::Value;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-struct ASP_ARGS_Run_Command_Rocq_Appr {
+struct ASP_ARGS_RunCommandRocq_Appr {
     env_var_golden: String,
     filepath_golden: String,
     asp_id_appr: String, 
@@ -22,11 +20,9 @@ struct ASP_ARGS_Run_Command_Rocq_Appr {
 fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<Result<()>> {
     // Suppose the file contents are to be extracted from evidence...
 
-    let myaspargs: ASP_ARGS_Run_Command_Rocq_Appr = serde_json::from_value(args)
-    .context("Could not parse ASP_ARGS for ASP run_command_verus_appr")?;
+    let myaspargs: ASP_ARGS_RunCommandRocq_Appr = serde_json::from_value(args)
+    .context("Could not parse ASP_ARGS for ASP run_command_rocq_appr")?;
 
-    //let targid = myaspargs.targ_id_appr.clone();
-            // Code for specific for this ASP.
     let env_var: String = myaspargs.env_var_golden;
     let filename: String = myaspargs.filepath_golden;
 
@@ -34,7 +30,7 @@ fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<Result<()>> {
 
     let filename_full = format! {"{env_var_string}{filename}"};
 
-    let contents = fs::read_to_string(filename_full).expect("Couldn't read (Evidence, GlobalContext) JSON file in goldenevidence_appr");
+    let contents = fs::read_to_string(filename_full).expect("Couldn't read (Evidence, GlobalContext) JSON file in run_command_rocq_appr");
     eprintln!{"\n\nAttempting to decode (Evidence, GlobalContext)...\n\n"};
     let my_contents: (copland::Evidence, copland::GlobalContext) = serde_json::from_str(&contents)?;
     eprintln!("\nDecoded (Evidence, GlobalContext) as:");
@@ -61,7 +57,6 @@ fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<Result<()>> {
         true => Ok(Ok(())),
         false => Ok(Err(anyhow::anyhow!("Evidence bytes contents do not match"))),
     }
-    //Ok(Err(anyhow::anyhow!("Appraisal was not successful")))
 }
 
 // Main simply invokes the body() function above,
