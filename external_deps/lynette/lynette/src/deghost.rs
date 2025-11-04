@@ -356,13 +356,16 @@ fn remove_verifier_attr(attr: &Vec<syn_verus::Attribute>) -> Vec<syn_verus::Attr
 fn remove_ghost_fn(func: &syn_verus::ItemFn, mode: &DeghostMode) -> Option<syn_verus::ItemFn> {
     remove_ghost_sig(&func.sig, mode).and_then(|new_sig| {
         if mode.strip_bodies {
-            let mut new_func = func.clone();
-            new_func.sig = new_sig;
-            new_func.block = Box::new(syn_verus::Block {
-                brace_token: Default::default(),
-                stmts: Vec::new(),
-            });
-            Some(new_func)
+            Some(syn_verus::ItemFn {
+                attrs: remove_verifier_attr(&func.attrs),
+                vis: func.vis.clone(),
+                sig: new_sig,
+                block: Box::new(syn_verus::Block {
+                    brace_token: Default::default(),
+                    stmts: Vec::new(),
+                }),
+                semi_token: func.semi_token.clone(),
+            })
         } else {
             if matches!(
                 new_sig.mode,
