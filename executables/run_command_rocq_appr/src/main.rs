@@ -4,7 +4,10 @@
 // Common Packages
 use std::fs;
 use anyhow::{Context, Result};
-use rust_am_lib::copland::{self, handle_appraisal_body, RawEv};
+use rust_am_lib::{
+    copland::{self, handle_appraisal_body, RawEv}, 
+    debug_print
+};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -31,10 +34,10 @@ fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<Result<()>> {
     let filename_full = format! {"{env_var_string}{filename}"};
 
     let contents = fs::read_to_string(filename_full).expect("Couldn't read (Evidence, GlobalContext) JSON file in run_command_rocq_appr");
-    eprintln!{"\n\nAttempting to decode (Evidence, GlobalContext)...\n\n"};
+    debug_print!{"\n\nAttempting to decode (Evidence, GlobalContext)...\n\n"};
     let my_contents: (copland::Evidence, copland::GlobalContext) = serde_json::from_str(&contents)?;
-    eprintln!("\nDecoded (Evidence, GlobalContext) as:");
-    eprintln!("{:?}", my_contents);
+    debug_print!("\nDecoded (Evidence, GlobalContext) as:");
+    debug_print!("{:?}", my_contents);
 
     let my_evidence: copland::Evidence = my_contents.0;
     let my_glob_ctxt: copland::GlobalContext = my_contents.1;
