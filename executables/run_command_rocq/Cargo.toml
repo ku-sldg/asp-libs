@@ -1,5 +1,5 @@
 [package]
-name = "run_command"
+name = "run_command_rocq"
 version = "0.1.0"
 edition = "2021"
 
