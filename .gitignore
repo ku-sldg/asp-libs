@@ -7,3 +7,5 @@ target
 
 # in Rust projects, lock files
 Cargo.lock
+
+testing/data/*
