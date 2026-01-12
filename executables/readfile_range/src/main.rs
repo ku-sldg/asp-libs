@@ -72,7 +72,7 @@ fn body(_ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP
     debug_print!("Starting verus_compare ASP execution\n");
 
     let myaspargs: ASP_ARGS_ReadfileRange =
-        serde_json::from_value(args).context("Could not decode ASP_ARGS for ASP verus_compare")?;
+        serde_json::from_value(args).context("Could not decode ASP_ARGS for ASP readfile_range")?;
 
     let file_path = PathBuf::from(myaspargs.filepath);
     //let modified_path = PathBuf::from(myaspargs.modified);
