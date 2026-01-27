@@ -91,14 +91,14 @@ fn body(_ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP
 
 fn main() {
     // debug print the current working directory
-    if let Ok(cwd) = std::env::current_dir() {
-        debug_print!("Current working directory: {}\n", cwd.display());
+    if let Ok(_cwd) = std::env::current_dir() {
+        debug_print!("Current working directory: {}\n", _cwd.display());
     } else {
         debug_print!("Could not get current working directory\n");
     }
     // debug print the program arguments on newlines
-    for arg in std::env::args() {
-        debug_print!("arg: {}\n", arg);
+    for _arg in std::env::args() {
+        debug_print!("arg: {}\n", _arg);
     }
     handle_body(body);
 }
