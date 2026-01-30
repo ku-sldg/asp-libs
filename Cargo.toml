@@ -8,4 +8,4 @@ resolver = "2"
 anyhow = "1.0.86"
 serde = { version = "1.0.214", features = ["derive"] }
 serde_json = {version = "1.0.125", features = ["unbounded_depth"]}
-rust_am_lib = { git = "https://github.com/ku-sldg/rust-am-lib.git", branch = "serde_fix"}
+rust_am_lib = { git = "https://github.com/ku-sldg/rust-am-lib.git"}
