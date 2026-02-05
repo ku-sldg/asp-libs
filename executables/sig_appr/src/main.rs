@@ -21,6 +21,8 @@ fn body(ev: copland::ASP_RawEv, _args: copland::ASP_ARGS) -> Result<Result<()>> 
         .collect::<Vec<u8>>();
     debug_print!("Got message input of {} bytes\n", message_sig_input.len());
     // Use openssl to verify the signature
+    //let good_pubkey_path = "../../../common_files/unsecure_pub_key_dont_use.pem";
+    //let bad_pubkey_path = "../../../common_files/unsecure_pub_key_dont_use_bad.pem";
     let key = include_bytes!("../../../common_files/unsecure_pub_key_dont_use.pem");
     let pkey = openssl::pkey::PKey::public_key_from_pem(key)?;
     let mut verifier = openssl::sign::Verifier::new(openssl::hash::MessageDigest::sha256(), &pkey)?;
