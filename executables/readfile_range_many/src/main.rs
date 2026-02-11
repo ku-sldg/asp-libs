@@ -7,6 +7,10 @@ use anyhow::{Context, Result};
 use std::fs::File;
 use std::io::{self, BufRead};
 use std::path::Path;
+use std::collections::HashMap;
+
+//use lynette::{extract_implementation, extract_spec_signatures};
+//use std::path::PathBuf;
 
 
 use rust_am_lib::{
@@ -15,7 +19,7 @@ use rust_am_lib::{
 };
 use serde::{Deserialize, Serialize};
 
-// This ASP ("readfile_range") is a measurement ASP that reads the contents of the specified lines of text from a file.
+// This ASP ("readfile_range_many") is a measurement ASP that reads the contents of the specified lines of text from a collection of files.
 //
 // INPUT:
 // The ASP expects a JSON object with an "ASP_ARGS" field containing the following arguments:
@@ -25,17 +29,26 @@ use serde::{Deserialize, Serialize};
 //
 // OUTPUT:
 // The ASP returns a raw evidence package (`RawEv`) containing a vector of length 1 with the only member being a byte array (Vec<u8>), 
-//     containing the "flattened" contents of the file in the specified range.  For simplicity, we chose not to preserve line boundaries
+//     containing the encoded contents of the Ranges_Map structure defined below.  The keys in that HashMap structure are of the form:  `<filepath>::<start_index>-<end_index>`, and   
+//     the values are byte arrays (encoded Vec<u8>s) of the file contents at those line ranges.  For simplicity, we chose not to preserve line boundaries
 //     of the contents because that would make the output evidence structure depend on the input file range.   
 
-
-// ASP Arguments (JSON-decoded)
 #[derive(Serialize, Deserialize, Debug, Clone)]
-struct ASP_ARGS_ReadfileRange {
+struct File_Slice {
     filepath: String,
     start_index: usize,
     end_index: usize
 }
+
+// ASP Arguments (JSON-decoded)
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct ASP_ARGS_ReadfileRangeMany {
+    slices: Vec<File_Slice>
+}
+
+type Slices_Map = HashMap<String, Vec<u8>>;
+
+
 
 fn read_line_range<P: AsRef<Path>>(
     path: P,
@@ -63,31 +76,45 @@ fn read_line_range<P: AsRef<Path>>(
     Ok(lines_in_range)
 }
 
-//use lynette::{extract_implementation, extract_spec_signatures};
-use std::path::PathBuf;
+fn get_bytevec_fileslice (
+    s: File_Slice ) -> io::Result<Vec<u8>> {
+
+        let lines  = read_line_range(s.filepath, s.start_index, s.end_index)?;
+        let res: Vec<u8> = lines.into_iter()
+                            .flat_map(|s| s.into_bytes())
+                            .collect();
+        Ok(res)
+}
 
 // function where the work of the ASP is performed.
 // May signal an error which will be handled in main.
 fn body(_ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP_RawEv> {
-    debug_print!("Starting readfile_range ASP execution\n");
+    debug_print!("Starting readfile_range_many ASP execution\n");
 
-    let myaspargs: ASP_ARGS_ReadfileRange =
-        serde_json::from_value(args).context("Could not decode ASP_ARGS for ASP readfile_range")?;
+    let myaspargs: ASP_ARGS_ReadfileRangeMany =
+        serde_json::from_value(args).context("Could not decode ASP_ARGS for ASP readfile_range_many")?;
 
-    let file_path = PathBuf::from(myaspargs.filepath);
-    //let modified_path = PathBuf::from(myaspargs.modified);
-    let start_index = myaspargs.start_index;
-    let end_index = myaspargs.end_index;
+    let slices = myaspargs.slices;
 
-    let lines = read_line_range(file_path, start_index, end_index)?;
+    let mut m : Slices_Map = HashMap::new();
 
-    //eprintln!("{:?}", lines);
+    for s in slices.into_iter() {
 
-    let res: Vec<u8> = lines.into_iter()
-                                .flat_map(|s| s.into_bytes())
-                                .collect();
+        let bline = s.start_index.clone();
+        let eline = s.end_index.clone();
+        let uri = s.filepath.clone();
 
+        let bline_string= bline.to_string();
+        let eline_string = eline.to_string();
+        let uri_slice_string = format!("{uri}::{bline_string}-{eline_string}");
 
+        if ! m.contains_key(&uri_slice_string) {
+            let v = get_bytevec_fileslice(s)?;
+            m.insert(uri_slice_string, v);
+        }
+    };
+
+    let res= serde_json::to_vec(&m)?;
 
      Ok(vec![res])
 }
