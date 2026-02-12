@@ -13,10 +13,15 @@ use serde_json::{Value, from_value};
 use serde_stacker::Deserializer;
 use std::collections::HashMap;
 
+
+
+pub const DEFAULT_TEMP_COMP_MAP_FILENAME: &'static str = "comp_map_temp.json";
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct ASP_ARGS_ReadfileRangeMany_Appr {
     env_var_golden: String,
     filepath_golden: String,
+    outdir: String,
     asp_id_appr: String, 
     targ_id_appr: String
 }
@@ -129,6 +134,11 @@ fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<Result<()>> {
     let candidate_map : Slices_Map = serde_json::from_value(candidate_map_json)?;
 
     let res_map: Slices_Comp_Map = get_slices_comp_map(golden_map, candidate_map);
+
+    let out_string = serde_json::to_string(&res_map)?;
+    let dir = myaspargs.outdir;
+    let full_comp_map_fp: String = format!("{dir}/{DEFAULT_TEMP_COMP_MAP_FILENAME}");
+    fs::write(&full_comp_map_fp, out_string)?;
 
     let mut res_bool = true;
 
