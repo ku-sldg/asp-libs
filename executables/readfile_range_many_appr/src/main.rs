@@ -3,6 +3,8 @@
 
 // Common Packages
 use std::fs;
+use std::env;
+use std::path::{self, Path};
 use anyhow::{Context, Result};
 use rust_am_lib::{
     copland::{self, handle_appraisal_body, RawEv},
@@ -10,18 +12,20 @@ use rust_am_lib::{
 };
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, from_value};
+use serde::de::DeserializeOwned;
 use serde_stacker::Deserializer;
 use std::collections::HashMap;
 
 
 
-pub const DEFAULT_TEMP_COMP_MAP_FILENAME: &'static str = "comp_map_temp.json";
+//pub const DEFAULT_TEMP_COMP_MAP_FILENAME: &'static str = "comp_map_temp.json";
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct ASP_ARGS_ReadfileRangeMany_Appr {
     env_var_golden: String,
     filepath_golden: String,
     outdir: String,
+    report_filepath: String,
     asp_id_appr: String, 
     targ_id_appr: String
 }
@@ -77,6 +81,212 @@ fn get_slices_comp_map (golden_map:Slices_Map, candidate_map:Slices_Map) -> Slic
 
     res
 
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct HAMR_AttestationReport {
+    r#type: String,
+    reports: Vec<HAMR_ComponentReport>
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct HAMR_ComponentReport {
+    r#type: String,
+    idPath: Vec<String>,
+    classifier: Vec<String>,
+    reports: Vec<HAMR_ComponentContractReport>
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct HAMR_ComponentContractReport {
+    r#type: String,
+    id: String,
+    kind: String,
+    meta: String,
+    slices: Vec<HAMR_Slice>
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct HAMR_Slice {
+    r#type: String,
+    kind: String,
+    meta: String,
+    pos: HAMR_Pos
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct HAMR_Pos {
+    r#type: String,
+    uri: String,
+    beginLine: usize,
+    beginCol: usize,
+    endLine: usize,
+    endCol: usize,
+    offset: usize,
+    length: usize
+}
+
+fn decode_from_file_and_print<T: DeserializeOwned + std::fmt::Debug + Clone>(term_fp:String, type_string:String) -> Result<T, serde_json::Error> {
+
+     let err_string = format!("Couldn't read {type_string} JSON file");
+     let term_contents = fs::read_to_string(term_fp).expect(err_string.as_str());
+                                eprintln!("\n{type_string} contents:\n{term_contents}");
+                                let term : T = serde_json::from_str(&term_contents)?;
+                                eprintln!("\nDecoded Term as:");
+                                eprintln!("{:?}", term);
+                                Ok(term)
+}
+
+pub fn get_attestation_report_json (hamr_report_fp:String) -> std::io::Result<HAMR_AttestationReport>  {
+
+    let res: HAMR_AttestationReport = decode_from_file_and_print(hamr_report_fp, "HAMR_AttestationReport".to_string())?;
+
+    Ok (res)
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Resolute_Appsumm_Member {
+    component:String,
+    contract_id:String,
+    location:String,
+    meta:String,
+    result:bool
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ResoluteAppraisalSummaryResponse {
+    pub TYPE: String,
+    pub ACTION: String,
+    pub SUCCESS: bool,
+    pub APPRAISAL_RESULT: bool,
+    pub PAYLOAD: Vec<Resolute_Appsumm_Member>
+}
+
+fn relpath_to_abspath (project_root_fp:String, relpath:String) -> String {
+
+    let root = Path::new(&project_root_fp);
+    let relative = Path::new(&relpath);
+
+    let combined_path = root.join(relative);
+    
+    // Normalize the path using std::path::absolute
+    let normalized_absolute_path = path::absolute(&combined_path).unwrap();
+
+    let canonnicalized_path = fs::canonicalize(normalized_absolute_path).unwrap();
+
+    let res = canonnicalized_path.to_str().unwrap().to_string();
+    res
+
+}
+
+fn merge_resolute_slice (root_fp:String, c:HAMR_Slice, m:Slices_Comp_Map, component_id:String, contract_id:String, hm: &mut std::collections::HashMap<String, Resolute_Appsumm_Member>) -> () {
+
+    let pos: HAMR_Pos = c.pos.clone();
+    let relative_uri = pos.uri;
+
+    let uri_absolute = relpath_to_abspath(root_fp, relative_uri);
+    let bline = c.pos.beginLine;
+    let eline = c.pos.endLine;
+
+    let bline_string= bline.to_string();
+    let eline_string = eline.to_string();
+    let uri_slice_string = format!("{uri_absolute}::{bline_string}-{eline_string}");
+
+    let r = m.get(&uri_slice_string).unwrap();
+
+    let v: Resolute_Appsumm_Member = 
+        Resolute_Appsumm_Member 
+            { component: component_id, contract_id: contract_id, location: uri_slice_string.clone(), meta: c.meta, result: *r };
+    
+    hm.entry(uri_slice_string).or_insert(v);
+
+}
+
+fn merge_resolute_contract (root_fp:String, c:HAMR_ComponentContractReport, m:Slices_Comp_Map, component_id:String, hm: &mut std::collections::HashMap<String, Resolute_Appsumm_Member>) -> () {
+
+
+    let slices = c.slices;
+
+    let _ : Vec<()> = slices.iter().map(|x| merge_resolute_slice (root_fp.clone(), x.clone(), m.clone(), component_id.clone(), c.id.clone(), &mut (*hm))).collect();
+}
+
+fn merge_resolute_component (root_fp:String, c:HAMR_ComponentReport, m: &Slices_Comp_Map, hm: &mut std::collections::HashMap<String, Resolute_Appsumm_Member>) -> () {
+
+    let reports = c.reports;
+
+    let idpath_string = c.idPath.join("::");
+
+    let _ : Vec<()> = reports.iter().map(|x| merge_resolute_contract (root_fp.clone(), x.clone(), m.clone(), idpath_string.clone(), &mut (*hm))).collect();
+}
+
+fn merge_resolute_appsumm (root_fp:String, r:HAMR_AttestationReport, m:&Slices_Comp_Map) -> ResoluteAppraisalSummaryResponse {
+
+    let mut hm : std::collections::HashMap<String,Resolute_Appsumm_Member> = std::collections::HashMap::new();
+
+    let reports = r.reports;
+
+    let _ : Vec<()> = reports.iter().map(|x| merge_resolute_component(root_fp.clone(), x.clone(), m, &mut hm)).collect();
+
+    //let vals = res1.values();
+
+    let targvec:  Vec<Resolute_Appsumm_Member>   = hm.into_values().collect();
+
+     let mut res_bool = true;
+
+    for v in targvec.clone().into_iter() {
+        if ! v.result {res_bool = false; break}
+    }
+
+    let res : ResoluteAppraisalSummaryResponse = 
+        ResoluteAppraisalSummaryResponse 
+            { TYPE: "".to_string(), ACTION: "".to_string(), SUCCESS: true, APPRAISAL_RESULT: res_bool, PAYLOAD: targvec };
+    res
+}
+
+pub fn generate_resolute_appsumm(hamr_root_dir: String, report_filename: String, comp_map:Slices_Comp_Map) -> std::io::Result<ResoluteAppraisalSummaryResponse>  {
+
+    let attestation_report_fp = format!("{hamr_root_dir}/{report_filename}");
+
+    //println!({}, attestation_report_fp);
+    //panic!("{attestation_report_fp}");
+    let att_report: HAMR_AttestationReport = get_attestation_report_json(attestation_report_fp.clone())?;
+
+    /*
+    let comp_map_fp = format!("{hamr_root_dir}/{DEFAULT_TEMP_COMP_MAP_FILENAME}");
+
+    let comp_map_json_string = fs::read_to_string(comp_map_fp)?;
+
+    let comp_map_json = deserialize_deep_json(&comp_map_json_string)?;
+    let comp_map : Slices_Comp_Map = serde_json::from_value(comp_map_json)?;
+    */
+
+    let resolute_appsumm = merge_resolute_appsumm(hamr_root_dir, att_report, &comp_map);
+
+    Ok(resolute_appsumm)
+
+}
+
+pub fn write_string_to_output_dir (maybe_out_dir:Option<String>, fp_suffix: String, default_mid_path:String, outstring:String) -> std::io::Result<String> {
+
+    let fp_prefix : String = match &maybe_out_dir {
+        Some(fp) => {
+            fp.to_string()
+        }
+        None => {
+
+            let cur_dir = env::current_dir()?;
+            let cur_dir_string = cur_dir.to_str().unwrap();
+            let default_path = default_mid_path;
+            let default_prefix: String = format!("{cur_dir_string}/{default_path}");
+            default_prefix
+        }
+    };
+
+    let full_req_fp = format!("{fp_prefix}/{fp_suffix}");
+
+    fs::create_dir_all(fp_prefix)?;
+    fs::write(&full_req_fp, outstring)?;
+    Ok(full_req_fp)
 }
 
 // function where the work of the ASP is performed.
@@ -135,10 +345,20 @@ fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<Result<()>> {
 
     let res_map: Slices_Comp_Map = get_slices_comp_map(golden_map, candidate_map);
 
+
+    let resolute_appsumm_response: ResoluteAppraisalSummaryResponse = generate_resolute_appsumm(myaspargs.outdir, myaspargs.report_filepath, res_map.clone())?;
+
+    let resolute_appsumm_resp_string = serde_json::to_string(&resolute_appsumm_response)?;
+    let appsumm_resp_suffix = "appsumm_response.json".to_string();
+    let appsumm_resp_mid_path = "testing/outputs/".to_string();
+    let _ = write_string_to_output_dir(None, appsumm_resp_suffix, appsumm_resp_mid_path.clone(), resolute_appsumm_resp_string.clone())?;
+
+    /*
     let out_string = serde_json::to_string(&res_map)?;
     let dir = myaspargs.outdir;
     let full_comp_map_fp: String = format!("{dir}/{DEFAULT_TEMP_COMP_MAP_FILENAME}");
     fs::write(&full_comp_map_fp, out_string)?;
+    */
 
     let mut res_bool = true;
 
