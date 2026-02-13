@@ -36,6 +36,7 @@ fn deserialize_deep_json(json_data: &str) -> serde_json::Result<Value> {
 // function where the work of the ASP is performed.
 // May signal an error which will be handled in main.
 fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<Result<()>> {
+
     let myaspargs: ASP_ARGS_GoldenEvidence_Appr = serde_json::from_value(args)
         .context("Could not parse ASP_ARGS for ASP goldenevidence_appr")?;
 
@@ -50,7 +51,7 @@ fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<Result<()>> {
     let contents = fs::read_to_string(filename_full).expect("Couldn't read (Evidence, GlobalContext) JSON file in goldenevidence_appr");
     debug_print!{"\n\nAttempting to decode (Evidence, GlobalContext)...\n\n"};
     let my_contents_val = deserialize_deep_json(&contents)?;
-    let my_contents: (copland::Evidence, copland::GlobalContext) = from_value(my_contents_val)?;//serde_json::from_str(&contents)?;
+    let my_contents: (copland::Evidence, copland::GlobalContext) = from_value(my_contents_val)?;
     debug_print!("\nDecoded (Evidence, GlobalContext) as:");
     debug_print!("{:?}", my_contents);
 
@@ -72,7 +73,9 @@ fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<Result<()>> {
     let bytes_equal: bool = golden_bytes.eq(&evidence_in);
 
     match bytes_equal {
-        true => Ok(Ok(())),
+        true => {
+            Ok(Ok(()))
+        },
         false => Ok(Err(anyhow::anyhow!("Evidence bytes contents do not match"))),
     }
 
