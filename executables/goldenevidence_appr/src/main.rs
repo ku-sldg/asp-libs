@@ -36,7 +36,6 @@ fn deserialize_deep_json(json_data: &str) -> serde_json::Result<Value> {
 // function where the work of the ASP is performed.
 // May signal an error which will be handled in main.
 fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<Result<()>> {
-    //panic!("--------BEGIN body() in goldenevidence_appr ASP");
 
     let myaspargs: ASP_ARGS_GoldenEvidence_Appr = serde_json::from_value(args)
         .context("Could not parse ASP_ARGS for ASP goldenevidence_appr")?;
@@ -52,9 +51,9 @@ fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<Result<()>> {
     let contents = fs::read_to_string(filename_full).expect("Couldn't read (Evidence, GlobalContext) JSON file in goldenevidence_appr");
     debug_print!{"\n\nAttempting to decode (Evidence, GlobalContext)...\n\n"};
     let my_contents_val = deserialize_deep_json(&contents)?;
-    let my_contents: (copland::Evidence, copland::GlobalContext) = from_value(my_contents_val)?;//serde_json::from_str(&contents)?;
-    eprintln!("\nDecoded (Evidence, GlobalContext) as:");
-    eprintln!("{:?}", my_contents);
+    let my_contents: (copland::Evidence, copland::GlobalContext) = from_value(my_contents_val)?;
+    debug_print!("\nDecoded (Evidence, GlobalContext) as:");
+    debug_print!("{:?}", my_contents);
 
     let my_evidence: copland::Evidence = my_contents.0;
     let my_glob_ctxt: copland::GlobalContext = my_contents.1;
@@ -63,9 +62,6 @@ fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<Result<()>> {
 
     let my_et = copland::get_et(my_evidence.clone());
     let my_rawev= copland::get_rawev(my_evidence);
-
-
-    //panic!("--------BEFORE do_EvidenceSlice() in goldenevidence_appr ASP");
 
     let evidence_slice = copland::do_EvidenceSlice(my_et, my_rawev, my_glob_ctxt, my_asp_params)?;
 
@@ -78,17 +74,13 @@ fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<Result<()>> {
 
     match bytes_equal {
         true => {
-            //panic!("--------END match bytes_equal in goldenevidence_appr ASP");
             Ok(Ok(()))
         },
         false => Ok(Err(anyhow::anyhow!("Evidence bytes contents do not match"))),
     }
 
-
 }
 
 fn main() {
-    //panic!("--------BEFORE handle_appraisal_body() in goldenevidence_appr ASP");
     handle_appraisal_body(body);
-
 }
