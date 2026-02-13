@@ -9,10 +9,6 @@ use std::io::{self, BufRead};
 use std::path::Path;
 use std::collections::HashMap;
 
-//use lynette::{extract_implementation, extract_spec_signatures};
-//use std::path::PathBuf;
-
-
 use rust_am_lib::{
     copland::{self, handle_body},
     debug_print,
@@ -29,7 +25,7 @@ use serde::{Deserialize, Serialize};
 //
 // OUTPUT:
 // The ASP returns a raw evidence package (`RawEv`) containing a vector of length 1 with the only member being a byte array (Vec<u8>), 
-//     containing the encoded contents of the Ranges_Map structure defined below.  The keys in that HashMap structure are of the form:  `<filepath>::<start_index>-<end_index>`, and   
+//     containing the encoded contents of the Slices_Map structure defined below.  The keys in that HashMap structure are of the form:  `<filepath>::<start_index>-<end_index>`, and   
 //     the values are byte arrays (encoded Vec<u8>s) of the file contents at those line ranges.  For simplicity, we chose not to preserve line boundaries
 //     of the contents because that would make the output evidence structure depend on the input file range.   
 
@@ -47,8 +43,6 @@ struct ASP_ARGS_ReadfileRangeMany {
 }
 
 type Slices_Map = HashMap<String, Vec<u8>>;
-
-
 
 fn read_line_range<P: AsRef<Path>>(
     path: P,

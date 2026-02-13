@@ -16,10 +16,6 @@ use serde::de::DeserializeOwned;
 use serde_stacker::Deserializer;
 use std::collections::HashMap;
 
-
-
-//pub const DEFAULT_TEMP_COMP_MAP_FILENAME: &'static str = "comp_map_temp.json";
-
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct ASP_ARGS_ReadfileRangeMany_Appr {
     env_var_golden: String,
@@ -33,6 +29,67 @@ struct ASP_ARGS_ReadfileRangeMany_Appr {
 type Slices_Map = HashMap<String, Vec<u8>>;
 
 type Slices_Comp_Map = HashMap<String, bool>;
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct HAMR_AttestationReport {
+    r#type: String,
+    reports: Vec<HAMR_ComponentReport>
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct HAMR_ComponentReport {
+    r#type: String,
+    idPath: Vec<String>,
+    classifier: Vec<String>,
+    reports: Vec<HAMR_ComponentContractReport>
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct HAMR_ComponentContractReport {
+    r#type: String,
+    id: String,
+    kind: String,
+    meta: String,
+    slices: Vec<HAMR_Slice>
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct HAMR_Slice {
+    r#type: String,
+    kind: String,
+    meta: String,
+    pos: HAMR_Pos
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct HAMR_Pos {
+    r#type: String,
+    uri: String,
+    beginLine: usize,
+    beginCol: usize,
+    endLine: usize,
+    endCol: usize,
+    offset: usize,
+    length: usize
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Resolute_Appsumm_Member {
+    component:String,
+    contract_id:String,
+    location:String,
+    meta:String,
+    result:bool
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ResoluteAppraisalSummaryResponse {
+    pub TYPE: String,
+    pub ACTION: String,
+    pub SUCCESS: bool,
+    pub APPRAISAL_RESULT: bool,
+    pub PAYLOAD: Vec<Resolute_Appsumm_Member>
+}
 
 fn deserialize_deep_json(json_data: &Vec<u8>) -> serde_json::Result<Value> {
     let mut de = serde_json::de::Deserializer::from_slice(json_data);
@@ -83,49 +140,6 @@ fn get_slices_comp_map (golden_map:Slices_Map, candidate_map:Slices_Map) -> Slic
 
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct HAMR_AttestationReport {
-    r#type: String,
-    reports: Vec<HAMR_ComponentReport>
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-struct HAMR_ComponentReport {
-    r#type: String,
-    idPath: Vec<String>,
-    classifier: Vec<String>,
-    reports: Vec<HAMR_ComponentContractReport>
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-struct HAMR_ComponentContractReport {
-    r#type: String,
-    id: String,
-    kind: String,
-    meta: String,
-    slices: Vec<HAMR_Slice>
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-struct HAMR_Slice {
-    r#type: String,
-    kind: String,
-    meta: String,
-    pos: HAMR_Pos
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-struct HAMR_Pos {
-    r#type: String,
-    uri: String,
-    beginLine: usize,
-    beginCol: usize,
-    endLine: usize,
-    endCol: usize,
-    offset: usize,
-    length: usize
-}
-
 fn decode_from_file_and_print<T: DeserializeOwned + std::fmt::Debug + Clone>(term_fp:String, type_string:String) -> Result<T, serde_json::Error> {
 
      let err_string = format!("Couldn't read {type_string} JSON file");
@@ -142,24 +156,6 @@ pub fn get_attestation_report_json (hamr_report_fp:String) -> std::io::Result<HA
     let res: HAMR_AttestationReport = decode_from_file_and_print(hamr_report_fp, "HAMR_AttestationReport".to_string())?;
 
     Ok (res)
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Resolute_Appsumm_Member {
-    component:String,
-    contract_id:String,
-    location:String,
-    meta:String,
-    result:bool
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct ResoluteAppraisalSummaryResponse {
-    pub TYPE: String,
-    pub ACTION: String,
-    pub SUCCESS: bool,
-    pub APPRAISAL_RESULT: bool,
-    pub PAYLOAD: Vec<Resolute_Appsumm_Member>
 }
 
 fn relpath_to_abspath (project_root_fp:String, relpath:String) -> String {
@@ -227,8 +223,6 @@ fn merge_resolute_appsumm (root_fp:String, r:HAMR_AttestationReport, m:&Slices_C
 
     let _ : Vec<()> = reports.iter().map(|x| merge_resolute_component(root_fp.clone(), x.clone(), m, &mut hm)).collect();
 
-    //let vals = res1.values();
-
     let targvec:  Vec<Resolute_Appsumm_Member>   = hm.into_values().collect();
 
      let mut res_bool = true;
@@ -247,18 +241,7 @@ pub fn generate_resolute_appsumm(hamr_root_dir: String, report_filename: String,
 
     let attestation_report_fp = format!("{hamr_root_dir}/{report_filename}");
 
-    //println!({}, attestation_report_fp);
-    //panic!("{attestation_report_fp}");
     let att_report: HAMR_AttestationReport = get_attestation_report_json(attestation_report_fp.clone())?;
-
-    /*
-    let comp_map_fp = format!("{hamr_root_dir}/{DEFAULT_TEMP_COMP_MAP_FILENAME}");
-
-    let comp_map_json_string = fs::read_to_string(comp_map_fp)?;
-
-    let comp_map_json = deserialize_deep_json(&comp_map_json_string)?;
-    let comp_map : Slices_Comp_Map = serde_json::from_value(comp_map_json)?;
-    */
 
     let resolute_appsumm = merge_resolute_appsumm(hamr_root_dir, att_report, &comp_map);
 
@@ -292,7 +275,6 @@ pub fn write_string_to_output_dir (maybe_out_dir:Option<String>, fp_suffix: Stri
 // function where the work of the ASP is performed.
 // May signal an error which will be handled in main.
 fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<Result<()>> {
-    //panic!("--------BEGIN body() in goldenevidence_appr ASP");
 
     let myaspargs: ASP_ARGS_ReadfileRangeMany_Appr = serde_json::from_value(args)
         .context("Could not parse ASP_ARGS for ASP readfile_range_many_appr")?;
@@ -320,8 +302,6 @@ fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<Result<()>> {
     let my_et = copland::get_et(my_evidence.clone());
     let my_rawev= copland::get_rawev(my_evidence);
 
-    //panic!("--------BEFORE do_EvidenceSlice() in goldenevidence_appr ASP");
-
     let evidence_slice = copland::do_EvidenceSlice(my_et, my_rawev, my_glob_ctxt, my_asp_params)?;
 
     let evidence_slice_rawev = RawEv::RawEv(evidence_slice);
@@ -331,7 +311,6 @@ fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<Result<()>> {
 
     if (golden_bytes.len() != 1) || evidence_in.len() != 1 {
         panic!("Evidence vectors have unexpected length in readfile_range_many_appr ASP");
-        //return Ok(Err(anyhow::anyhow!("Evidence vectors have unexpected length in readfile_range_many_appr ASP")))
     }
 
     let golden_map_encoded: &Vec<u8> = golden_bytes.first().unwrap();
@@ -353,13 +332,6 @@ fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<Result<()>> {
     let appsumm_resp_mid_path = "testing/outputs/".to_string();
     let _ = write_string_to_output_dir(None, appsumm_resp_suffix, appsumm_resp_mid_path.clone(), resolute_appsumm_resp_string.clone())?;
 
-    /*
-    let out_string = serde_json::to_string(&res_map)?;
-    let dir = myaspargs.outdir;
-    let full_comp_map_fp: String = format!("{dir}/{DEFAULT_TEMP_COMP_MAP_FILENAME}");
-    fs::write(&full_comp_map_fp, out_string)?;
-    */
-
     let mut res_bool = true;
 
     for (_k,v) in res_map.into_iter() {
@@ -368,17 +340,14 @@ fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<Result<()>> {
 
     match res_bool {
         true => {
-            //panic!("--------END match bytes_equal in goldenevidence_appr ASP");
             Ok(Ok(()))
         },
         false => Ok(Err(anyhow::anyhow!("At least one file slice bytes contents do not match in readfile_range_many_appr ASP"))),
     }
 
-
 }
 
 fn main() {
-    //panic!("--------BEFORE handle_appraisal_body() in goldenevidence_appr ASP");
     handle_appraisal_body(body);
 
 }
