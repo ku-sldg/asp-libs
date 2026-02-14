@@ -12,9 +12,15 @@ use rust_am_lib::{
 };
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, from_value};
-use serde::de::DeserializeOwned;
+//use serde::de::DeserializeOwned;
 use serde_stacker::Deserializer;
 use std::collections::HashMap;
+
+//use flate2::write::GzEncoder;
+use flate2::read::GzDecoder;
+//use flate2::Compression;
+use std::io::prelude::*;
+use std::io::{self};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct ASP_ARGS_ReadfileRangeMany_Appr {
@@ -91,6 +97,7 @@ pub struct ResoluteAppraisalSummaryResponse {
     pub PAYLOAD: Vec<Resolute_Appsumm_Member>
 }
 
+/*
 fn deserialize_deep_json(json_data: &Vec<u8>) -> serde_json::Result<Value> {
     let mut de = serde_json::de::Deserializer::from_slice(json_data);
     de.disable_recursion_limit(); // This method is only available with the feature
@@ -103,6 +110,7 @@ fn deserialize_deep_json(json_data: &Vec<u8>) -> serde_json::Result<Value> {
     
     Ok(value)
 }
+*/
 
 fn deserialize_deep_json_string(json_data: &str) -> serde_json::Result<Value> {
     let mut de = serde_json::de::Deserializer::from_str(json_data);
@@ -140,6 +148,7 @@ fn get_slices_comp_map (golden_map:Slices_Map, candidate_map:Slices_Map) -> Slic
 
 }
 
+/*
 fn decode_from_file_and_print<T: DeserializeOwned + std::fmt::Debug + Clone>(term_fp:&Path, type_string:String) -> Result<T, serde_json::Error> {
 
      let err_string = format!("Couldn't read {type_string} JSON file");
@@ -150,12 +159,29 @@ fn decode_from_file_and_print<T: DeserializeOwned + std::fmt::Debug + Clone>(ter
                                 eprintln!("{:?}", term);
                                 Ok(term)
 }
+                                */
 
+/*
 pub fn get_attestation_report_json (hamr_report_fp:&Path) -> std::io::Result<HAMR_AttestationReport>  {
 
     let res: HAMR_AttestationReport = decode_from_file_and_print(hamr_report_fp, "HAMR_AttestationReport".to_string())?;
 
     Ok (res)
+}
+*/
+pub fn get_attestation_report_json (hamr_report_fp:&Path) -> std::io::Result<HAMR_AttestationReport>  {
+
+    //let res: HAMR_AttestationReport = decode_from_file_and_print(hamr_report_fp, "HAMR_AttestationReport".to_string())?;
+    let type_string = "HAMR_AttestationReport".to_string();
+    let err_string = format!("Couldn't read {type_string} JSON file");
+    let term_contents = fs::read_to_string(hamr_report_fp).expect(err_string.as_str());
+                            //eprintln!("\n{type_string} contents:\n{term_contents}");
+                            let term : HAMR_AttestationReport = serde_json::from_str(&term_contents)?;
+                            //eprintln!("\nDecoded Term as:");
+                            //eprintln!("{:?}", term);
+                            Ok(term)
+
+    //Ok (res)
 }
 
 fn relpath_to_abspath (project_root_fp:&Path, relpath:&Path) -> String {
@@ -274,6 +300,21 @@ pub fn write_string_to_output_dir (maybe_out_dir:Option<String>, fp_suffix: &Pat
     Ok(full_req_fp.as_path().to_str().unwrap().to_string())
 }
 
+/*
+fn compress_string(s: &str) -> io::Result<Vec<u8>> {
+    let mut encoder = GzEncoder::new(Vec::new(), Compression::default());
+    encoder.write_all(s.as_bytes())?;
+    encoder.finish()
+}
+*/
+
+fn decompress_string(compressed_data: &[u8]) -> io::Result<String> {
+    let mut decoder = GzDecoder::new(compressed_data);
+    let mut s = String::new();
+    decoder.read_to_string(&mut s)?;
+    Ok(s)
+}
+
 // function where the work of the ASP is performed.
 // May signal an error which will be handled in main.
 fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<Result<()>> {
@@ -317,13 +358,16 @@ fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<Result<()>> {
         panic!("Evidence vectors have unexpected length in readfile_range_many_appr ASP");
     }
 
-    let golden_map_encoded: &Vec<u8> = golden_bytes.first().unwrap();
-    let candidate_map_encoded: &Vec<u8> = evidence_in.first().unwrap();
+    let golden_map_encoded_compressed: &Vec<u8> = golden_bytes.first().unwrap();
+    let candidate_map_encoded_compressed: &Vec<u8> = evidence_in.first().unwrap();
 
-    let golden_map_json: Value = deserialize_deep_json(golden_map_encoded)?;
+    let x = decompress_string(golden_map_encoded_compressed)?;
+    let y = decompress_string(candidate_map_encoded_compressed)?;
+
+    let golden_map_json: Value = deserialize_deep_json_string(&x)?;
     let golden_map : Slices_Map = serde_json::from_value(golden_map_json)?;
 
-    let candidate_map_json: Value = deserialize_deep_json(candidate_map_encoded)?;
+    let candidate_map_json: Value = deserialize_deep_json_string(&y)?; //deserialize_deep_json(candidate_map_encoded)?;
     let candidate_map : Slices_Map = serde_json::from_value(candidate_map_json)?;
 
     let res_map: Slices_Comp_Map = get_slices_comp_map(golden_map, candidate_map);

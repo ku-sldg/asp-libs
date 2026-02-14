@@ -4,16 +4,27 @@
 // Common Packages
 use anyhow::{Context, Result};
 
+use std::fs;
 use std::fs::File;
-use std::io::{self, BufRead};
+use std::io::{self, BufRead, Write};
 use std::path::Path;
 use std::collections::HashMap;
+
+use flate2::write::GzEncoder;
+//use flate2::read::GzDecoder;
+use flate2::Compression;
+//use std::io::prelude::*;
+
+use serde::{Deserialize, Serialize};
+use serde_json::{Value, from_value};
+//use serde::de::DeserializeOwned;
+use serde_stacker::Deserializer;
 
 use rust_am_lib::{
     copland::{self, handle_body},
     debug_print,
 };
-use serde::{Deserialize, Serialize};
+//use serde::{Deserialize, Serialize};
 
 // This ASP ("readfile_range_many") is a measurement ASP that reads the contents of the specified lines of text from a collection of files.
 //
@@ -39,8 +50,23 @@ struct File_Slice {
 // ASP Arguments (JSON-decoded)
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct ASP_ARGS_ReadfileRangeMany {
-    slices: Vec<File_Slice>
+    slices_file: String
 }
+
+fn compress_string(s: &str) -> io::Result<Vec<u8>> {
+    let mut encoder = GzEncoder::new(Vec::new(), Compression::default());
+    encoder.write_all(s.as_bytes())?;
+    encoder.finish()
+}
+
+/*
+fn decompress_string(compressed_data: &[u8]) -> io::Result<String> {
+    let mut decoder = GzDecoder::new(compressed_data);
+    let mut s = String::new();
+    decoder.read_to_string(&mut s)?;
+    Ok(s)
+}
+*/
 
 type Slices_Map = HashMap<String, Vec<u8>>;
 
@@ -80,6 +106,19 @@ fn get_bytevec_fileslice (
         Ok(res)
 }
 
+fn deserialize_deep_json_string(json_data: &str) -> serde_json::Result<Value> {
+    let mut de = serde_json::de::Deserializer::from_str(json_data);
+    de.disable_recursion_limit(); // This method is only available with the feature
+    
+    // Wrap with serde_stacker's Deserializer to use a dynamically growing stack
+    let stacker_de = Deserializer::new(&mut de);
+    
+    // Deserialize the data
+    let value = Value::deserialize(stacker_de)?;
+    
+    Ok(value)
+}
+
 // function where the work of the ASP is performed.
 // May signal an error which will be handled in main.
 fn body(_ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP_RawEv> {
@@ -88,7 +127,14 @@ fn body(_ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP
     let myaspargs: ASP_ARGS_ReadfileRangeMany =
         serde_json::from_value(args).context("Could not decode ASP_ARGS for ASP readfile_range_many")?;
 
-    let slices = myaspargs.slices;
+    let slices_file = myaspargs.slices_file;
+
+    let contents = fs::read_to_string(slices_file).expect("Couldn't read slices_file JSON file in readfile_range_many");
+    debug_print!{"\n\nAttempting to decode Vec<File_Slice>...\n\n"};
+    let my_contents_val = deserialize_deep_json_string(&contents)?;
+    let slices: Vec<File_Slice> = from_value(my_contents_val)?;
+
+
 
     let mut m : Slices_Map = HashMap::new();
 
@@ -108,7 +154,15 @@ fn body(_ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP
         }
     };
 
-    let res= serde_json::to_vec(&m)?;
+    
+    let res_str = serde_json::to_string(&m)?;
+
+    let compressed_str = compress_string(&res_str)?;
+
+    let res = compressed_str;
+    
+
+    //let res= serde_json::to_vec(&m)?;
 
      Ok(vec![res])
 }
