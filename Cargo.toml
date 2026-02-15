@@ -1,7 +1,5 @@
 [workspace]
-members = [
-  "executables/*"
-]
+members = ["executables/*"]
 resolver = "2"
 
 [workspace.dependencies]
