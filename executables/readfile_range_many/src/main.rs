@@ -13,7 +13,6 @@ use std::collections::HashMap;
 use flate2::write::GzEncoder;
 //use flate2::read::GzDecoder;
 use flate2::Compression;
-//use std::io::prelude::*;
 
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, from_value};
@@ -24,27 +23,29 @@ use rust_am_lib::{
     copland::{self, handle_body},
     debug_print,
 };
-//use serde::{Deserialize, Serialize};
 
 // This ASP ("readfile_range_many") is a measurement ASP that reads the contents of the specified lines of text from a collection of files.
 //
 // INPUT:
 // The ASP expects a JSON object with an "ASP_ARGS" field containing the following arguments:
-// - "filepath": A string path to the file to be read.
-// - "start_index": A number for the starting line index (starting at 1).
-// - "end_index":   A number for the ending line index.
+// - "slices_file":  A filepath(String) pointing to a JSON-encoded vector of File_Slice objects
+
 //
 // OUTPUT:
 // The ASP returns a raw evidence package (`RawEv`) containing a vector of length 1 with the only member being a byte array (Vec<u8>), 
 //     containing the encoded contents of the Slices_Map structure defined below.  The keys in that HashMap structure are of the form:  `<filepath>::<start_index>-<end_index>`, and   
 //     the values are byte arrays (encoded Vec<u8>s) of the file contents at those line ranges.  For simplicity, we chose not to preserve line boundaries
-//     of the contents because that would make the output evidence structure depend on the input file range.   
+//     of the contents because that would make the output evidence structure depend on the input file range.
+
+//     NOTE:  Additionally, we choose to gzip compress the Slices_Map structure to trim down the output evidence size.  
+//            Any dual appraisal ASP will first need to decompress the raw data before decoding and proceeding with appraisal.
+
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct File_Slice {
-    filepath: String,
-    start_index: usize,
-    end_index: usize
+    filepath: String,   // - "filepath": A string path to the file to be read.
+    start_index: usize, // - "start_index": A number for the starting line index (starting at 1).
+    end_index: usize    // - "end_index":   A number for the ending line index.
 }
 
 // ASP Arguments (JSON-decoded)
@@ -134,8 +135,6 @@ fn body(_ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP
     let my_contents_val = deserialize_deep_json_string(&contents)?;
     let slices: Vec<File_Slice> = from_value(my_contents_val)?;
 
-
-
     let mut m : Slices_Map = HashMap::new();
 
     for s in slices.into_iter() {
@@ -154,15 +153,11 @@ fn body(_ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP
         }
     };
 
-    
     let res_str = serde_json::to_string(&m)?;
 
     let compressed_str = compress_string(&res_str)?;
 
     let res = compressed_str;
-    
-
-    //let res= serde_json::to_vec(&m)?;
 
      Ok(vec![res])
 }
