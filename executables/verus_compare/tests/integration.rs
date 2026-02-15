@@ -1,14 +1,30 @@
-fn test_exec_and_output(test_name: &str, exec: &str, args: &str, expected_output: &str) {
-    // Capture the output of running [exec] with [args] as a single argument
-    let output = std::process::Command::new(exec)
-        .arg(args)
-        .output()
-        .expect("Failed to execute process");
+use std::io::Write;
+use std::process::{Command, Stdio};
+
+fn test_exec_and_output(test_name: &str, exec: &str, input_data: &str, expected_output: &str) {
+    let mut child = Command::new(exec)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .expect("Failed to spawn process");
+
+    {
+        let mut stdin = child.stdin.take().expect("Failed to open stdin");
+        stdin
+            .write_all(input_data.as_bytes())
+            .expect("Failed to write to stdin");
+    }
+
+    let output = child.wait_with_output().expect("Failed to read stdout");
     let stdout = String::from_utf8_lossy(&output.stdout);
-    // If we fail this, print the full output for debugging
+
     assert!(
         stdout.contains(expected_output),
-        "Test {}: Output did not contain expected string\nOutput: ```\n{}\n```\nExpected to contain: \n```{}\n```\nFull output for debugging: \n{:?}",
+        "Test {}: Output did not contain expected string\n\
+         --- Captured STDOUT ---\n{}\n\
+         --- Expected to contain ---\n{}\n\
+         --- Full Metadata ---\n{:?}",
         test_name,
         stdout,
         expected_output,
