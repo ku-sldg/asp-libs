@@ -336,8 +336,9 @@ fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<Result<()>> {
 
     let resolute_appsumm_resp_string = serde_json::to_string(&resolute_appsumm_response)?;
     let appsumm_resp_suffix = Path::new("appsumm_response.json");
-    let appsumm_resp_mid_path = Path::new("testing/outputs/");
-    let _ = write_string_to_output_dir(None, appsumm_resp_suffix, appsumm_resp_mid_path, resolute_appsumm_resp_string.clone())?;
+    //let appsumm_resp_mid_path = Path::new("testing/outputs/");
+    //let full_suffix = appsumm_resp_mid_path.join(appsumm_resp_suffix);
+    let _ = write_string_to_output_dir(Some(myaspargs.outdir), appsumm_resp_suffix, Path::new(""), resolute_appsumm_resp_string.clone())?;
 
     let res_bool = resolute_appsumm_response.APPRAISAL_RESULT;
 
