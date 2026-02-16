@@ -25,7 +25,6 @@ use std::io::{self};
 struct ASP_ARGS_ReadfileRangeMany_Appr {
     env_var_golden: String,  // - "env_var_golden":  A string for the ENV var to get the (optional) prefix path to filepath_golden
     filepath_golden: String, // - "filepath_golden": A string path to the golden evidence file to be read.
-    outdir: String,          // - "outdir":  A string path to the output directory for the appraisal summary
     report_filepath: String, // - "report_filepath":  A string path to the input HAMR AttestationReport structure
     asp_id_appr: String,     // - "asp_id_appr":  ASP_ID string set by the appraisal procedure internally.
                              //                   Used to index into golden evidence structure
@@ -332,13 +331,21 @@ fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<Result<()>> {
 
     let res_map: Slices_Comp_Map = get_slices_comp_map(golden_map, candidate_map);
 
-    let resolute_appsumm_response: ResoluteAppraisalSummaryResponse = generate_resolute_appsumm( myaspargs.report_filepath, res_map.clone())?;
+    let hamr_report_filepath_string = myaspargs.report_filepath.clone();
+
+    let resolute_appsumm_response: ResoluteAppraisalSummaryResponse = generate_resolute_appsumm( hamr_report_filepath_string, res_map.clone())?;
 
     let resolute_appsumm_resp_string = serde_json::to_string(&resolute_appsumm_response)?;
+
+    let appsumm_midpath = Path::new("");
     let appsumm_resp_suffix = Path::new("appsumm_response.json");
-    //let appsumm_resp_mid_path = Path::new("testing/outputs/");
-    //let full_suffix = appsumm_resp_mid_path.join(appsumm_resp_suffix);
-    let _ = write_string_to_output_dir(Some(myaspargs.outdir), appsumm_resp_suffix, Path::new(""), resolute_appsumm_resp_string.clone())?;
+
+    let new_hamr_report_filepath_string = myaspargs.report_filepath.clone();
+    let hamr_report_filename_path = Path::new(&new_hamr_report_filepath_string);
+    let hamr_root_dir = hamr_report_filename_path.parent().unwrap();
+    let hamr_root_dir_string = hamr_root_dir.to_str().unwrap().to_string();
+
+    let _ = write_string_to_output_dir(Some(hamr_root_dir_string), appsumm_resp_suffix, appsumm_midpath, resolute_appsumm_resp_string.clone())?;
 
     let res_bool = resolute_appsumm_response.APPRAISAL_RESULT;
 
