@@ -2,24 +2,25 @@
 #![allow(non_snake_case)]
 
 // Common Packages
-use std::fs;
+//use std::fs;
 use anyhow::{Context, Result};
 use rust_am_lib::{
-    copland::{self, handle_body, vec_to_rawev},
+    copland::{self, GlobalContext, EvidenceT, handle_body, vec_to_rawev},
     debug_print,
 };
 use serde::{Deserialize, Serialize};
-use serde_json::{Value, from_value};
-use serde_stacker::Deserializer;
+//use serde_json::{Value, from_value};
+//use serde_stacker::Deserializer;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct ASP_ARGS_Provision_GoldenEvidence {
     env_var_golden: String,
     filepath_golden: String,
-    et_context: String,
-    et_golden: String
+    et_context: GlobalContext,
+    et_golden: EvidenceT
 }
 
+/*
 fn deserialize_deep_json(json_data: &str) -> serde_json::Result<Value> {
     let mut de = serde_json::de::Deserializer::from_str(json_data);
     de.disable_recursion_limit(); // This method is only available with the feature
@@ -32,6 +33,7 @@ fn deserialize_deep_json(json_data: &str) -> serde_json::Result<Value> {
     
     Ok(value)
 }
+*/
 
 // function where the work of the ASP is performed.
 // May signal an error which will be handled in main.
@@ -51,6 +53,8 @@ fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP_
 
     let my_rawev = vec_to_rawev(vecvec);
 
+    /*
+
     let fp = myaspargs.et_golden;
     debug_print!{"\n\nAttempting to read (EvidenceT, GlobalContext) JSON structure from file: {}\n\n", fp};
 
@@ -61,8 +65,10 @@ fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP_
     debug_print!("\nDecoded (EvidenceT, GlobalContext) as:");
     debug_print!("{:?}", my_contents);
 
-    let my_evidenceT: copland::EvidenceT = my_contents.0;
-    let my_glob_ctxt: copland::GlobalContext = my_contents.1;
+    */
+
+    let my_evidenceT: copland::EvidenceT = myaspargs.et_golden; //my_contents.0;
+    let my_glob_ctxt: copland::GlobalContext = myaspargs.et_context; //my_contents.1;
 
 
     let my_evidence: copland::Evidence = (my_rawev,my_evidenceT);
