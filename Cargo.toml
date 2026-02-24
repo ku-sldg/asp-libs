@@ -1,5 +1,4 @@
 [workspace]
-#members = ["executables/*", "tpm_executables/*"]
 resolver = "2"
 members = ["executables/*"]
 
@@ -7,6 +6,4 @@ members = ["executables/*"]
 anyhow = "1.0.86"
 serde = { version = "1.0.214", features = ["derive"] }
 serde_json = {version = "1.0.125", features = ["unbounded_depth"]}
-#rust_am_lib = { git = "https://github.com/ku-sldg/rust-am-lib.git", version = "0.3.0"}
-rust_am_lib = { git = "file:///Users/adampetz/Documents/Summer_2025/rust-am-lib/", version = "0.3.0", branch="working_dir"}
-#rust_am_lib = { git = "file://<local_dir>", version = "", branch=""}
+rust_am_lib = { git = "https://github.com/ku-sldg/rust-am-lib.git", version = "0.3.0"}
