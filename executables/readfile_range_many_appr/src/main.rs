@@ -4,7 +4,7 @@
 // Common Packages
 use std::fs;
 use std::env;
-use std::path::{self, Path};
+use std::path::{Path};
 use anyhow::{Context, Result};
 use rust_am_lib::{
     copland::{self, handle_appraisal_body, RawEv},
@@ -16,10 +16,10 @@ use serde_stacker::Deserializer;
 use std::collections::HashMap;
 
 use flate2::read::GzDecoder;
-//use flate2::write::GzEncoder;
-//use flate2::Compression;
 use std::io::prelude::*;
 use std::io::{self};
+
+use hamrLib::*;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct ASP_ARGS_ReadfileRangeMany_Appr {
@@ -32,52 +32,7 @@ struct ASP_ARGS_ReadfileRangeMany_Appr {
                              //                   Used to index into golden evidence structure
 }
 
-type Slices_Map = HashMap<String, Vec<u8>>;
-
 type Slices_Comp_Map = HashMap<String, bool>;
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct HAMR_AttestationReport {
-    r#type: String,
-    reports: Vec<HAMR_ComponentReport>
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-struct HAMR_ComponentReport {
-    r#type: String,
-    idPath: Vec<String>,
-    classifier: Vec<String>,
-    reports: Vec<HAMR_ComponentContractReport>
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-struct HAMR_ComponentContractReport {
-    r#type: String,
-    id: String,
-    kind: String,
-    meta: String,
-    slices: Vec<HAMR_Slice>
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-struct HAMR_Slice {
-    r#type: String,
-    kind: String,
-    meta: String,
-    pos: HAMR_Pos
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-struct HAMR_Pos {
-    r#type: String,
-    uri: String,
-    beginLine: usize,
-    beginCol: usize,
-    endLine: usize,
-    endCol: usize,
-    offset: usize,
-    length: usize
-}
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Resolute_Appsumm_Member {
@@ -129,33 +84,6 @@ fn get_slices_comp_map (golden_map:Slices_Map, candidate_map:Slices_Map) -> Slic
 
     };
 
-    res
-
-}
-
-/* TODO:  make this a library function to keep in-sync with client code */
-fn get_attestation_report_json (hamr_report_fp:&Path) -> std::io::Result<HAMR_AttestationReport>  {
-
-    let type_string = "HAMR_AttestationReport".to_string();
-    let err_string = format!("Couldn't read {type_string} JSON file");
-    let term_contents = fs::read_to_string(hamr_report_fp).expect(err_string.as_str());
-                            let term : HAMR_AttestationReport = serde_json::from_str(&term_contents)?;
-                            Ok(term)
-}
-
-fn relpath_to_abspath (project_root_fp:&Path, relpath:&Path) -> String {
-
-    let root = Path::new(&project_root_fp);
-    let relative = Path::new(&relpath);
-
-    let combined_path = root.join(relative);
-    
-    // Normalize the path using std::path::absolute
-    let normalized_absolute_path = path::absolute(&combined_path).unwrap();
-
-    let canonnicalized_path = fs::canonicalize(normalized_absolute_path).unwrap();
-
-    let res = canonnicalized_path.to_str().unwrap().to_string();
     res
 
 }

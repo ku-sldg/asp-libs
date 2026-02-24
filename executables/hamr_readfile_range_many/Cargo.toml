@@ -10,3 +10,4 @@ serde_json = { workspace = true }
 rust_am_lib = { workspace = true }
 serde_stacker = "0.1"
 flate2 = "1.0"
+hamrLib = { path = "../../external_deps/hamrLib/hamrLib" }

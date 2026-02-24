@@ -1,6 +1,7 @@
 [workspace]
-members = ["executables/*"]
+#members = ["executables/*", "tpm_executables/*"]
 resolver = "2"
+members = ["executables/*"]
 
 [workspace.dependencies]
 anyhow = "1.0.86"
