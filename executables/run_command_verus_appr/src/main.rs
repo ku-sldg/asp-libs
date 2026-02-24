@@ -12,7 +12,6 @@ use serde_json::Value;
 fn body(ev: copland::ASP_RawEv, _args: copland::ASP_ARGS) -> Result<Result<()>> {
     // Suppose the file contents are to be extracted from evidence...
 
-    //panic!("Got to run_command_verus_appr");
     let evidence_in = ev.first().context("No file evidence found")?;
 
     let appraisal_response: std::result::Result<Value, serde_json::Error>= serde_json::from_slice(&evidence_in);
@@ -25,13 +24,10 @@ fn body(ev: copland::ASP_RawEv, _args: copland::ASP_ARGS) -> Result<Result<()>> 
         }
     };
 
-    //panic!("Got past appraisal_response");
-
     let appraisal_response_string = appraisal_response_decoded["verification-results"]["errors"].as_number();
 
     match appraisal_response_string {
         None => {
-            //panic!("hihihi");
             Ok(Err(anyhow::anyhow!("Could not parse JSON response from running verus executable")))
         }
         Some(num_errors) => {
@@ -48,7 +44,6 @@ fn body(ev: copland::ASP_RawEv, _args: copland::ASP_ARGS) -> Result<Result<()>> 
 
     }
 }
-    //let num_errors = appraisal_response_string.unwrap();
 
 // Main simply invokes the body() function above,
 // and checks for Err Result.
