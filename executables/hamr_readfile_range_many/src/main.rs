@@ -21,6 +21,7 @@ use rust_am_lib::{
 
 use hamrLib::*;
 
+
 // This ASP ("hamr_readfile_range_many") is a measurement ASP that parses a HAMR Attestation Report and reads the contents of the specified lines of text from a collection of files.
 //
 // INPUT:
@@ -30,12 +31,13 @@ use hamrLib::*;
 //
 // OUTPUT:
 // The ASP returns a raw evidence package (`RawEv`) containing a vector of length 1 with the only member being a byte array (Vec<u8>), 
-//     containing the encoded contents of the Slices_Map structure defined below.  The keys in that HashMap structure are of the form:  `<filepath>::<start_index>-<end_index>`, and   
+//     containing the encoded contents of the Slices_Map structure defined in the hamrLib external dependency library(pub type Slices_Map = HashMap<String, Vec<u8>>;).  
+//     The keys in the HashMap structure are of the form:  `<filepath>::<start_index>-<end_index>`, and   
 //     the values are byte arrays (encoded Vec<u8>s) of the file contents at those line ranges.  For simplicity, we chose not to preserve line boundaries
 //     of the contents because that would make the output evidence structure depend on the input file range.
 
 //     NOTE:  Additionally, we choose to gzip compress the Slices_Map structure to trim down the output evidence size.  
-//            Any dual appraisal ASP will first need to decompress the raw data before decoding and proceeding with appraisal.
+//            Any dual appraisal ASP will first need to decompress the raw data before decoding to a Slices_Map and proceeding with appraisal.
 
 // ASP Arguments (JSON-decoded)
 #[derive(Serialize, Deserialize, Debug, Clone)]
