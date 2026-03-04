@@ -28,7 +28,7 @@ struct ASP_ARGS_ReadfileRangeMany_Appr {
     report_filepath: String, // - "report_filepath":  A string path to the input HAMR AttestationReport structure
     asp_id_appr: String,     // - "asp_id_appr":  ASP_ID string set by the appraisal procedure internally.
                              //                   Used to index into golden evidence structure
-    targ_id_appr: String     // - "targ_id_appr": TARG_ID string set by the appraisal procedure internally.
+    //targ_id_appr: String     // - "targ_id_appr": TARG_ID string set by the appraisal procedure internally.
                              //                   Used to index into golden evidence structure
 }
 
@@ -210,8 +210,8 @@ fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<Result<()>> {
         .context("Could not parse ASP_ARGS for ASP readfile_range_many_appr")?;
 
     // Code for specific for this ASP.
-    let env_var: String = myaspargs.env_var_golden;
-    let filename: String = myaspargs.filepath_golden;
+    let env_var: String = myaspargs.env_var_golden.clone();
+    let filename: String = myaspargs.filepath_golden.clone();
 
     let env_var_string = rust_am_lib::copland::get_env_var_val(env_var)?;
 
@@ -229,7 +229,9 @@ fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<Result<()>> {
     let my_evidence: copland::Evidence = my_contents.0;
     let my_glob_ctxt: copland::GlobalContext = my_contents.1;
 
-    let my_asp_params: copland::ASP_PARAMS = copland::ASP_PARAMS{ ASP_ID: myaspargs.asp_id_appr, ASP_ARGS: serde_json::Value::Null, ASP_PLC: "".to_string(), ASP_TARG_ID: myaspargs.targ_id_appr};
+    let asp_args_value = serde_json::to_value(&myaspargs)?;
+
+    let my_asp_params: copland::ASP_PARAMS = copland::ASP_PARAMS{ ASP_ID: myaspargs.asp_id_appr.clone(), ASP_ARGS: asp_args_value.clone() /*, ASP_PLC: "".to_string(), ASP_TARG_ID: myaspargs.targ_id_appr */};
 
     let my_et = copland::get_et(my_evidence.clone());
     let my_rawev= copland::get_rawev(my_evidence);

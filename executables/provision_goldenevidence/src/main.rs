@@ -47,7 +47,7 @@ fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP_
 
     debug_print!("Attempting to write golden evidence to filename: {filename_full}");
     std::fs::write(filename_full, my_json_string)?;
-    Ok(vec![])
+    Ok(vec![Vec::new()])
 }
 
 fn main() {

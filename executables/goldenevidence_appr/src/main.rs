@@ -17,7 +17,9 @@ struct ASP_ARGS_GoldenEvidence_Appr {
     env_var_golden: String,
     filepath_golden: String,
     asp_id_appr: String, 
-    targ_id_appr: String
+    env_var: String,
+    filepath: String
+    //targ_id_appr: String
 }
 
 fn deserialize_deep_json(json_data: &str) -> serde_json::Result<Value> {
@@ -41,12 +43,15 @@ fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<Result<()>> {
         .context("Could not parse ASP_ARGS for ASP goldenevidence_appr")?;
 
     // Code for specific for this ASP.
-    let env_var: String = myaspargs.env_var_golden;
-    let filename: String = myaspargs.filepath_golden;
+    let env_var: String = myaspargs.env_var_golden.clone();
+    let filename: String = myaspargs.filepath_golden.clone();
 
     let env_var_string = rust_am_lib::copland::get_env_var_val(env_var)?;
 
     let filename_full = format! {"{env_var_string}{filename}"};
+
+    debug_print!{"\n\nReading golden evidence file:\n"};
+    debug_print!{"{filename_full}"};
 
     let contents = fs::read_to_string(filename_full).expect("Couldn't read (Evidence, GlobalContext) JSON file in goldenevidence_appr");
     debug_print!{"\n\nAttempting to decode (Evidence, GlobalContext)...\n\n"};
@@ -58,7 +63,9 @@ fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<Result<()>> {
     let my_evidence: copland::Evidence = my_contents.0;
     let my_glob_ctxt: copland::GlobalContext = my_contents.1;
 
-    let my_asp_params: copland::ASP_PARAMS = copland::ASP_PARAMS{ ASP_ID: myaspargs.asp_id_appr, ASP_ARGS: serde_json::Value::Null, ASP_PLC: "".to_string(), ASP_TARG_ID: myaspargs.targ_id_appr};
+    let asp_args_value = serde_json::to_value(&myaspargs)?;
+
+    let my_asp_params: copland::ASP_PARAMS = copland::ASP_PARAMS{ ASP_ID: myaspargs.asp_id_appr, ASP_ARGS: asp_args_value.clone() /* serde_json::Value::Null */ /*, ASP_PLC: "".to_string(), ASP_TARG_ID: myaspargs.targ_id_appr */};
 
     let my_et = copland::get_et(my_evidence.clone());
     let my_rawev= copland::get_rawev(my_evidence);

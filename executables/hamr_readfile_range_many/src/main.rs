@@ -42,7 +42,7 @@ use hamrLib::*;
 // ASP Arguments (JSON-decoded)
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct ASP_ARGS_HAMR_ReadfileRangeMany {
-    attestation_report_filepath: String
+    report_filepath: String
 }
 
 fn compress_string(s: &str) -> io::Result<Vec<u8>> {
@@ -95,7 +95,7 @@ fn body(_ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP
     let myaspargs: ASP_ARGS_HAMR_ReadfileRangeMany =
         serde_json::from_value(args).context("Could not decode ASP_ARGS for ASP hamr_readfile_range_many")?;
 
-    let report_filepath_string = myaspargs.attestation_report_filepath;
+    let report_filepath_string = myaspargs.report_filepath;
     let report_filepath = Path::new(&report_filepath_string);
 
     let att_report: HAMR_AttestationReport = get_attestation_report_json(report_filepath)?;
