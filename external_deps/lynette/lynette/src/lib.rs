@@ -12,7 +12,8 @@ pub mod utils;
 
 use crate::deghost::*;
 use crate::utils::*;
-pub use extract::{extract_implementation, extract_spec_signatures};
+pub use extract::{extract_implementation, extract_spec_signatures, 
+    strip_proof_functions, strip_verifier_attributes};
 
 /// When a flag is set, the corresponding ghost code will not be removed by the
 /// deghost functions.

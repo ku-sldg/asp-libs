@@ -4,7 +4,7 @@
 // Common Packages
 use std::fs;
 use std::env;
-use std::path::{self, Path};
+use std::path::{Path};
 use anyhow::{Context, Result};
 use rust_am_lib::{
     copland::{self, handle_appraisal_body, RawEv},
@@ -16,69 +16,23 @@ use serde_stacker::Deserializer;
 use std::collections::HashMap;
 
 use flate2::read::GzDecoder;
-//use flate2::write::GzEncoder;
-//use flate2::Compression;
 use std::io::prelude::*;
 use std::io::{self};
+
+use hamrLib::*;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct ASP_ARGS_ReadfileRangeMany_Appr {
     env_var_golden: String,  // - "env_var_golden":  A string for the ENV var to get the (optional) prefix path to filepath_golden
     filepath_golden: String, // - "filepath_golden": A string path to the golden evidence file to be read.
-    outdir: String,          // - "outdir":  A string path to the output directory for the appraisal summary
     report_filepath: String, // - "report_filepath":  A string path to the input HAMR AttestationReport structure
     asp_id_appr: String,     // - "asp_id_appr":  ASP_ID string set by the appraisal procedure internally.
                              //                   Used to index into golden evidence structure
-    targ_id_appr: String     // - "targ_id_appr": TARG_ID string set by the appraisal procedure internally.
+    //targ_id_appr: String     // - "targ_id_appr": TARG_ID string set by the appraisal procedure internally.
                              //                   Used to index into golden evidence structure
 }
 
-type Slices_Map = HashMap<String, Vec<u8>>;
-
 type Slices_Comp_Map = HashMap<String, bool>;
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct HAMR_AttestationReport {
-    r#type: String,
-    reports: Vec<HAMR_ComponentReport>
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-struct HAMR_ComponentReport {
-    r#type: String,
-    idPath: Vec<String>,
-    classifier: Vec<String>,
-    reports: Vec<HAMR_ComponentContractReport>
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-struct HAMR_ComponentContractReport {
-    r#type: String,
-    id: String,
-    kind: String,
-    meta: String,
-    slices: Vec<HAMR_Slice>
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-struct HAMR_Slice {
-    r#type: String,
-    kind: String,
-    meta: String,
-    pos: HAMR_Pos
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-struct HAMR_Pos {
-    r#type: String,
-    uri: String,
-    beginLine: usize,
-    beginCol: usize,
-    endLine: usize,
-    endCol: usize,
-    offset: usize,
-    length: usize
-}
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Resolute_Appsumm_Member {
@@ -130,33 +84,6 @@ fn get_slices_comp_map (golden_map:Slices_Map, candidate_map:Slices_Map) -> Slic
 
     };
 
-    res
-
-}
-
-/* TODO:  make this a library function to keep in-sync with client code */
-fn get_attestation_report_json (hamr_report_fp:&Path) -> std::io::Result<HAMR_AttestationReport>  {
-
-    let type_string = "HAMR_AttestationReport".to_string();
-    let err_string = format!("Couldn't read {type_string} JSON file");
-    let term_contents = fs::read_to_string(hamr_report_fp).expect(err_string.as_str());
-                            let term : HAMR_AttestationReport = serde_json::from_str(&term_contents)?;
-                            Ok(term)
-}
-
-fn relpath_to_abspath (project_root_fp:&Path, relpath:&Path) -> String {
-
-    let root = Path::new(&project_root_fp);
-    let relative = Path::new(&relpath);
-
-    let combined_path = root.join(relative);
-    
-    // Normalize the path using std::path::absolute
-    let normalized_absolute_path = path::absolute(&combined_path).unwrap();
-
-    let canonnicalized_path = fs::canonicalize(normalized_absolute_path).unwrap();
-
-    let res = canonnicalized_path.to_str().unwrap().to_string();
     res
 
 }
@@ -283,8 +210,8 @@ fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<Result<()>> {
         .context("Could not parse ASP_ARGS for ASP readfile_range_many_appr")?;
 
     // Code for specific for this ASP.
-    let env_var: String = myaspargs.env_var_golden;
-    let filename: String = myaspargs.filepath_golden;
+    let env_var: String = myaspargs.env_var_golden.clone();
+    let filename: String = myaspargs.filepath_golden.clone();
 
     let env_var_string = rust_am_lib::copland::get_env_var_val(env_var)?;
 
@@ -302,7 +229,9 @@ fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<Result<()>> {
     let my_evidence: copland::Evidence = my_contents.0;
     let my_glob_ctxt: copland::GlobalContext = my_contents.1;
 
-    let my_asp_params: copland::ASP_PARAMS = copland::ASP_PARAMS{ ASP_ID: myaspargs.asp_id_appr, ASP_ARGS: serde_json::Value::Null, ASP_PLC: "".to_string(), ASP_TARG_ID: myaspargs.targ_id_appr};
+    let asp_args_value = serde_json::to_value(&myaspargs)?;
+
+    let my_asp_params: copland::ASP_PARAMS = copland::ASP_PARAMS{ ASP_ID: myaspargs.asp_id_appr.clone(), ASP_ARGS: asp_args_value.clone() /*, ASP_PLC: "".to_string(), ASP_TARG_ID: myaspargs.targ_id_appr */};
 
     let my_et = copland::get_et(my_evidence.clone());
     let my_rawev= copland::get_rawev(my_evidence);
@@ -332,13 +261,21 @@ fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<Result<()>> {
 
     let res_map: Slices_Comp_Map = get_slices_comp_map(golden_map, candidate_map);
 
-    let resolute_appsumm_response: ResoluteAppraisalSummaryResponse = generate_resolute_appsumm( myaspargs.report_filepath, res_map.clone())?;
+    let hamr_report_filepath_string = myaspargs.report_filepath.clone();
+
+    let resolute_appsumm_response: ResoluteAppraisalSummaryResponse = generate_resolute_appsumm( hamr_report_filepath_string, res_map.clone())?;
 
     let resolute_appsumm_resp_string = serde_json::to_string(&resolute_appsumm_response)?;
+
+    let appsumm_midpath = Path::new("");
     let appsumm_resp_suffix = Path::new("appsumm_response.json");
-    //let appsumm_resp_mid_path = Path::new("testing/outputs/");
-    //let full_suffix = appsumm_resp_mid_path.join(appsumm_resp_suffix);
-    let _ = write_string_to_output_dir(Some(myaspargs.outdir), appsumm_resp_suffix, Path::new(""), resolute_appsumm_resp_string.clone())?;
+
+    let new_hamr_report_filepath_string = myaspargs.report_filepath.clone();
+    let hamr_report_filename_path = Path::new(&new_hamr_report_filepath_string);
+    let hamr_root_dir = hamr_report_filename_path.parent().unwrap();
+    let hamr_root_dir_string = hamr_root_dir.to_str().unwrap().to_string();
+
+    let _ = write_string_to_output_dir(Some(hamr_root_dir_string), appsumm_resp_suffix, appsumm_midpath, resolute_appsumm_resp_string.clone())?;
 
     let res_bool = resolute_appsumm_response.APPRAISAL_RESULT;
 

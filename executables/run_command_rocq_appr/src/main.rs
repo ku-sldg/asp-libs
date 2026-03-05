@@ -42,7 +42,7 @@ fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<Result<()>> {
     let my_evidence: copland::Evidence = my_contents.0;
     let my_glob_ctxt: copland::GlobalContext = my_contents.1;
 
-    let my_asp_params: copland::ASP_PARAMS = copland::ASP_PARAMS{ ASP_ID: myaspargs.asp_id_appr, ASP_ARGS: serde_json::Value::Null, ASP_PLC: "".to_string(), ASP_TARG_ID: myaspargs.targ_id_appr};
+    let my_asp_params: copland::ASP_PARAMS = copland::ASP_PARAMS{ ASP_ID: myaspargs.asp_id_appr, ASP_ARGS: serde_json::Value::Null/*, ASP_PLC: "".to_string(), ASP_TARG_ID: myaspargs.targ_id_appr */};
 
     let my_et = copland::get_et(my_evidence.clone());
     let my_rawev= copland::get_rawev(my_evidence);

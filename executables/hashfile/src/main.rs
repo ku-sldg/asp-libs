@@ -15,11 +15,24 @@ use rust_am_lib::{
 // e.g.
 use sha2::{Digest, Sha256};
 
+/*
 // ASP Arguments (JSON-decoded)
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct ASP_ARGS_Hashfile {
     env_var: String,
     filepath: String
+}
+*/
+// ASP Arguments (JSON-decoded)
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct ASP_ARGS_Hashfile
+{
+    env_var_golden: String,
+    filepath_golden: String,
+    asp_id_appr: String, 
+    env_var: String,
+    filepath: String
+    //targ_id_appr: String
 }
 
 // function where the work of the ASP is performed.

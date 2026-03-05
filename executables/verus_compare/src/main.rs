@@ -32,8 +32,11 @@ struct ASP_ARGS_VerusCompare {
     modified: String,
 }
 
-use lynette::{extract_implementation, extract_spec_signatures};
+use lynette::{extract_implementation, extract_spec_signatures, 
+    strip_proof_functions, strip_verifier_attributes};
 use std::path::PathBuf;
+
+
 
 // function where the work of the ASP is performed.
 // May signal an error which will be handled in main.
@@ -69,6 +72,14 @@ fn body(_ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP
     let modified_spec = extract_spec_signatures(&modified_path)?;
     let original_impl = extract_implementation(&original_path)?;
     let modified_impl = extract_implementation(&modified_path)?;
+
+    let original_spec_minus_proof = strip_proof_functions(&strip_verifier_attributes(&original_spec));
+    let modified_spec_minus_proof = strip_proof_functions(&strip_verifier_attributes(&modified_spec));
+
+    let original_impl_minus_proof = strip_proof_functions(&strip_verifier_attributes(&original_impl));
+    let modified_impl_minus_proof = strip_proof_functions(&strip_verifier_attributes(&modified_impl));
+
+
     debug_print!("Extraction complete\n");
     debug_print!("Original Spec:\\n{}\\n", original_spec);
     debug_print!("Modified Spec:\\n{}\\n", modified_spec);
@@ -76,10 +87,10 @@ fn body(_ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP
     debug_print!("Modified Impl:\\n{}\\n", modified_impl);
 
     Ok(vec![
-        original_spec.into_bytes(),
-        modified_spec.into_bytes(),
-        original_impl.into_bytes(),
-        modified_impl.into_bytes(),
+        original_spec_minus_proof.into_bytes(),
+        modified_spec_minus_proof.into_bytes(),
+        original_impl_minus_proof.into_bytes(),
+        modified_impl_minus_proof.into_bytes(),
     ])
 }
 
