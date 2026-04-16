@@ -11,32 +11,38 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct ASP_ARGS_Readfile_Appr {
     env_var_golden: String,
-    filepath_golden: String
+    filepath_golden: String,
+    /// Base64-encoded golden bytes injected from the evidence bundle at run time.
+    /// When present this takes priority over filepath_golden, eliminating the
+    /// need for a binary golden file on disk.
+    golden_b64: Option<String>,
 }
 
 // function where the work of the ASP is performed.
 // May signal an error which will be handled in main.
 fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<Result<()>> {
-  
+
     debug_print!("Starting readfile_appr ASP execution\n");
 
     let myaspargs : ASP_ARGS_Readfile_Appr = serde_json::from_value(args)
     .context("Could not decode ASP_ARGS for ASP readfile_appr")?;
 
-    let env_var: String = myaspargs.env_var_golden;
-    let filename: String = myaspargs.filepath_golden;
+    let golden_bytes: Vec<u8> = match &myaspargs.golden_b64 {
+        Some(b64) => {
+            debug_print!("Using base64-encoded golden from ASP_ARGS\n");
+            use base64::{engine::general_purpose::STANDARD as B64, Engine};
+            B64.decode(b64).context("Could not base64-decode golden_b64")?
+        }
+        None => {
+            let env_var_string = rust_am_lib::copland::get_env_var_val(myaspargs.env_var_golden)?;
+            let golden_filename = format!("{}{}", env_var_string, myaspargs.filepath_golden);
+            debug_print!("Attempting to read from file: {}\n", golden_filename);
+            let bytes = std::fs::read(&golden_filename)?;
+            debug_print!("Read {} bytes from golden file\n", bytes.len());
+            bytes
+        }
+    };
 
-    let env_var_string = rust_am_lib::copland::get_env_var_val(env_var)?;
-
-    let golden_filename = format! {"{env_var_string}{filename}"};
-  
-    debug_print!("Attempting to read from file: {}\n", golden_filename);
-
-    let golden_bytes: Vec<u8> = std::fs::read(&golden_filename.to_string())?; // Vec<u8>
-  
-    debug_print!("Read {} bytes from golden file\n", golden_bytes.len());
-
-    // Suppose the file contents are to be extracted from evidence...
     let evidence_in = ev.first().context("No file evidence found")?;
 
     let bytes_equal: bool = golden_bytes.eq(evidence_in);

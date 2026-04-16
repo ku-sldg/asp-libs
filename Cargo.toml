@@ -4,6 +4,7 @@ resolver = "2"
 
 [workspace.dependencies]
 anyhow = "1.0.86"
+base64 = "0.22"
 serde = { version = "1.0.214", features = ["derive"] }
 serde_json = {version = "1.0.125", features = ["unbounded_depth"]}
 rust_am_lib = { git = "https://github.com/ku-sldg/rust-am-lib.git", version = "0.4.0"}
