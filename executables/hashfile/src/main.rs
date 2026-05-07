@@ -23,16 +23,22 @@ struct ASP_ARGS_Hashfile {
     filepath: String
 }
 */
-// ASP Arguments (JSON-decoded)
+// ASP Arguments (JSON-decoded).
+// Only filepath and env_var are required.  The provisioning fields
+// (env_var_golden, filepath_golden, asp_id_appr) are kept as optional so
+// that callers using the old inline-provision style continue to work.
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct ASP_ARGS_Hashfile
 {
-    env_var_golden: String,
-    filepath_golden: String,
-    asp_id_appr: String, 
     env_var: String,
-    filepath: String
-    //targ_id_appr: String
+    filepath: String,
+    // Legacy / optional provisioning metadata – not used by this ASP.
+    #[serde(default)]
+    env_var_golden: String,
+    #[serde(default)]
+    filepath_golden: String,
+    #[serde(default)]
+    asp_id_appr: String,
 }
 
 // function where the work of the ASP is performed.

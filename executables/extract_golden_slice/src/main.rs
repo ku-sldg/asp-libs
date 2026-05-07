@@ -48,18 +48,30 @@ fn load_bundle(bundle_path: &Path) -> Result<(Evidence, GlobalContext)> {
     Ok(bundle)
 }
 
+// Dashboard bookkeeping keys stored in asp_args.json but never sent to the CVM.
+// They must be stripped before building the ASP_PARAMS match key so that
+// do_EvidenceSlice finds the same args that were in the evidence tree.
+const BOOKKEEPING_KEYS: &[&str] = &["golden_b64", "golden_ts"];
+
 fn load_asp_args(asp_args_path: &Path, asp_id: &str, targ_id: &str) -> Result<Value> {
     let contents = fs::read_to_string(asp_args_path)
         .with_context(|| format!("Could not read asp_args.json: {}", asp_args_path.display()))?;
     let root: Value = serde_json::from_str(&contents)
         .context("Could not parse asp_args.json")?;
 
-    let targ_args = root
+    let mut targ_args = root
         .get(asp_id)
         .with_context(|| format!("asp_id '{}' not found in asp_args.json", asp_id))?
         .get(targ_id)
         .with_context(|| format!("targ_id '{}' not found under asp_id '{}' in asp_args.json", targ_id, asp_id))?
         .clone();
+
+    // Strip dashboard bookkeeping fields so the match args equal what the CVM stored.
+    if let Value::Object(ref mut map) = targ_args {
+        for key in BOOKKEEPING_KEYS {
+            map.remove(*key);
+        }
+    }
 
     Ok(targ_args)
 }
