@@ -13,7 +13,9 @@ use std::{process::Command};
 // ASP Arguments (JSON-decoded)
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct ASP_ARGS_RunCommandCargoVerus {
-    exe_args: Vec<String>
+    exe_args: Vec<String>,
+    #[serde(default)]
+    cwd: Option<String>
 }
 
 // function where the work of the ASP is performed.
@@ -31,8 +33,12 @@ fn body(_ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP
 
     let error_string = format! {"Error executing {command_string} command on PATH"};
 
-    let output = Command::new(command_string)
-                                .env("RUSTC_BOOTSTRAP", "1").args(my_exe_args).output().expect(error_string.as_str());
+    let mut command = Command::new(command_string);
+    command.env("RUSTC_BOOTSTRAP", "1").args(my_exe_args);
+    if let Some(dir) = myaspargs.cwd {
+        command.current_dir(dir);
+    }
+    let output = command.output().expect(error_string.as_str());
 
     let err_res = output.stderr;
     let out_res : Vec<u8> = output.stdout;
