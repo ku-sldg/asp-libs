@@ -5,6 +5,30 @@ push and is written as a narrative summary of what changed and why.
 
 ---
 
+## [hamr-asps] — 2026-07-30 (2)
+
+### New ASP: `model_slices_appr`
+
+Appraises whole-file evidence (from the `readfile` ASP) against golden
+values that must be derivable from that content, serving pybb's signed
+golden-spec baselines: an administrator blesses a WHOLE model file
+(readfile + SIG at provisioning), and this appraiser checks that the
+measurement protocols' goldens are extractable from the blessed bytes —
+slice definitions are appraiser inputs checked against signed content,
+never independently trusted labels.
+
+Three optional checks via ASP_ARGS (fails closed if none present — no
+vacuous blessings): `golden_b64` (full-content equality),
+`hash_golden_b64` (SHA-256 recomputation, byte-compatible with the
+hashfile ASP's goldens), and `slices` ({targ: {start_index, end_index,
+golden_b64}} — each range re-extracted with readfile_range's exact
+semantics: 1-based inclusive lines, BufReader::lines terminator handling,
+concatenation with no separator). Failure reasons name the failing
+checks/targets and are sanitized single-line (the CVM splices reasons
+into response JSON unescaped; fix tracked separately).
+
+---
+
 ## [hamr-asps] — 2026-07-30
 
 ### New ASPs: `run_command_lean`, `run_command_lean_appr`

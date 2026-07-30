@@ -1,0 +1,12 @@
+[package]
+name = "model_slices_appr"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = { workspace = true }
+rust_am_lib = {workspace = true}
+serde = {workspace = true}
+serde_json = {workspace = true}
+base64 = { workspace = true }
+sha2 = "0.10.8"
