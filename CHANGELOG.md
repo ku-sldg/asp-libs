@@ -5,6 +5,39 @@ push and is written as a narrative summary of what changed and why.
 
 ---
 
+## [hamr-asps] — 2026-07-30
+
+### New ASPs: `run_command_lean`, `run_command_lean_appr`
+
+Added a measurement/appraisal pair for the Lean 4 toolchain, serving the
+pybb temp-control-lean example (a Lean specification and executable as the
+third attested verification ecosystem, after Logika/JVM and Verus/Microkit).
+
+`run_command_lean` invokes `lake` with caller-supplied `exe_args` and an
+optional `cwd` (lake must run inside the Lake package; elan resolves the
+pinned toolchain from the package's `lean-toolchain` file). One ASP serves
+both semantic tiers: `lake lean <file> -- --json` re-elaborates a
+specification, and `lake exe <target> <args>` runs the built executable.
+As with `run_command_hamr`, the binary is resolved by name from PATH only.
+
+`run_command_lean_appr` appraises in two modes selected by ASP_ARGS:
+
+- **diagnostics mode** (default): parses the JSON-lines diagnostics that
+  `lean --json` emits on stdout; PASS iff no diagnostic has severity
+  `error` and none has kind `hasSorry`. A `sorry` exits 0 and only WARNS,
+  so exit-code appraisal would bless a vacuous proof. Non-JSON stdout
+  lines are skipped — build chatter is not evidence of failure (the
+  cargo-verus cold-build lesson).
+- **expected mode** (`{"expected": s}`): trimmed stdout comparison, for
+  appraising the behavior of an executed binary against a known vector.
+
+Failure reasons are sanitized to single-line, quote-free, bounded strings:
+the CVM currently splices appraisal reasons into its response JSON without
+escaping them, and Lean goal states are multi-line. (CVM-side escaping fix
+tracked separately.)
+
+---
+
 ## [dev] — 2026-04-16
 
 ### New ASPs: `run_command_hamr`, `run_command_hamr_appr`
