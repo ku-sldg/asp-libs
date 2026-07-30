@@ -5,6 +5,22 @@ push and is written as a narrative summary of what changed and why.
 
 ---
 
+## [hamr-asps] — 2026-07-30 (3)
+
+### `hashfile`: hardware-accelerated SHA-256
+
+Enabled the sha2 crate's `asm` feature (ARMv8 cryptography extensions on
+aarch64): 4–5x faster hashing on Apple Silicon (a 163 MB artifact drops
+from ~440 ms to ~90 ms through the full ASP round-trip). Motivated by
+pybb's just-in-time toolchain measurement, where verifier toolchains
+(hundreds of MB: lean's elaborator library, sireum.jar, OSATE plugins)
+are hashed in the same Copland term as their invocation, immediately
+before use — but the speedup applies to every hashfile measurement.
+Digest-compatible: identical output, all previously provisioned goldens
+verify unchanged.
+
+---
+
 ## [hamr-asps] — 2026-07-30 (2)
 
 ### New ASP: `model_slices_appr`
