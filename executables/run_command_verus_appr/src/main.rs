@@ -9,20 +9,34 @@ use serde_json::Value;
 
 // function where the work of the ASP is performed.
 // May signal an error which will be handled in main.
+// COLD cargo-verus builds pollute stdout with build progress lines ahead
+// of the verification-results JSON (warm builds emit pure JSON). The
+// appraisal must not depend on build temperature: parse the whole
+// evidence first, and on failure retry from each line that opens a JSON
+// object until one parses.
+fn extract_json(bytes: &[u8]) -> Value {
+    if let Ok(v) = serde_json::from_slice::<Value>(bytes) {
+        return v;
+    }
+    let text = String::from_utf8_lossy(bytes);
+    let mut offset = 0usize;
+    for line in text.split_inclusive('\n') {
+        if line.trim_start().starts_with('{') {
+            if let Ok(v) = serde_json::from_str::<Value>(&text[offset..]) {
+                return v;
+            }
+        }
+        offset += line.len();
+    }
+    Value::Null
+}
+
 fn body(ev: copland::ASP_RawEv, _args: copland::ASP_ARGS) -> Result<Result<()>> {
     // Suppose the file contents are to be extracted from evidence...
 
     let evidence_in = ev.first().context("No file evidence found")?;
 
-    let appraisal_response: std::result::Result<Value, serde_json::Error>= serde_json::from_slice(&evidence_in);
-
-    let appraisal_response_decoded: serde_json::Value = {
-        match appraisal_response {
-            Ok(v) => {v}
-            Err(_) => {Value::Null}
-
-        }
-    };
+    let appraisal_response_decoded: serde_json::Value = extract_json(&evidence_in);
 
     let appraisal_response_string = appraisal_response_decoded["verification-results"]["errors"].as_number();
 

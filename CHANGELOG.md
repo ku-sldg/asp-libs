@@ -5,6 +5,24 @@ push and is written as a narrative summary of what changed and why.
 
 ---
 
+## [hamr-asps] — 2026-08-04
+
+### `run_command_verus_appr`: robust to cold-build stdout pollution
+
+COLD cargo-verus builds emit build progress lines on stdout ahead of the
+verification-results JSON (warm builds emit pure JSON), and the appraiser
+parsed the entire evidence as JSON — so a cold build failed appraisal
+regardless of the actual verification outcome. This broke pybb's
+isolette `--promote` gate systematically: codegen touches shared crate
+files, so the post-codegen proof gate is ALWAYS cold. The appraiser now
+parses the whole evidence first and, on failure, retries from each line
+that opens a JSON object until one parses (the same lesson
+`run_command_lean_appr` already carried). Verified against clean, cold-
+polluted, cold-polluted-failing, and garbage evidence: verdicts now
+depend only on the verification results, never on build temperature.
+
+---
+
 ## [hamr-asps] — 2026-07-30 (3)
 
 ### `hashfile`: hardware-accelerated SHA-256
