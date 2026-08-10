@@ -5,7 +5,36 @@ push and is written as a narrative summary of what changed and why.
 
 ---
 
-## [hamr-asps] — 2026-08-04
+## [hamr-asps] — 2026-08-10
+
+### Rocq toolchain ASPs: runner upgrade, dune runner, assumptions-audit appraiser
+
+Groundwork for pybb's temp-control-Rocq example (Rocq 9, dune-built
+theories). `run_command_rocq` was still the upstream template: no `cwd`
+(rocq must run in the package dir), `.expect()` panics, and stdout-only
+evidence — but rocq reports errors on STDERR with a nonzero exit, and
+success is silent, so stdout alone can never refute. It now takes an
+optional `cwd` and emits a single JSON evidence object
+`{status, stdout, stderr}`. New `run_command_dune` is its build-tool
+sibling (the lake analogue): same args and evidence shape, hardwired
+`dune`. `run_command_rocq_appr` (previously a golden-bytes comparison
+shell) is rewritten as the judgment over that evidence, dual-mode like
+the lean appraiser: default BUILD mode passes iff status is 0 (with the
+stderr Error lines as the reason) — note elaboration alone blesses
+`Admitted.` and `Axiom`, exactly like `sorry` exits 0 in Lean; the
+`{"goals": [...]}` ASSUMPTIONS mode is the provability judgment, for a
+`Print Assumptions` audit file compiled fresh each run (dune caching is
+why the audit must live OUTSIDE the theory: warm builds are silent, so
+cached Print output would vanish). It requires exactly one section per
+listed goal — a count mismatch fails closed — and every section to be
+"Closed under the global context"; an "Axioms:" section fails with a
+reason naming the goal and its axioms, which catches both `Admitted`
+proofs and smuggled `Axiom` declarations (a laundering vector Lean's
+hasSorry diagnostics cannot see). Reasons are sanitize()d single-line
+per the CVM's unescaped-splice constraint. Validated by direct
+ASPRunRequest stdin invocations: clean/broken compiles, warm dune
+builds, mixed closed/admitted/axiom audits, count mismatch, and
+garbage evidence.
 
 ### `run_command_verus_appr`: robust to cold-build stdout pollution
 

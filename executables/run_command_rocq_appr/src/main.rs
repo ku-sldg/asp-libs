@@ -2,63 +2,139 @@
 #![allow(non_snake_case)]
 
 // Common Packages
-use std::fs;
 use anyhow::{Context, Result};
-use rust_am_lib::{
-    copland::{self, handle_appraisal_body, RawEv}, 
-    debug_print
-};
-use serde::{Deserialize, Serialize};
+use rust_am_lib::copland::{self, handle_appraisal_body};
+use serde_json::Value;
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-struct ASP_ARGS_RunCommandRocq_Appr {
-    env_var_golden: String,
-    filepath_golden: String,
-    asp_id_appr: String, 
-    targ_id_appr: String
+// Appraises evidence produced by run_command_rocq / run_command_dune —
+// a single JSON object {status, stdout, stderr} — in one of two modes
+// selected by ASP_ARGS:
+//
+//   default          — build mode, for `dune build` (or a plain
+//                      `rocq compile`): PASS iff exit status is 0. Both
+//                      tools are silent on success and report failures
+//                      on stderr; the reason carries the Error lines.
+//                      NOTE an exit status of 0 proves elaboration only:
+//                      `Admitted.` and `Axiom` declarations compile
+//                      cleanly — provability is judged in assumptions
+//                      mode, not here.
+//
+//   {"goals": [...]}  — assumptions mode, for a Print Assumptions audit
+//                      file (`rocq compile Assumptions.v` with one
+//                      `Print Assumptions <goal>.` per listed goal, in
+//                      order): PASS iff status is 0 AND stdout parses
+//                      into exactly one section per goal AND every
+//                      section is "Closed under the global context".
+//                      An "Axioms:" section means the goal depends on
+//                      an Admitted proof or a smuggled Axiom — the
+//                      reason names the goal and its axioms. A section
+//                      count mismatch FAILS (fail closed on output the
+//                      audit cannot account for).
+
+// Failure reasons travel inside the CVM's response JSON, which does not
+// escape them — a reason containing double quotes, backslashes, or control
+// characters (axiom types can be multi-line) breaks the response. Keep
+// reasons single-line, quote-free, and bounded.
+fn sanitize(s: &str) -> String {
+    let mut out: String = s.chars().take(400).map(|c| match c {
+        '"' => '\'',
+        '\\' => '/',
+        c if c.is_control() => ' ',
+        c => c,
+    }).collect();
+    if s.chars().count() > 400 {
+        out.push_str(" ...");
+    }
+    out
+}
+
+const CLOSED: &str = "Closed under the global context";
+const AXIOMS: &str = "Axioms:";
+
+// stdout of a Print Assumptions audit -> one entry per section, either
+// None (closed) or Some(axiom names). Sections arrive in the order the
+// Print Assumptions commands appear in the audit file; axiom entries
+// are "name : type" lines (types may wrap onto indented continuations,
+// which are skipped — the name line is what identifies the dependency).
+fn parse_sections(stdout: &str) -> Vec<Option<Vec<String>>> {
+    let mut sections: Vec<Option<Vec<String>>> = Vec::new();
+    for line in stdout.lines() {
+        let trimmed = line.trim_end();
+        if trimmed == CLOSED {
+            sections.push(None);
+        } else if trimmed == AXIOMS {
+            sections.push(Some(Vec::new()));
+        } else if let Some(Some(axioms)) = sections.last_mut() {
+            if !line.starts_with(char::is_whitespace) {
+                if let Some((name, _)) = trimmed.split_once(':') {
+                    let name = name.trim();
+                    if !name.is_empty() {
+                        axioms.push(name.to_string());
+                    }
+                }
+            }
+        }
+    }
+    sections
 }
 
 // function where the work of the ASP is performed.
 // May signal an error which will be handled in main.
 fn body(ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<Result<()>> {
-    // Suppose the file contents are to be extracted from evidence...
+    let evidence_in = ev.first().context("No command-output evidence found")?;
+    let evidence: Value = serde_json::from_slice(evidence_in)
+        .context("run_command_rocq_appr expects JSON {status, stdout, stderr} evidence")?;
+    let status = evidence["status"].as_i64();
+    let stdout = evidence["stdout"].as_str().unwrap_or("");
+    let stderr = evidence["stderr"].as_str().unwrap_or("");
 
-    let myaspargs: ASP_ARGS_RunCommandRocq_Appr = serde_json::from_value(args)
-    .context("Could not parse ASP_ARGS for ASP run_command_rocq_appr")?;
+    if status != Some(0) {
+        let detail: Vec<&str> = stderr
+            .lines()
+            .filter(|l| !l.trim().is_empty())
+            .collect();
+        return Ok(Err(anyhow::anyhow!(
+            "Rocq command failed (status {}): {}",
+            status.map_or("none".to_string(), |c| c.to_string()),
+            sanitize(&detail.join(" | ")))));
+    }
 
-    let env_var: String = myaspargs.env_var_golden;
-    let filename: String = myaspargs.filepath_golden;
+    let goals: Option<Vec<String>> = args.get("goals").and_then(|v| {
+        v.as_array().map(|a| {
+            a.iter()
+                .filter_map(|g| g.as_str().map(str::to_string))
+                .collect()
+        })
+    });
+    let Some(goals) = goals else {
+        return Ok(Ok(())); // build mode: a clean exit is the judgment
+    };
 
-    let env_var_string = rust_am_lib::copland::get_env_var_val(env_var)?;
+    let sections = parse_sections(stdout);
+    if sections.len() != goals.len() {
+        return Ok(Err(anyhow::anyhow!(
+            "Assumptions audit mismatch: {} goals but {} Print Assumptions sections in output",
+            goals.len(), sections.len())));
+    }
 
-    let filename_full = format! {"{env_var_string}{filename}"};
+    let mut problems: Vec<String> = Vec::new();
+    for (goal, section) in goals.iter().zip(sections) {
+        if let Some(axioms) = section {
+            let deps = if axioms.is_empty() {
+                "unparsed axioms".to_string()
+            } else {
+                axioms.join(", ")
+            };
+            problems.push(format!("{goal} depends on axioms: {deps}"));
+        }
+    }
 
-    let contents = fs::read_to_string(filename_full).expect("Couldn't read (Evidence, GlobalContext) JSON file in run_command_rocq_appr");
-    debug_print!{"\n\nAttempting to decode (Evidence, GlobalContext)...\n\n"};
-    let my_contents: (copland::Evidence, copland::GlobalContext) = serde_json::from_str(&contents)?;
-    debug_print!("\nDecoded (Evidence, GlobalContext) as:");
-    debug_print!("{:?}", my_contents);
-
-    let my_evidence: copland::Evidence = my_contents.0;
-    let my_glob_ctxt: copland::GlobalContext = my_contents.1;
-
-    let my_asp_params: copland::ASP_PARAMS = copland::ASP_PARAMS{ ASP_ID: myaspargs.asp_id_appr, ASP_ARGS: serde_json::Value::Null/*, ASP_PLC: "".to_string(), ASP_TARG_ID: myaspargs.targ_id_appr */};
-
-    let my_et = copland::get_et(my_evidence.clone());
-    let my_rawev= copland::get_rawev(my_evidence);
-
-    let evidence_slice = copland::do_EvidenceSlice(my_et, my_rawev, my_glob_ctxt, my_asp_params)?;
-
-    let evidence_slice_rawev = RawEv::RawEv(evidence_slice);
-    let golden_bytes = copland::rawev_to_vec(evidence_slice_rawev);
-
-    let evidence_in = ev;
-
-    let bytes_equal: bool = golden_bytes.eq(&evidence_in);
-
-    match bytes_equal {
-        true => Ok(Ok(())),
-        false => Ok(Err(anyhow::anyhow!("Evidence bytes contents do not match"))),
+    if problems.is_empty() {
+        Ok(Ok(()))
+    } else {
+        Ok(Err(anyhow::anyhow!(
+            "Rocq assumptions audit failed: {}",
+            sanitize(&problems.join("; ")))))
     }
 }
 
