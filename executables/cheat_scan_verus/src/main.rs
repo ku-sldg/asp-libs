@@ -131,6 +131,9 @@ fn scan_text(text: &str) -> BTreeMap<&'static str, u64> {
     );
     counts.insert("axiom", count_word(text, "axiom", false));
     counts.insert("broadcast", count_word(text, "broadcast", false));
+    // uninterpreted spec fns: sound alone, but the raw material of
+    // smuggled axiomatization (verus --no-cheating rejects them too)
+    counts.insert("uninterp", count_word(text, "uninterp", false));
     counts
 }
 
