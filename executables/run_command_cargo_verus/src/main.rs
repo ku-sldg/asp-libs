@@ -39,21 +39,30 @@ struct ASP_ARGS_RunCommandCargoVerus {
 // of the JSON (and a trailing "Finished ..." line can follow it). Retry
 // a parse from each line that opens a JSON object; serde stops at the
 // end of the first complete value, so trailing text is tolerated.
+// Return the LAST verification-results object in the output, not the first.
+// `cargo-verus verify` builds the whole dependency graph and every crate
+// cargo recompiles prints its own verification-results JSON, in dependency
+// order (deps before dependents). The crate being measured (the one in
+// `cwd`) is the root, so it is always LAST — a dependency edit inserts the
+// dep's results (e.g. verified:0) ahead of it, and picking the first would
+// mismeasure the target. The count of recompiled crates depends on cargo's
+// build cache, so first-match is nondeterministic; last-match is the root.
 fn extract_json(bytes: &[u8]) -> Value {
     let text = String::from_utf8_lossy(bytes);
     let mut offset = 0usize;
+    let mut last = Value::Null;
     for line in text.split_inclusive('\n') {
         if line.trim_start().starts_with('{') {
             let mut de = serde_json::Deserializer::from_str(&text[offset..]);
             if let Ok(v) = Value::deserialize(&mut de) {
                 if v.get("verification-results").is_some() {
-                    return v;
+                    last = v;
                 }
             }
         }
         offset += line.len();
     }
-    Value::Null
+    last
 }
 
 fn body(_ev: copland::ASP_RawEv, args: copland::ASP_ARGS) -> Result<copland::ASP_RawEv> {
