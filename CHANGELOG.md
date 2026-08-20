@@ -5,6 +5,58 @@ push and is written as a narrative summary of what changed and why.
 
 ---
 
+## [hamr-asps] — 2026-08-19
+
+### Verus proof-escape measurement: cheat scan, batch hashing, deterministic counts
+
+New ASPs for pybb's isolette attestation demo, closing the
+axiom/assume and drop-and-replace attack surface on the generated Verus
+crates — the things that make `cargo-verus` report "verified, 0 errors"
+without an honest proof.
+
+`cheat_scan_verus` measures a crate's proof-ESCAPE surface: it walks
+`src/**/*.rs` and counts, textually, the constructs Verus's own
+`--no-cheating` flag names plus the axiom family — assume, admit,
+external_body (broken down by bridge/component/other path class), bare
+`verifier::external`, assume_specification, the
+`external_*_specification` family, axiom, broadcast, and `uninterp`
+(uninterpreted spec fns: sound alone, but the raw material of smuggled
+axiomatization). Evidence is canonical BTree-ordered JSON, so an
+unchanged tree yields byte-identical bytes and appraisal is an exact
+golden comparison via the existing `goldenbytes_appr`. Counting is
+textual on purpose — the semantics is drift-from-a-blessed-baseline, so
+a false positive in the golden run cancels against the same one at
+attestation time. This catches an admitted contract
+(`assume(false)`) or a smuggled `broadcast` axiom even when every proof
+still verifies clean.
+
+`hashfile_many` + `hashfile_many_appr` batch whole-file hashing into a
+single evidence blob. pybb's system-proof-crate tier hashed 124 files as
+124 per-file `hashfile` targets, which became a 123-deep `bseq` chain
+whose CVM cost is superlinear in chain length (~30s per appraisal pass).
+`hashfile_many` takes `{root, files, walk_dirs, walk_suffix}` and emits
+one canonical `{relpath: sha256-b64}` map; the walk self-enumerates, so
+ADDED files drift the evidence too (a per-file target list can't see
+additions). `hashfile_many_appr` compares the two maps exactly and names
+every drifted, missing, and added path in its refusal, so batching keeps
+per-file attribution.
+
+`run_command_cargo_verus` gained normalized `verification-results`
+evidence (so the golden pins the verified COUNT, not just errors==0 —
+catching a shrunken proof surface), then a correctness fix on top:
+`extract_json` now returns the LAST `verification-results` object in the
+output, not the first. `cargo-verus verify` builds the whole dependency
+graph and every crate cargo recompiles prints its own results JSON, in
+dependency order; the crate being measured (in `cwd`) is the root, so it
+is always emitted last. First-match meant that after any dependency edit
+a dependency's results (e.g. `GUMBO_Library`, verified:0) were measured
+instead of the target crate's — the count golden then spuriously refused
+every importer, and how many objects appeared depended on cargo's build
+cache. Last-match is deterministically the root. Goldens were unaffected
+(they were provisioned warm, already root-crate values).
+
+---
+
 ## [hamr-asps] — 2026-08-10
 
 ### Rocq toolchain ASPs: runner upgrade, dune runner, assumptions-audit appraiser
