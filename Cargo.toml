@@ -8,3 +8,9 @@ base64 = "0.22"
 serde = { version = "1.0.214", features = ["derive"] }
 serde_json = {version = "1.0.125", features = ["unbounded_depth"]}
 rust_am_lib = { git = "https://github.com/ku-sldg/rust-am-lib.git", version = "0.4.0"}
+# Temporary, for the attestation ledger (pybb docs/ledger_plan.md B.6): builds
+# against the local rust-am-lib branch `ledger-verdict-b64`, which base64-encodes
+# negative appraisal reasons in RawEv. Remove once that fix is merged upstream
+# and the git dependency above points at a revision that includes it.
+[patch."https://github.com/ku-sldg/rust-am-lib.git"]
+rust_am_lib = { path = "../rust-am-lib" }
